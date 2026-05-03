@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "nombre": "smartphones",
+    "nombreMostrar": "Smartphones",
+    "icono": "fa-mobile-screen"
+  },
+  {
+    "id": 2,
+    "nombre": "tablets",
+    "nombreMostrar": "Tablets",
+    "icono": "fa-tablet-screen-button"
+  },
+  {
+    "id": 3,
+    "nombre": "accesorios",
+    "nombreMostrar": "Accesorios",
+    "icono": "fa-headphones"
+  },
+  {
+    "id": 4,
+    "nombre": "laptops",
+    "nombreMostrar": "Laptops",
+    "icono": "fa-laptop"
+  },
+  {
+    "id": 5,
+    "nombre": "smartwatches",
+    "nombreMostrar": "Smartwatches",
+    "icono": "fa-clock"
+  },
+  {
+    "id": 6,
+    "nombre": "camaras",
+    "nombreMostrar": "Cámaras",
+    "icono": "fa-camera"
+  }
+]

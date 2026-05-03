@@ -1,0 +1,7 @@
+node_modules/
+.env
+*.log
+test-server.js
+verificar-setup.js
+debug.html
+reiniciar.bat

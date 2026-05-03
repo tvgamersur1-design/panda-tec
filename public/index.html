@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panta Tec - Sistema de Ventas</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css?v=10">
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="logo">
+            <i class="fas fa-mobile-alt"></i>
+            <h2>Panta Tec</h2>
+        </div>
+        
+        <nav class="nav-menu">
+            <a href="#" class="nav-item active" data-section="dashboard">
+                <i class="fas fa-chart-line"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="#" class="nav-item" data-section="productos">
+                <i class="fas fa-mobile-screen"></i>
+                <span>Productos</span>
+            </a>
+            <a href="#" class="nav-item" data-section="categorias">
+                <i class="fas fa-tags"></i>
+                <span>Categorías</span>
+            </a>
+            <a href="#" class="nav-item" data-section="ventas">
+                <i class="fas fa-shopping-cart"></i>
+                <span>Nueva Venta</span>
+            </a>
+            <a href="#" class="nav-item" data-section="historial">
+                <i class="fas fa-history"></i>
+                <span>Historial</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <i class="fas fa-user-circle"></i>
+                <span>Administrador</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="menu-toggle" id="menuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1 id="pageTitle">Dashboard</h1>
+            </div>
+            <div class="topbar-right">
+                <div class="date-time">
+                    <i class="far fa-calendar"></i>
+                    <span id="currentDate"></span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="content-section active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon blue">
+                        <i class="fas fa-mobile-screen"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="totalProductos">0</h3>
+                        <p>Total Productos</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="totalVentas">$0.00</h3>
+                        <p>Ventas Totales</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon orange">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="stockTotal">0</h3>
+                        <p>Stock Total</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon purple">
+                        <i class="fas fa-receipt"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="cantidadVentas">0</h3>
+                        <p>Ventas Realizadas</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-content">
+                <div class="card">
+                    <h3><i class="fas fa-exclamation-triangle"></i> Stock Bajo</h3>
+                    <div id="stockBajo"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Productos Section -->
+        <section id="productos" class="content-section">
+            <div class="section-header">
+                <h2><i class="fas fa-mobile-screen"></i> Gestión de Productos</h2>
+                <button class="btn btn-primary" onclick="abrirModalProducto()">
+                    <i class="fas fa-plus"></i> Nuevo Producto
+                </button>
+            </div>
+            
+            <div class="filtros-productos" id="filtrosProductos">
+                <button class="filtro-btn active" data-categoria="todas" onclick="filtrarPorCategoria('todas')">
+                    <i class="fas fa-th"></i> Todas
+                </button>
+            </div>
+            
+            <div id="listaProductos" class="productos-grid"></div>
+        </section>
+
+        <!-- Categorías Section -->
+        <section id="categorias" class="content-section">
+            <div class="section-header">
+                <h2><i class="fas fa-tags"></i> Gestión de Categorías</h2>
+                <button class="btn btn-primary" onclick="abrirModalCategoria()">
+                    <i class="fas fa-plus"></i> Nueva Categoría
+                </button>
+            </div>
+            <div id="listaCategorias" class="categorias-grid"></div>
+        </section>
+
+        <!-- Ventas Section -->
+        <section id="ventas" class="content-section">
+
+            <!-- Botón flotante carrito (solo móvil) -->
+            <button class="carrito-fab" id="carritoFab" onclick="abrirCarritoMobile()">
+                <i class="fas fa-shopping-cart"></i>
+                <span class="carrito-fab-badge" id="carritoFabBadge">0</span>
+                <span class="carrito-fab-total" id="carritoFabTotal">$0.00</span>
+            </button>
+
+            <div class="ventas-layout">
+                <!-- Productos disponibles -->
+                <div class="card productos-disponibles">
+                    <h3><i class="fas fa-mobile-screen"></i> Productos Disponibles</h3>
+                    
+                    <div class="filtros-venta" id="filtrosVenta">
+                        <button class="filtro-venta-btn active" data-categoria="todas" onclick="filtrarVentaCategoria('todas')">
+                            Todas
+                        </button>
+                    </div>
+                    
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="buscarProducto" placeholder="Buscar producto...">
+                    </div>
+                    <div id="productosDisponibles" class="productos-lista"></div>
+                </div>
+
+                <!-- Carrito de compras (desktop) -->
+                <div class="card carrito-compras" id="carritoDesktop">
+                    <h3><i class="fas fa-shopping-cart"></i> Carrito de Compras</h3>
+                    
+                    <div class="form-group">
+                        <label><i class="fas fa-user"></i> Cliente:</label>
+                        <input type="text" id="clienteVenta" placeholder="Nombre del cliente" required>
+                    </div>
+
+                    <div class="form-group metodo-pago-group">
+                        <label><i class="fas fa-credit-card"></i> Método de Pago:</label>
+                        <div class="metodo-pago-btns">
+                            <button type="button" class="metodo-pago-btn active" data-metodo="efectivo" onclick="seleccionarMetodoPago('efectivo')">
+                                <i class="fas fa-money-bill-wave"></i> Efectivo
+                            </button>
+                            <button type="button" class="metodo-pago-btn" data-metodo="tarjeta" onclick="seleccionarMetodoPago('tarjeta')">
+                                <i class="fas fa-credit-card"></i> Tarjeta
+                            </button>
+                            <button type="button" class="metodo-pago-btn" data-metodo="transferencia" onclick="seleccionarMetodoPago('transferencia')">
+                                <i class="fas fa-building-columns"></i> Transferencia
+                            </button>
+                            <button type="button" class="metodo-pago-btn" data-metodo="yape" onclick="seleccionarMetodoPago('yape')">
+                                <i class="fas fa-qrcode"></i> Yape
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="carritoItems" class="carrito-items"></div>
+
+                    <div class="carrito-resumen">
+                        <div class="resumen-item">
+                            <span>Subtotal:</span>
+                            <span id="subtotalVenta">$0.00</span>
+                        </div>
+                        <div class="resumen-item">
+                            <span>Items:</span>
+                            <span id="totalItems">0</span>
+                        </div>
+                        <div class="descuento-section">
+                            <div class="descuento-toggle">
+                                <label class="toggle-label">
+                                    <input type="checkbox" id="descuentoToggle" onchange="toggleDescuento()">
+                                    <span class="toggle-slider"></span>
+                                    <span><i class="fas fa-percent"></i> Aplicar Descuento</span>
+                                </label>
+                            </div>
+                            <div class="descuento-controls" id="descuentoControls" style="display:none;">
+                                <div class="descuento-tipo-btns">
+                                    <button type="button" class="descuento-tipo-btn active" data-tipo="porcentaje" onclick="seleccionarTipoDescuento('porcentaje')">
+                                        <i class="fas fa-percent"></i> Porcentaje
+                                    </button>
+                                    <button type="button" class="descuento-tipo-btn" data-tipo="monto_fijo" onclick="seleccionarTipoDescuento('monto_fijo')">
+                                        <i class="fas fa-dollar-sign"></i> Monto Fijo
+                                    </button>
+                                </div>
+                                <div class="descuento-input-group">
+                                    <input type="number" id="descuentoValor" placeholder="0" min="0" step="0.01" oninput="calcularDescuento()">
+                                    <span id="descuentoSufijo">%</span>
+                                </div>
+                                <div class="descuento-resultado">
+                                    <span>Descuento:</span>
+                                    <span id="descuentoCalculado" class="descuento-monto">-$0.00</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="resumen-total">
+                            <span>TOTAL:</span>
+                            <span id="totalVenta">$0.00</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group nota-group">
+                        <label><i class="fas fa-sticky-note"></i> Nota (opcional):</label>
+                        <input type="text" id="notaVenta" placeholder="Observaciones de la venta...">
+                    </div>
+
+                    <div class="carrito-actions">
+                        <button type="button" class="btn btn-secondary" onclick="limpiarCarrito()">
+                            <i class="fas fa-trash"></i> Limpiar
+                        </button>
+                        <button type="button" class="btn btn-success" onclick="mostrarConfirmacion()">
+                            <i class="fas fa-check-circle"></i> Procesar Venta
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Historial Section -->
+        <section id="historial" class="content-section">
+            <div class="section-header">
+                <h2><i class="fas fa-history"></i> Historial de Ventas</h2>
+            </div>
+            <div class="filtros-historial card">
+                <div class="filtros-row">
+                    <div class="filtro-group">
+                        <label><i class="far fa-calendar"></i> Desde:</label>
+                        <input type="date" id="filtroFechaDesde" onchange="filtrarHistorial()">
+                    </div>
+                    <div class="filtro-group">
+                        <label><i class="far fa-calendar"></i> Hasta:</label>
+                        <input type="date" id="filtroFechaHasta" onchange="filtrarHistorial()">
+                    </div>
+                    <div class="filtro-group">
+                        <label><i class="fas fa-user"></i> Cliente:</label>
+                        <input type="text" id="filtroBuscarCliente" placeholder="Buscar cliente..." oninput="filtrarHistorial()">
+                    </div>
+                    <div class="filtro-group">
+                        <label><i class="fas fa-info-circle"></i> Estado:</label>
+                        <select id="filtroEstado" onchange="filtrarHistorial()">
+                            <option value="">Todos</option>
+                            <option value="completada">Completada</option>
+                            <option value="anulada">Anulada</option>
+                        </select>
+                    </div>
+                    <div class="filtro-group">
+                        <label><i class="fas fa-credit-card"></i> Pago:</label>
+                        <select id="filtroMetodoPago" onchange="filtrarHistorial()">
+                            <option value="">Todos</option>
+                            <option value="efectivo">Efectivo</option>
+                            <option value="tarjeta">Tarjeta</option>
+                            <option value="transferencia">Transferencia</option>
+                            <option value="yape">Yape</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="limpiarFiltros()" style="margin-top:10px;">
+                    <i class="fas fa-eraser"></i> Limpiar filtros
+                </button>
+            </div>
+            <div id="listaVentas"></div>
+        </section>
+    </main>
+
+    <!-- Modal Producto -->
+    <div id="modalProducto" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle"><i class="fas fa-mobile-screen"></i> Nuevo Producto</h3>
+                <button class="modal-close" onclick="cerrarModalProducto()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="productoForm">
+                <input type="hidden" id="productoId">
+                <div class="form-group">
+                    <label><i class="fas fa-tag"></i> Nombre del Producto:</label>
+                    <input type="text" id="nombre" placeholder="Ej: iPhone 15 Pro Max" required>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-list"></i> Categoría:</label>
+                    <select id="categoria" required>
+                        <option value="">Seleccionar categoría</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-align-left"></i> Descripción:</label>
+                    <textarea id="descripcion" rows="3" placeholder="Características del producto"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label><i class="fas fa-dollar-sign"></i> Precio:</label>
+                        <input type="number" id="precio" step="0.01" placeholder="0.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-box"></i> Stock:</label>
+                        <input type="number" id="stock" placeholder="0" required>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="cerrarModalProducto()">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Categoría -->
+    <div id="modalCategoria" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalCategoriaTitle"><i class="fas fa-tags"></i> Nueva Categoría</h3>
+                <button class="modal-close" onclick="cerrarModalCategoria()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="categoriaForm">
+                <input type="hidden" id="categoriaId">
+                <div class="form-group">
+                    <label><i class="fas fa-tag"></i> Nombre de la Categoría:</label>
+                    <input type="text" id="categoriaNombre" placeholder="Ej: Smartphones" required>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-icons"></i> Seleccionar Icono:</label>
+                    <div class="iconos-grid" id="iconosGrid">
+                        <div class="icono-item" data-icono="fa-mobile-screen">
+                            <i class="fas fa-mobile-screen"></i>
+                        </div>
+                        <div class="icono-item" data-icono="fa-tablet-screen-button">
+                            <i class="fas fa-tablet-screen-button"></i>
+                        </div>
+                        <div class="icono-item" data-icono="fa-laptop">
+                            <i class="fas fa-laptop"></i>
+                        </div>
+                        <div class="icono-item" data-icono="fa-headphones">
+                            <i class="fas fa-headphones"></i>
+                        </div>
+                        <div class="icono-item" data-icono="fa-clock">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="icono-item" data-icono="fa-camera">
+                            <i class="fas fa-camera"></i>
+                        </div>
+                        <div class="icono-item" data-icono="fa-gamepad">
+                            <i class="fas fa-gamepad"></i>
+                        </div>
+                        <div class="icono-item" data-icono="fa-tv">
+                            <i class="fas fa-tv"></i>
+                        </div>
+                        <div class="icono-item" data-icono="fa-keyboard">
+                            <i class="fas fa-keyboard"></i>
+                        </div>
+                        <div class="icono-item" data-icono="fa-mouse">
+                            <i class="fas fa-mouse"></i>
+                        </div>
+                        <div class="icono-item" data-icono="fa-microphone">
+                            <i class="fas fa-microphone"></i>
+                        </div>
+                        <div class="icono-item" data-icono="fa-speaker">
+                            <i class="fas fa-volume-high"></i>
+                        </div>
+                        <div class="icono-item" data-icono="fa-plug">
+                            <i class="fas fa-plug"></i>
+                        </div>
+                        <div class="icono-item" data-icono="fa-battery-full">
+                            <i class="fas fa-battery-full"></i>
+                        </div>
+                        <div class="icono-item" data-icono="fa-wifi">
+                            <i class="fas fa-wifi"></i>
+                        </div>
+                        <div class="icono-item" data-icono="fa-bluetooth">
+                            <i class="fab fa-bluetooth-b"></i>
+                        </div>
+                        <div class="icono-item" data-icono="fa-usb">
+                            <i class="fab fa-usb"></i>
+                        </div>
+                        <div class="icono-item" data-icono="fa-sd-card">
+                            <i class="fas fa-sd-card"></i>
+                        </div>
+                        <div class="icono-item" data-icono="fa-hard-drive">
+                            <i class="fas fa-hard-drive"></i>
+                        </div>
+                        <div class="icono-item" data-icono="fa-print">
+                            <i class="fas fa-print"></i>
+                        </div>
+                    </div>
+                    <input type="hidden" id="categoriaIcono" required>
+                    <p class="icono-seleccionado" id="iconoSeleccionado" style="display:none; margin-top:10px; color:#2563eb;">
+                        <i class="fas fa-check-circle"></i> Icono seleccionado
+                    </p>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="cerrarModalCategoria()">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Confirmación de Venta -->
+    <div id="modalConfirmacion" class="modal">
+        <div class="modal-content modal-ticket">
+            <div class="modal-header">
+                <h3><i class="fas fa-receipt"></i> Confirmar Venta</h3>
+                <button class="modal-close" onclick="cerrarConfirmacion()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="ticket-preview" id="ticketPreview">
+                <!-- Filled by JS -->
+            </div>
+            <div class="modal-actions" style="padding: 0 25px 25px;">
+                <button type="button" class="btn btn-secondary" onclick="cerrarConfirmacion()">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </button>
+                <button type="button" class="btn btn-success" onclick="procesarVenta()">
+                    <i class="fas fa-check-circle"></i> Confirmar y Registrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Anular Venta -->
+    <div id="modalAnular" class="modal">
+        <div class="modal-content" style="max-width:450px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-ban" style="color:#ef4444;"></i> Anular Venta</h3>
+                <button class="modal-close" onclick="cerrarModalAnular()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div style="padding:25px;">
+                <div id="anularVentaInfo" class="anular-venta-info"></div>
+                <div class="form-group" style="margin-top:20px;">
+                    <label><i class="fas fa-comment-alt"></i> Motivo de anulación:</label>
+                    <textarea id="motivoAnulacion" rows="3"
+                        placeholder="Ej: Error en el precio, cliente canceló el pedido..."
+                        style="resize:none;"></textarea>
+                    <p id="motivoError" style="color:#ef4444; font-size:12px; margin-top:5px; display:none;">
+                        <i class="fas fa-exclamation-circle"></i> El motivo es obligatorio
+                    </p>
+                </div>
+                <div class="anular-advertencia">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Esta acción restaurará el stock de los productos y no se puede deshacer.
+                </div>
+            </div>
+            <div class="modal-actions" style="padding:0 25px 25px;">
+                <button class="btn btn-secondary" onclick="cerrarModalAnular()">
+                    <i class="fas fa-arrow-left"></i> Cancelar
+                </button>
+                <button class="btn btn-danger" onclick="confirmarAnulacion()">
+                    <i class="fas fa-ban"></i> Anular Venta
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Carrito Móvil -->
+    <div id="modalCarritoMobile" class="modal">
+        <div class="modal-content modal-carrito-mobile">
+            <div class="modal-header">
+                <h3><i class="fas fa-shopping-cart"></i> Carrito</h3>
+                <button class="modal-close" onclick="cerrarCarritoMobile()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="carrito-mobile-body">
+                <div class="form-group">
+                    <label><i class="fas fa-user"></i> Cliente:</label>
+                    <input type="text" id="clienteVentaMobile" placeholder="Nombre del cliente">
+                </div>
+
+                <div class="form-group metodo-pago-group">
+                    <label><i class="fas fa-credit-card"></i> Método de Pago:</label>
+                    <div class="metodo-pago-btns">
+                        <button type="button" class="metodo-pago-btn active" data-metodo="efectivo" onclick="seleccionarMetodoPagoMobile('efectivo')">
+                            <i class="fas fa-money-bill-wave"></i> Efectivo
+                        </button>
+                        <button type="button" class="metodo-pago-btn" data-metodo="tarjeta" onclick="seleccionarMetodoPagoMobile('tarjeta')">
+                            <i class="fas fa-credit-card"></i> Tarjeta
+                        </button>
+                        <button type="button" class="metodo-pago-btn" data-metodo="transferencia" onclick="seleccionarMetodoPagoMobile('transferencia')">
+                            <i class="fas fa-building-columns"></i> Transferencia
+                        </button>
+                        <button type="button" class="metodo-pago-btn" data-metodo="yape" onclick="seleccionarMetodoPagoMobile('yape')">
+                            <i class="fas fa-qrcode"></i> Yape
+                        </button>
+                    </div>
+                </div>
+
+                <div id="carritoItemsMobile" class="carrito-items"></div>
+
+                <div class="carrito-resumen">
+                    <div class="resumen-item">
+                        <span>Subtotal:</span>
+                        <span id="subtotalVentaMobile">$0.00</span>
+                    </div>
+                    <div class="resumen-item">
+                        <span>Items:</span>
+                        <span id="totalItemsMobile">0</span>
+                    </div>
+                    <div class="descuento-section">
+                        <div class="descuento-toggle">
+                            <label class="toggle-label">
+                                <input type="checkbox" id="descuentoToggleMobile" onchange="toggleDescuentoMobile()">
+                                <span class="toggle-slider"></span>
+                                <span><i class="fas fa-percent"></i> Aplicar Descuento</span>
+                            </label>
+                        </div>
+                        <div class="descuento-controls" id="descuentoControlsMobile" style="display:none;">
+                            <div class="descuento-tipo-btns">
+                                <button type="button" class="descuento-tipo-btn active" data-tipo="porcentaje" onclick="seleccionarTipoDescuentoMobile('porcentaje')">
+                                    <i class="fas fa-percent"></i> Porcentaje
+                                </button>
+                                <button type="button" class="descuento-tipo-btn" data-tipo="monto_fijo" onclick="seleccionarTipoDescuentoMobile('monto_fijo')">
+                                    <i class="fas fa-dollar-sign"></i> Monto Fijo
+                                </button>
+                            </div>
+                            <div class="descuento-input-group">
+                                <input type="number" id="descuentoValorMobile" placeholder="0" min="0" step="0.01" oninput="calcularDescuentoMobile()">
+                                <span id="descuentoSufijoMobile">%</span>
+                            </div>
+                            <div class="descuento-resultado">
+                                <span>Descuento:</span>
+                                <span id="descuentoCalculadoMobile" class="descuento-monto">-$0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="resumen-total">
+                        <span>TOTAL:</span>
+                        <span id="totalVentaMobile">$0.00</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-sticky-note"></i> Nota (opcional):</label>
+                    <input type="text" id="notaVentaMobile" placeholder="Observaciones...">
+                </div>
+            </div>
+            <div class="carrito-mobile-footer">
+                <button class="btn btn-secondary" onclick="limpiarCarritoMobile()">
+                    <i class="fas fa-trash"></i> Limpiar
+                </button>
+                <button class="btn btn-success" onclick="procesarVentaMobile()">
+                    <i class="fas fa-check-circle"></i> Procesar Venta
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlay para cerrar sidebar en móvil -->
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+    <script src="app.js?v=9"></script>
+</body>
+</html>

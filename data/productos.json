@@ -1,0 +1,154 @@
+[
+  {
+    "id": 1,
+    "nombre": "iPhone 15 Pro Max",
+    "descripcion": "256GB, Titanio Natural, A17 Pro",
+    "precio": 1299.99,
+    "stock": 7,
+    "categoria": "smartphones"
+  },
+  {
+    "id": 2,
+    "nombre": "Samsung Galaxy S24 Ultra",
+    "descripcion": "512GB, Negro Titanio, Snapdragon 8 Gen 3",
+    "precio": 1199.99,
+    "stock": 10,
+    "categoria": "smartphones"
+  },
+  {
+    "id": 3,
+    "nombre": "Xiaomi 14 Pro",
+    "descripcion": "256GB, Negro, Snapdragon 8 Gen 3",
+    "precio": 899.99,
+    "stock": 2,
+    "categoria": "smartphones"
+  },
+  {
+    "id": 4,
+    "nombre": "Google Pixel 8 Pro",
+    "descripcion": "128GB, Obsidiana, Tensor G3",
+    "precio": 999.99,
+    "stock": 12,
+    "categoria": "smartphones"
+  },
+  {
+    "id": 5,
+    "nombre": "OnePlus 12",
+    "descripcion": "256GB, Verde, Snapdragon 8 Gen 3",
+    "precio": 799.99,
+    "stock": 7,
+    "categoria": "smartphones"
+  },
+  {
+    "id": 6,
+    "nombre": "iPad Air M2",
+    "descripcion": "11 pulgadas, 128GB, WiFi, Chip M2",
+    "precio": 599.99,
+    "stock": 7,
+    "categoria": "tablets"
+  },
+  {
+    "id": 7,
+    "nombre": "Samsung Galaxy Tab S9",
+    "descripcion": "11 pulgadas, 256GB, WiFi",
+    "precio": 799.99,
+    "stock": 7,
+    "categoria": "tablets"
+  },
+  {
+    "id": 10,
+    "nombre": "AirPods Pro 2",
+    "descripcion": "Cancelación de ruido activa, USB-C",
+    "precio": 249.99,
+    "stock": 23,
+    "categoria": "accesorios"
+  },
+  {
+    "id": 11,
+    "nombre": "Samsung Galaxy Buds 2 Pro",
+    "descripcion": "Auriculares inalámbricos con ANC",
+    "precio": 199.99,
+    "stock": 18,
+    "categoria": "accesorios"
+  },
+  {
+    "id": 12,
+    "nombre": "Funda Spigen Ultra Hybrid",
+    "descripcion": "Protección transparente para iPhone",
+    "precio": 29.99,
+    "stock": 49,
+    "categoria": "accesorios"
+  },
+  {
+    "id": 13,
+    "nombre": "Cargador Anker 65W",
+    "descripcion": "Cargador rápido USB-C",
+    "precio": 45.99,
+    "stock": 29,
+    "categoria": "accesorios"
+  },
+  {
+    "id": 14,
+    "nombre": "Cable USB-C Trenzado",
+    "descripcion": "Cable de 2 metros, Carga rápida 100W",
+    "precio": 19.99,
+    "stock": 57,
+    "categoria": "accesorios"
+  },
+  {
+    "id": 15,
+    "nombre": "Protector de Pantalla",
+    "descripcion": "Vidrio templado 9H",
+    "precio": 14.99,
+    "stock": 95,
+    "categoria": "accesorios"
+  },
+  {
+    "id": 16,
+    "nombre": "MacBook Pro 14",
+    "descripcion": "Chip M3 Pro, 18GB RAM, 512GB SSD",
+    "precio": 1999.99,
+    "stock": 5,
+    "categoria": "laptops"
+  },
+  {
+    "id": 17,
+    "nombre": "Dell XPS 15",
+    "descripcion": "Intel i7, 16GB RAM, 512GB SSD",
+    "precio": 1799.99,
+    "stock": 4,
+    "categoria": "laptops"
+  },
+  {
+    "id": 20,
+    "nombre": "Apple Watch Series 9",
+    "descripcion": "45mm, GPS + Cellular",
+    "precio": 429.99,
+    "stock": 11,
+    "categoria": "smartwatches"
+  },
+  {
+    "id": 21,
+    "nombre": "Samsung Galaxy Watch 6",
+    "descripcion": "44mm, Bluetooth",
+    "precio": 349.99,
+    "stock": 15,
+    "categoria": "smartwatches"
+  },
+  {
+    "id": 23,
+    "nombre": "Canon EOS R6 Mark II",
+    "descripcion": "Cámara mirrorless 24.2MP",
+    "precio": 2499.99,
+    "stock": 4,
+    "categoria": "camaras"
+  },
+  {
+    "id": 25,
+    "nombre": "GoPro Hero 12 Black",
+    "descripcion": "Cámara de acción 5.3K",
+    "precio": 399.99,
+    "stock": 20,
+    "categoria": "camaras"
+  }
+]

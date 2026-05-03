@@ -1,0 +1,19 @@
+{
+  "name": "sistema-ventas-sellos",
+  "version": "1.0.0",
+  "description": "Sistema de productos y ventas con Node.js y JSON",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js"
+  },
+  "keywords": ["ventas", "productos", "api"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

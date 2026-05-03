@@ -1,0 +1,79 @@
+[
+  {
+    "id": 1,
+    "venta_id": 1,
+    "producto_id": 1,
+    "cantidad": 1,
+    "precio_unitario": 1299.99
+  },
+  {
+    "id": 2,
+    "venta_id": 1,
+    "producto_id": 13,
+    "cantidad": 1,
+    "precio_unitario": 45.99
+  },
+  {
+    "id": 3,
+    "venta_id": 1,
+    "producto_id": 15,
+    "cantidad": 1,
+    "precio_unitario": 14.99
+  },
+  {
+    "id": 4,
+    "venta_id": 2,
+    "producto_id": 2,
+    "cantidad": 1,
+    "precio_unitario": 1199.99
+  },
+  {
+    "id": 5,
+    "venta_id": 2,
+    "producto_id": 6,
+    "cantidad": 1,
+    "precio_unitario": 599.99
+  },
+  {
+    "id": 6,
+    "venta_id": 2,
+    "producto_id": 10,
+    "cantidad": 1,
+    "precio_unitario": 249.99
+  },
+  {
+    "id": 7,
+    "venta_id": 3,
+    "producto_id": 7,
+    "cantidad": 1,
+    "precio_unitario": 599.99
+  },
+  {
+    "id": 8,
+    "venta_id": 3,
+    "producto_id": 12,
+    "cantidad": 1,
+    "precio_unitario": 29.99
+  },
+  {
+    "id": 9,
+    "venta_id": 3,
+    "producto_id": 15,
+    "cantidad": 1,
+    "precio_unitario": 14.99
+  },
+  {
+    "id": 10,
+    "venta_id": 4,
+    "producto_id": 20,
+    "cantidad": 1,
+    "precio_unitario": 429.99
+  },
+  {
+    "id": 11,
+    "venta_id": 5,
+    "producto_id": 16,
+    "cantidad": 1,
+    "precio_unitario": 1999.99
+  }
+]

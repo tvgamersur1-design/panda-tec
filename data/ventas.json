@@ -1,0 +1,64 @@
+[
+  {
+    "id": 1,
+    "fecha": "2026-04-28T10:30:00.000Z",
+    "cliente": "Carlos Mendoza",
+    "total": 1549.98,
+    "estado": "completada",
+    "metodo_pago": "efectivo",
+    "descuento_tipo": null,
+    "descuento_valor": 0,
+    "descuento_total": 0,
+    "nota": ""
+  },
+  {
+    "id": 2,
+    "fecha": "2026-04-29T14:20:00.000Z",
+    "cliente": "María García",
+    "total": 2159.98,
+    "estado": "completada",
+    "metodo_pago": "tarjeta",
+    "descuento_tipo": "porcentaje",
+    "descuento_valor": 10,
+    "descuento_total": 239.99,
+    "nota": "Cliente frecuente"
+  },
+  {
+    "id": 3,
+    "fecha": "2026-04-30T09:15:00.000Z",
+    "cliente": "Luis Torres",
+    "total": 649.98,
+    "estado": "completada",
+    "metodo_pago": "yape",
+    "descuento_tipo": null,
+    "descuento_valor": 0,
+    "descuento_total": 0,
+    "nota": ""
+  },
+  {
+    "id": 4,
+    "fecha": "2026-05-01T11:00:00.000Z",
+    "cliente": "Ana Quispe",
+    "total": 429.99,
+    "estado": "anulada",
+    "metodo_pago": "efectivo",
+    "descuento_tipo": null,
+    "descuento_valor": 0,
+    "descuento_total": 0,
+    "nota": "",
+    "motivo_anulacion": "Cliente cambió de opinión al momento del pago",
+    "fecha_anulacion": "2026-05-01T12:30:00.000Z"
+  },
+  {
+    "id": 5,
+    "fecha": "2026-05-02T16:45:00.000Z",
+    "cliente": "Pedro Rojas",
+    "total": 1999.99,
+    "estado": "completada",
+    "metodo_pago": "transferencia",
+    "descuento_tipo": "monto_fijo",
+    "descuento_valor": 100,
+    "descuento_total": 100,
+    "nota": "Pago en 2 partes"
+  }
+]
