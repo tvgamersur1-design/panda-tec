@@ -1,251 +1,361 @@
-const fs = require('fs').promises;
-const path = require('path');
+const mongoose = require('mongoose');
+const Venta = require('../models/Venta');
+const DetalleVenta = require('../models/DetalleVenta');
+const Producto = require('../models/Producto');
+const MovimientoInventario = require('../models/MovimientoInventario');
 
-const ventasPath = path.join(__dirname, '../../data/ventas.json');
-const detallesPath = path.join(__dirname, '../../data/detalles_venta.json');
-const productosPath = path.join(__dirname, '../../data/productos.json');
+/**
+ * GET /api/ventas?desde=&hasta=&estado=&metodo_pago=
+ * Listar ventas con filtros opcionales, populando cliente y vendedor.
+ */
+exports.listar = async (req, res) => {
+  try {
+    const { desde, hasta, estado, metodo_pago } = req.query;
 
-const leerArchivo = async (filePath) => {
-  const data = await fs.readFile(filePath, 'utf-8');
-  return JSON.parse(data);
+    const filtro = {};
+
+    if (desde || hasta) {
+      filtro.fecha_venta = {};
+      if (desde) filtro.fecha_venta.$gte = new Date(desde);
+      if (hasta) {
+        const hastaFin = new Date(hasta);
+        hastaFin.setHours(23, 59, 59, 999);
+        filtro.fecha_venta.$lte = hastaFin;
+      }
+    }
+
+    if (estado) filtro.estado = estado;
+    if (metodo_pago) filtro.metodo_pago = metodo_pago;
+
+    const ventas = await Venta.find(filtro)
+      .populate('cliente_id', 'nombre apellido_paterno dni')
+      .populate('vendedor_id', 'nombre_completo usuario')
+      .sort({ fecha_venta: -1 });
+
+    res.json(ventas);
+  } catch (error) {
+    console.error('Error al listar ventas:', error);
+    res.status(500).json({ error: 'Error al listar ventas' });
+  }
 };
 
-const guardarArchivo = async (filePath, data) => {
-  await fs.writeFile(filePath, JSON.stringify(data, null, 2));
-};
+/**
+ * POST /api/ventas
+ * Registrar una venta nueva con operación atómica (transacción MongoDB).
+ *
+ * Body: {
+ *   items: [{ producto_id, cantidad, descuento_item? }],
+ *   metodo_pago,
+ *   cliente_id?,
+ *   descuento_tipo?,
+ *   descuento_valor?,
+ *   monto_recibido?,
+ *   notas?
+ * }
+ */
+exports.crear = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-const normalizarVenta = (venta) => ({
-  ...venta,
-  estado: venta.estado || 'completada',
-  metodo_pago: venta.metodo_pago || 'efectivo',
-  subtotal: venta.subtotal != null ? venta.subtotal : venta.total,
-  descuento_total: venta.descuento_total != null ? venta.descuento_total : 0,
-  descuento_tipo: venta.descuento_tipo || null,
-  descuento_valor: venta.descuento_valor || 0,
-  nota: venta.nota || ''
-});
-
-exports.registrarVenta = async (req, res) => {
   try {
     const {
-      cliente,
-      productos: productosVenta,
-      metodo_pago = 'efectivo',
+      items,
+      metodo_pago,
+      cliente_id = null,
       descuento_tipo = null,
       descuento_valor = 0,
-      nota = ''
+      monto_recibido,
+      notas,
     } = req.body;
-    
-    if (!productosVenta || productosVenta.length === 0) {
-      return res.status(400).json({ error: 'Debe incluir al menos un producto' });
+
+    // Validaciones básicas
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ error: 'Debe incluir al menos un ítem en la venta' });
     }
 
-    const productos = await leerArchivo(productosPath);
-    const ventas = await leerArchivo(ventasPath);
-    const detalles = await leerArchivo(detallesPath);
+    if (!metodo_pago) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ error: 'El método de pago es obligatorio' });
+    }
 
-    // Validar stock
-    for (const item of productosVenta) {
-      const producto = productos.find(p => p.id === item.producto_id);
+    // Verificar stock de cada producto y recopilar datos
+    const productosData = [];
+    for (const item of items) {
+      const producto = await Producto.findOne({
+        _id: item.producto_id,
+        eliminado: false,
+      }).session(session);
+
       if (!producto) {
-        return res.status(404).json({ error: `Producto ${item.producto_id} no encontrado` });
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(404).json({ error: `Producto no encontrado: ${item.producto_id}` });
       }
-      if (producto.stock < item.cantidad) {
-        return res.status(400).json({ 
-          error: `Stock insuficiente para ${producto.nombre}. Disponible: ${producto.stock}` 
+
+      if (producto.stock_actual < item.cantidad) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(409).json({
+          error: `Stock insuficiente para: ${producto.nombre}`,
         });
       }
+
+      productosData.push({ producto, cantidad: item.cantidad, descuento_item: item.descuento_item || 0 });
     }
 
-    // Crear venta
-    const nuevaVentaId = ventas.length > 0 ? Math.max(...ventas.map(v => v.id)) + 1 : 1;
+    // Calcular subtotal
     let subtotal = 0;
-
-    const nuevosDetalles = [];
-    
-    for (const item of productosVenta) {
-      const producto = productos.find(p => p.id === item.producto_id);
-      const descuentoItem = item.descuento_item || 0;
-      const subtotalItem = parseFloat((producto.precio * item.cantidad - descuentoItem).toFixed(2));
+    for (const { producto, cantidad, descuento_item } of productosData) {
+      const subtotalItem = parseFloat(
+        (producto.precio_venta * cantidad - descuento_item).toFixed(2)
+      );
       subtotal += subtotalItem;
-
-      // Crear detalle
-      const nuevoDetalleId = detalles.length + nuevosDetalles.length + 1;
-      nuevosDetalles.push({
-        id: nuevoDetalleId,
-        venta_id: nuevaVentaId,
-        producto_id: item.producto_id,
-        cantidad: item.cantidad,
-        precio_unitario: producto.precio,
-        descuento_item: descuentoItem,
-        subtotal: subtotalItem
-      });
-
-      // Actualizar stock
-      producto.stock -= item.cantidad;
     }
-
     subtotal = parseFloat(subtotal.toFixed(2));
 
+    // Calcular descuento total
     let descuento_total = 0;
     if (descuento_tipo === 'porcentaje') {
       descuento_total = parseFloat((subtotal * (descuento_valor / 100)).toFixed(2));
     } else if (descuento_tipo === 'monto_fijo') {
-      descuento_total = parseFloat(descuento_valor.toFixed(2));
+      descuento_total = parseFloat(Math.min(descuento_valor, subtotal).toFixed(2));
     }
 
     const total = parseFloat((subtotal - descuento_total).toFixed(2));
 
-    const nuevaVenta = {
-      id: nuevaVentaId,
-      fecha: new Date().toISOString(),
-      cliente: cliente || 'Cliente general',
-      metodo_pago,
-      estado: 'completada',
-      descuento_tipo,
-      descuento_valor,
-      subtotal,
-      descuento_total,
-      total,
-      nota
-    };
+    // Calcular vuelto si aplica
+    let vuelto = null;
+    if (metodo_pago === 'efectivo' && monto_recibido != null) {
+      vuelto = parseFloat((monto_recibido - total).toFixed(2));
+    }
 
-    ventas.push(nuevaVenta);
-    detalles.push(...nuevosDetalles);
+    // Generar numero_venta: V-YYYY-NNN
+    const anioActual = new Date().getFullYear();
+    const prefijo = `V-${anioActual}-`;
+    const ultimaVenta = await Venta.findOne({
+      numero_venta: { $regex: `^${prefijo}` },
+    })
+      .sort({ numero_venta: -1 })
+      .session(session);
 
-    await guardarArchivo(ventasPath, ventas);
-    await guardarArchivo(detallesPath, detalles);
-    await guardarArchivo(productosPath, productos);
+    let secuencia = 1;
+    if (ultimaVenta && ultimaVenta.numero_venta) {
+      const partes = ultimaVenta.numero_venta.split('-');
+      const ultimoNum = parseInt(partes[partes.length - 1], 10);
+      if (!isNaN(ultimoNum)) secuencia = ultimoNum + 1;
+    }
+    const numero_venta = `${prefijo}${String(secuencia).padStart(3, '0')}`;
 
-    res.status(201).json({
-      venta: nuevaVenta,
-      detalles: nuevosDetalles
-    });
+    // Crear documento Venta
+    const [venta] = await Venta.create(
+      [
+        {
+          numero_venta,
+          cliente_id: cliente_id || null,
+          vendedor_id: req.user.id,
+          metodo_pago,
+          subtotal,
+          descuento_tipo,
+          descuento_valor,
+          descuento_total,
+          total,
+          monto_recibido: monto_recibido != null ? monto_recibido : undefined,
+          vuelto: vuelto != null ? vuelto : undefined,
+          notas,
+          estado: 'completada',
+        },
+      ],
+      { session }
+    );
+
+    // Crear DetalleVenta y actualizar stock por cada ítem
+    const detalles = [];
+    for (const { producto, cantidad, descuento_item } of productosData) {
+      const precio_unitario = producto.precio_venta;
+      const subtotalItem = parseFloat((precio_unitario * cantidad - descuento_item).toFixed(2));
+
+      const [detalle] = await DetalleVenta.create(
+        [
+          {
+            venta_id: venta._id,
+            producto_id: producto._id,
+            cantidad,
+            precio_unitario,
+            descuento_item,
+            subtotal: subtotalItem,
+          },
+        ],
+        { session }
+      );
+      detalles.push(detalle);
+
+      // Decrementar stock
+      const stockAnterior = producto.stock_actual;
+      const stockNuevo = stockAnterior - cantidad;
+      const nuevoEstado = stockNuevo === 0 ? 'agotado' : producto.estado === 'agotado' ? 'activo' : producto.estado;
+
+      await Producto.findByIdAndUpdate(
+        producto._id,
+        { stock_actual: stockNuevo, estado: nuevoEstado },
+        { session }
+      );
+
+      // Crear MovimientoInventario tipo 'salida'
+      await MovimientoInventario.create(
+        [
+          {
+            producto_id: producto._id,
+            tipo: 'salida',
+            cantidad,
+            stock_anterior: stockAnterior,
+            stock_nuevo: stockNuevo,
+            referencia_id: venta._id,
+            referencia_tipo: 'venta',
+            usuario_id: req.user.id,
+            notas: `Venta ${numero_venta}`,
+          },
+        ],
+        { session }
+      );
+    }
+
+    await session.commitTransaction();
+    session.endSession();
+
+    res.status(201).json({ venta, detalles });
   } catch (error) {
-    res.status(500).json({ error: 'Error al registrar venta' });
+    await session.abortTransaction();
+    session.endSession();
+    console.error('Error al crear venta:', error);
+    res.status(500).json({ error: 'Error al registrar la venta' });
   }
 };
 
-exports.anularVenta = async (req, res) => {
+/**
+ * GET /api/ventas/:id
+ * Detalle de una venta con sus DetalleVenta populados.
+ */
+exports.detalle = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const venta = await Venta.findById(id)
+      .populate('cliente_id', 'nombre apellido_paterno dni telefono')
+      .populate('vendedor_id', 'nombre_completo usuario');
+
+    if (!venta) {
+      return res.status(404).json({ error: 'Venta no encontrada' });
+    }
+
+    const detalles = await DetalleVenta.find({ venta_id: venta._id }).populate(
+      'producto_id',
+      'nombre precio_venta'
+    );
+
+    res.json({ venta, detalles });
+  } catch (error) {
+    console.error('Error al obtener detalle de venta:', error);
+    res.status(500).json({ error: 'Error al obtener detalle de venta' });
+  }
+};
+
+/**
+ * PUT /api/ventas/:id/anular
+ * Anular una venta (solo admin). Restaura stock y crea movimientos de devolución.
+ */
+exports.anular = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     const { id } = req.params;
     const { motivo } = req.body;
 
     if (!motivo || !motivo.trim()) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(400).json({ error: 'El motivo de anulación es obligatorio' });
     }
 
-    const ventas = await leerArchivo(ventasPath);
-    const detalles = await leerArchivo(detallesPath);
-    const productos = await leerArchivo(productosPath);
-
-    const venta = ventas.find(v => v.id === parseInt(id));
+    const venta = await Venta.findById(id).session(session);
 
     if (!venta) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(404).json({ error: 'Venta no encontrada' });
     }
 
     if (venta.estado === 'anulada') {
-      return res.status(400).json({ error: 'La venta ya está anulada' });
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(409).json({ error: 'La venta ya fue anulada' });
     }
 
+    if (venta.estado !== 'completada') {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(409).json({ error: 'Solo se pueden anular ventas con estado completada' });
+    }
+
+    // Actualizar estado de la venta
     venta.estado = 'anulada';
     venta.motivo_anulacion = motivo.trim();
-    venta.fecha_anulacion = new Date().toISOString();
+    venta.fecha_anulacion = new Date();
+    await venta.save({ session });
 
-    // Restaurar stock
-    const detallesVenta = detalles.filter(d => d.venta_id === venta.id);
-    for (const detalle of detallesVenta) {
-      const producto = productos.find(p => p.id === detalle.producto_id);
-      if (producto) {
-        producto.stock += detalle.cantidad;
-      }
+    // Restaurar stock de cada producto
+    const detalles = await DetalleVenta.find({ venta_id: venta._id }).session(session);
+
+    for (const detalle of detalles) {
+      const producto = await Producto.findById(detalle.producto_id).session(session);
+      if (!producto) continue;
+
+      const stockAnterior = producto.stock_actual;
+      const stockNuevo = stockAnterior + detalle.cantidad;
+      // Si el producto estaba agotado y ahora tiene stock, volver a activo
+      const nuevoEstado = producto.estado === 'agotado' && stockNuevo > 0 ? 'activo' : producto.estado;
+
+      await Producto.findByIdAndUpdate(
+        producto._id,
+        { stock_actual: stockNuevo, estado: nuevoEstado },
+        { session }
+      );
+
+      // Crear MovimientoInventario tipo 'devolucion'
+      await MovimientoInventario.create(
+        [
+          {
+            producto_id: producto._id,
+            tipo: 'devolucion',
+            cantidad: detalle.cantidad,
+            stock_anterior: stockAnterior,
+            stock_nuevo: stockNuevo,
+            referencia_id: venta._id,
+            referencia_tipo: 'venta',
+            usuario_id: req.user.id,
+            notas: `Anulación venta ${venta.numero_venta}: ${motivo.trim()}`,
+          },
+        ],
+        { session }
+      );
     }
 
-    await guardarArchivo(ventasPath, ventas);
-    await guardarArchivo(productosPath, productos);
+    await session.commitTransaction();
+    session.endSession();
 
-    res.json(normalizarVenta(venta));
+    // Retornar venta actualizada con populate
+    const ventaActualizada = await Venta.findById(id)
+      .populate('cliente_id', 'nombre apellido_paterno dni')
+      .populate('vendedor_id', 'nombre_completo usuario');
+
+    res.json(ventaActualizada);
   } catch (error) {
-    res.status(500).json({ error: 'Error al anular venta' });
-  }
-};
-
-exports.listarVentas = async (req, res) => {
-  try {
-    const { desde, hasta, cliente, estado, metodo_pago } = req.query;
-
-    const ventas = await leerArchivo(ventasPath);
-    const detalles = await leerArchivo(detallesPath);
-    const productos = await leerArchivo(productosPath);
-
-    let resultado = ventas.map(normalizarVenta);
-
-    if (desde) {
-      resultado = resultado.filter(v => v.fecha >= desde);
-    }
-    if (hasta) {
-      resultado = resultado.filter(v => v.fecha <= hasta + 'T23:59:59.999Z');
-    }
-    if (cliente) {
-      resultado = resultado.filter(v => v.cliente.toLowerCase().includes(cliente.toLowerCase()));
-    }
-    if (estado) {
-      resultado = resultado.filter(v => v.estado === estado);
-    }
-    if (metodo_pago) {
-      resultado = resultado.filter(v => v.metodo_pago === metodo_pago);
-    }
-
-    resultado.sort((a, b) => b.fecha.localeCompare(a.fecha));
-
-    const ventasConDetalles = resultado.map(venta => ({
-      ...venta,
-      detalles: detalles
-        .filter(d => d.venta_id === venta.id)
-        .map(d => ({
-          ...d,
-          producto: productos.find(p => p.id === d.producto_id)?.nombre || 'Desconocido'
-        }))
-    }));
-
-    res.json(ventasConDetalles);
-  } catch (error) {
-    res.status(500).json({ error: 'Error al listar ventas' });
-  }
-};
-
-exports.obtenerVenta = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const ventas = await leerArchivo(ventasPath);
-    const detalles = await leerArchivo(detallesPath);
-    const productos = await leerArchivo(productosPath);
-
-    const venta = ventas.find(v => v.id === parseInt(id));
-    
-    if (!venta) {
-      return res.status(404).json({ error: 'Venta no encontrada' });
-    }
-
-    const ventaNormalizada = normalizarVenta(venta);
-
-    const ventaConDetalles = {
-      ...ventaNormalizada,
-      detalles: detalles
-        .filter(d => d.venta_id === venta.id)
-        .map(d => {
-          const producto = productos.find(p => p.id === d.producto_id);
-          return {
-            ...d,
-            producto_nombre: producto?.nombre || 'Desconocido',
-            subtotal: d.cantidad * d.precio_unitario
-          };
-        })
-    };
-
-    res.json(ventaConDetalles);
-  } catch (error) {
-    res.status(500).json({ error: 'Error al obtener venta' });
+    await session.abortTransaction();
+    session.endSession();
+    console.error('Error al anular venta:', error);
+    res.status(500).json({ error: 'Error al anular la venta' });
   }
 };

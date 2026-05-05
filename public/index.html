@@ -1,606 +1,182 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panta Tec - Sistema de Ventas</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="styles.css?v=10">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panta Tec — Iniciar sesión</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    :root {
+      --color-primary: #2563EB;
+      --color-primary-dark: #1D4ED8;
+      --color-primary-light: #DBEAFE;
+      --color-danger: #DC2626;
+      --color-bg: #F8FAFC;
+      --color-surface: #FFFFFF;
+      --color-border: #E2E8F0;
+      --color-text: #1E293B;
+      --color-text-muted: #64748B;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--color-bg);
+      color: var(--color-text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .login-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      padding: 2.5rem 2rem;
+      width: 100%;
+      max-width: 400px;
+    }
+    .brand { text-align: center; margin-bottom: 0.5rem; }
+    .brand-icon {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 56px; height: 56px;
+      background: var(--color-primary-light); border-radius: 14px; margin-bottom: 0.75rem;
+    }
+    .brand-icon i { font-size: 1.75rem; color: var(--color-primary); }
+    .brand-name { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; }
+    .brand-store { font-size: 0.875rem; color: var(--color-text-muted); margin-top: 0.25rem; min-height: 1.25rem; }
+    hr { border: none; border-top: 1px solid var(--color-border); margin: 1.5rem 0; }
+    .form-title { font-size: 1.125rem; font-weight: 600; margin-bottom: 1.25rem; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.375rem; }
+    .input-wrapper { position: relative; }
+    .input-wrapper i { position: absolute; left: 0.875rem; top: 50%; transform: translateY(-50%); color: var(--color-text-muted); font-size: 0.875rem; pointer-events: none; }
+    .form-group input {
+      width: 100%; padding: 0.625rem 0.875rem 0.625rem 2.5rem;
+      border: 1px solid var(--color-border); border-radius: 8px;
+      font-family: inherit; font-size: 1rem; color: var(--color-text);
+      background: var(--color-surface); outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .form-group input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
+    .form-group input::placeholder { color: var(--color-text-muted); }
+    .btn-login {
+      width: 100%; padding: 0.75rem; background: var(--color-primary); color: #fff;
+      border: none; border-radius: 8px; font-family: inherit; font-size: 1rem; font-weight: 600;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+      transition: background 0.15s; margin-top: 1.25rem;
+    }
+    .btn-login:hover:not(:disabled) { background: var(--color-primary-dark); }
+    .btn-login:disabled { opacity: 0.7; cursor: not-allowed; }
+    .spinner {
+      width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff; border-radius: 50%;
+      animation: spin 0.7s linear infinite; display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .btn-login.loading .spinner { display: block; }
+    .btn-login.loading .btn-text { display: none; }
+    .error-msg {
+      display: none; align-items: center; gap: 0.5rem;
+      background: #FEF2F2; border: 1px solid #FECACA; color: var(--color-danger);
+      border-radius: 8px; padding: 0.625rem 0.875rem; font-size: 0.875rem; margin-top: 1rem;
+    }
+    .error-msg.visible { display: flex; }
+    .login-footer { text-align: center; margin-top: 1.5rem; font-size: 0.875rem; color: var(--color-text-muted); }
+    @media (max-width: 440px) { .login-card { padding: 2rem 1.25rem; } }
+  </style>
 </head>
 <body>
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <div class="logo">
-            <i class="fas fa-mobile-alt"></i>
-            <h2>Panta Tec</h2>
-        </div>
-        
-        <nav class="nav-menu">
-            <a href="#" class="nav-item active" data-section="dashboard">
-                <i class="fas fa-chart-line"></i>
-                <span>Dashboard</span>
-            </a>
-            <a href="#" class="nav-item" data-section="productos">
-                <i class="fas fa-mobile-screen"></i>
-                <span>Productos</span>
-            </a>
-            <a href="#" class="nav-item" data-section="categorias">
-                <i class="fas fa-tags"></i>
-                <span>Categorías</span>
-            </a>
-            <a href="#" class="nav-item" data-section="ventas">
-                <i class="fas fa-shopping-cart"></i>
-                <span>Nueva Venta</span>
-            </a>
-            <a href="#" class="nav-item" data-section="historial">
-                <i class="fas fa-history"></i>
-                <span>Historial</span>
-            </a>
-        </nav>
-
-        <div class="sidebar-footer">
-            <div class="user-info">
-                <i class="fas fa-user-circle"></i>
-                <span>Administrador</span>
-            </div>
-        </div>
-    </aside>
-
-    <!-- Main Content -->
-    <main class="main-content">
-        <header class="topbar">
-            <div class="topbar-left">
-                <button class="menu-toggle" id="menuToggle">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <h1 id="pageTitle">Dashboard</h1>
-            </div>
-            <div class="topbar-right">
-                <div class="date-time">
-                    <i class="far fa-calendar"></i>
-                    <span id="currentDate"></span>
-                </div>
-            </div>
-        </header>
-
-        <!-- Dashboard Section -->
-        <section id="dashboard" class="content-section active">
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon blue">
-                        <i class="fas fa-mobile-screen"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3 id="totalProductos">0</h3>
-                        <p>Total Productos</p>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon green">
-                        <i class="fas fa-dollar-sign"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3 id="totalVentas">$0.00</h3>
-                        <p>Ventas Totales</p>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon orange">
-                        <i class="fas fa-box"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3 id="stockTotal">0</h3>
-                        <p>Stock Total</p>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon purple">
-                        <i class="fas fa-receipt"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3 id="cantidadVentas">0</h3>
-                        <p>Ventas Realizadas</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="dashboard-content">
-                <div class="card">
-                    <h3><i class="fas fa-exclamation-triangle"></i> Stock Bajo</h3>
-                    <div id="stockBajo"></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Productos Section -->
-        <section id="productos" class="content-section">
-            <div class="section-header">
-                <h2><i class="fas fa-mobile-screen"></i> Gestión de Productos</h2>
-                <button class="btn btn-primary" onclick="abrirModalProducto()">
-                    <i class="fas fa-plus"></i> Nuevo Producto
-                </button>
-            </div>
-            
-            <div class="filtros-productos" id="filtrosProductos">
-                <button class="filtro-btn active" data-categoria="todas" onclick="filtrarPorCategoria('todas')">
-                    <i class="fas fa-th"></i> Todas
-                </button>
-            </div>
-            
-            <div id="listaProductos" class="productos-grid"></div>
-        </section>
-
-        <!-- Categorías Section -->
-        <section id="categorias" class="content-section">
-            <div class="section-header">
-                <h2><i class="fas fa-tags"></i> Gestión de Categorías</h2>
-                <button class="btn btn-primary" onclick="abrirModalCategoria()">
-                    <i class="fas fa-plus"></i> Nueva Categoría
-                </button>
-            </div>
-            <div id="listaCategorias" class="categorias-grid"></div>
-        </section>
-
-        <!-- Ventas Section -->
-        <section id="ventas" class="content-section">
-
-            <!-- Botón flotante carrito (solo móvil) -->
-            <button class="carrito-fab" id="carritoFab" onclick="abrirCarritoMobile()">
-                <i class="fas fa-shopping-cart"></i>
-                <span class="carrito-fab-badge" id="carritoFabBadge">0</span>
-                <span class="carrito-fab-total" id="carritoFabTotal">$0.00</span>
-            </button>
-
-            <div class="ventas-layout">
-                <!-- Productos disponibles -->
-                <div class="card productos-disponibles">
-                    <h3><i class="fas fa-mobile-screen"></i> Productos Disponibles</h3>
-                    
-                    <div class="filtros-venta" id="filtrosVenta">
-                        <button class="filtro-venta-btn active" data-categoria="todas" onclick="filtrarVentaCategoria('todas')">
-                            Todas
-                        </button>
-                    </div>
-                    
-                    <div class="search-box">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="buscarProducto" placeholder="Buscar producto...">
-                    </div>
-                    <div id="productosDisponibles" class="productos-lista"></div>
-                </div>
-
-                <!-- Carrito de compras (desktop) -->
-                <div class="card carrito-compras" id="carritoDesktop">
-                    <h3><i class="fas fa-shopping-cart"></i> Carrito de Compras</h3>
-                    
-                    <div class="form-group">
-                        <label><i class="fas fa-user"></i> Cliente:</label>
-                        <input type="text" id="clienteVenta" placeholder="Nombre del cliente" required>
-                    </div>
-
-                    <div class="form-group metodo-pago-group">
-                        <label><i class="fas fa-credit-card"></i> Método de Pago:</label>
-                        <div class="metodo-pago-btns">
-                            <button type="button" class="metodo-pago-btn active" data-metodo="efectivo" onclick="seleccionarMetodoPago('efectivo')">
-                                <i class="fas fa-money-bill-wave"></i> Efectivo
-                            </button>
-                            <button type="button" class="metodo-pago-btn" data-metodo="tarjeta" onclick="seleccionarMetodoPago('tarjeta')">
-                                <i class="fas fa-credit-card"></i> Tarjeta
-                            </button>
-                            <button type="button" class="metodo-pago-btn" data-metodo="transferencia" onclick="seleccionarMetodoPago('transferencia')">
-                                <i class="fas fa-building-columns"></i> Transferencia
-                            </button>
-                            <button type="button" class="metodo-pago-btn" data-metodo="yape" onclick="seleccionarMetodoPago('yape')">
-                                <i class="fas fa-qrcode"></i> Yape
-                            </button>
-                        </div>
-                    </div>
-
-                    <div id="carritoItems" class="carrito-items"></div>
-
-                    <div class="carrito-resumen">
-                        <div class="resumen-item">
-                            <span>Subtotal:</span>
-                            <span id="subtotalVenta">$0.00</span>
-                        </div>
-                        <div class="resumen-item">
-                            <span>Items:</span>
-                            <span id="totalItems">0</span>
-                        </div>
-                        <div class="descuento-section">
-                            <div class="descuento-toggle">
-                                <label class="toggle-label">
-                                    <input type="checkbox" id="descuentoToggle" onchange="toggleDescuento()">
-                                    <span class="toggle-slider"></span>
-                                    <span><i class="fas fa-percent"></i> Aplicar Descuento</span>
-                                </label>
-                            </div>
-                            <div class="descuento-controls" id="descuentoControls" style="display:none;">
-                                <div class="descuento-tipo-btns">
-                                    <button type="button" class="descuento-tipo-btn active" data-tipo="porcentaje" onclick="seleccionarTipoDescuento('porcentaje')">
-                                        <i class="fas fa-percent"></i> Porcentaje
-                                    </button>
-                                    <button type="button" class="descuento-tipo-btn" data-tipo="monto_fijo" onclick="seleccionarTipoDescuento('monto_fijo')">
-                                        <i class="fas fa-dollar-sign"></i> Monto Fijo
-                                    </button>
-                                </div>
-                                <div class="descuento-input-group">
-                                    <input type="number" id="descuentoValor" placeholder="0" min="0" step="0.01" oninput="calcularDescuento()">
-                                    <span id="descuentoSufijo">%</span>
-                                </div>
-                                <div class="descuento-resultado">
-                                    <span>Descuento:</span>
-                                    <span id="descuentoCalculado" class="descuento-monto">-$0.00</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="resumen-total">
-                            <span>TOTAL:</span>
-                            <span id="totalVenta">$0.00</span>
-                        </div>
-                    </div>
-
-                    <div class="form-group nota-group">
-                        <label><i class="fas fa-sticky-note"></i> Nota (opcional):</label>
-                        <input type="text" id="notaVenta" placeholder="Observaciones de la venta...">
-                    </div>
-
-                    <div class="carrito-actions">
-                        <button type="button" class="btn btn-secondary" onclick="limpiarCarrito()">
-                            <i class="fas fa-trash"></i> Limpiar
-                        </button>
-                        <button type="button" class="btn btn-success" onclick="mostrarConfirmacion()">
-                            <i class="fas fa-check-circle"></i> Procesar Venta
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Historial Section -->
-        <section id="historial" class="content-section">
-            <div class="section-header">
-                <h2><i class="fas fa-history"></i> Historial de Ventas</h2>
-            </div>
-            <div class="filtros-historial card">
-                <div class="filtros-row">
-                    <div class="filtro-group">
-                        <label><i class="far fa-calendar"></i> Desde:</label>
-                        <input type="date" id="filtroFechaDesde" onchange="filtrarHistorial()">
-                    </div>
-                    <div class="filtro-group">
-                        <label><i class="far fa-calendar"></i> Hasta:</label>
-                        <input type="date" id="filtroFechaHasta" onchange="filtrarHistorial()">
-                    </div>
-                    <div class="filtro-group">
-                        <label><i class="fas fa-user"></i> Cliente:</label>
-                        <input type="text" id="filtroBuscarCliente" placeholder="Buscar cliente..." oninput="filtrarHistorial()">
-                    </div>
-                    <div class="filtro-group">
-                        <label><i class="fas fa-info-circle"></i> Estado:</label>
-                        <select id="filtroEstado" onchange="filtrarHistorial()">
-                            <option value="">Todos</option>
-                            <option value="completada">Completada</option>
-                            <option value="anulada">Anulada</option>
-                        </select>
-                    </div>
-                    <div class="filtro-group">
-                        <label><i class="fas fa-credit-card"></i> Pago:</label>
-                        <select id="filtroMetodoPago" onchange="filtrarHistorial()">
-                            <option value="">Todos</option>
-                            <option value="efectivo">Efectivo</option>
-                            <option value="tarjeta">Tarjeta</option>
-                            <option value="transferencia">Transferencia</option>
-                            <option value="yape">Yape</option>
-                        </select>
-                    </div>
-                </div>
-                <button class="btn btn-secondary btn-sm" onclick="limpiarFiltros()" style="margin-top:10px;">
-                    <i class="fas fa-eraser"></i> Limpiar filtros
-                </button>
-            </div>
-            <div id="listaVentas"></div>
-        </section>
-    </main>
-
-    <!-- Modal Producto -->
-    <div id="modalProducto" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modalTitle"><i class="fas fa-mobile-screen"></i> Nuevo Producto</h3>
-                <button class="modal-close" onclick="cerrarModalProducto()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <form id="productoForm">
-                <input type="hidden" id="productoId">
-                <div class="form-group">
-                    <label><i class="fas fa-tag"></i> Nombre del Producto:</label>
-                    <input type="text" id="nombre" placeholder="Ej: iPhone 15 Pro Max" required>
-                </div>
-                <div class="form-group">
-                    <label><i class="fas fa-list"></i> Categoría:</label>
-                    <select id="categoria" required>
-                        <option value="">Seleccionar categoría</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label><i class="fas fa-align-left"></i> Descripción:</label>
-                    <textarea id="descripcion" rows="3" placeholder="Características del producto"></textarea>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label><i class="fas fa-dollar-sign"></i> Precio:</label>
-                        <input type="number" id="precio" step="0.01" placeholder="0.00" required>
-                    </div>
-                    <div class="form-group">
-                        <label><i class="fas fa-box"></i> Stock:</label>
-                        <input type="number" id="stock" placeholder="0" required>
-                    </div>
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-secondary" onclick="cerrarModalProducto()">
-                        <i class="fas fa-times"></i> Cancelar
-                    </button>
-                    <button type="submit" class="btn btn-success">
-                        <i class="fas fa-save"></i> Guardar
-                    </button>
-                </div>
-            </form>
-        </div>
+  <div class="login-card" role="main">
+    <div class="brand">
+      <div class="brand-icon" aria-hidden="true"><i class="fas fa-mobile-alt"></i></div>
+      <h1 class="brand-name">Panta Tec</h1>
+      <p class="brand-store" id="storeName">Sistema de Gestión</p>
     </div>
-
-    <!-- Modal Categoría -->
-    <div id="modalCategoria" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modalCategoriaTitle"><i class="fas fa-tags"></i> Nueva Categoría</h3>
-                <button class="modal-close" onclick="cerrarModalCategoria()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <form id="categoriaForm">
-                <input type="hidden" id="categoriaId">
-                <div class="form-group">
-                    <label><i class="fas fa-tag"></i> Nombre de la Categoría:</label>
-                    <input type="text" id="categoriaNombre" placeholder="Ej: Smartphones" required>
-                </div>
-                <div class="form-group">
-                    <label><i class="fas fa-icons"></i> Seleccionar Icono:</label>
-                    <div class="iconos-grid" id="iconosGrid">
-                        <div class="icono-item" data-icono="fa-mobile-screen">
-                            <i class="fas fa-mobile-screen"></i>
-                        </div>
-                        <div class="icono-item" data-icono="fa-tablet-screen-button">
-                            <i class="fas fa-tablet-screen-button"></i>
-                        </div>
-                        <div class="icono-item" data-icono="fa-laptop">
-                            <i class="fas fa-laptop"></i>
-                        </div>
-                        <div class="icono-item" data-icono="fa-headphones">
-                            <i class="fas fa-headphones"></i>
-                        </div>
-                        <div class="icono-item" data-icono="fa-clock">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                        <div class="icono-item" data-icono="fa-camera">
-                            <i class="fas fa-camera"></i>
-                        </div>
-                        <div class="icono-item" data-icono="fa-gamepad">
-                            <i class="fas fa-gamepad"></i>
-                        </div>
-                        <div class="icono-item" data-icono="fa-tv">
-                            <i class="fas fa-tv"></i>
-                        </div>
-                        <div class="icono-item" data-icono="fa-keyboard">
-                            <i class="fas fa-keyboard"></i>
-                        </div>
-                        <div class="icono-item" data-icono="fa-mouse">
-                            <i class="fas fa-mouse"></i>
-                        </div>
-                        <div class="icono-item" data-icono="fa-microphone">
-                            <i class="fas fa-microphone"></i>
-                        </div>
-                        <div class="icono-item" data-icono="fa-speaker">
-                            <i class="fas fa-volume-high"></i>
-                        </div>
-                        <div class="icono-item" data-icono="fa-plug">
-                            <i class="fas fa-plug"></i>
-                        </div>
-                        <div class="icono-item" data-icono="fa-battery-full">
-                            <i class="fas fa-battery-full"></i>
-                        </div>
-                        <div class="icono-item" data-icono="fa-wifi">
-                            <i class="fas fa-wifi"></i>
-                        </div>
-                        <div class="icono-item" data-icono="fa-bluetooth">
-                            <i class="fab fa-bluetooth-b"></i>
-                        </div>
-                        <div class="icono-item" data-icono="fa-usb">
-                            <i class="fab fa-usb"></i>
-                        </div>
-                        <div class="icono-item" data-icono="fa-sd-card">
-                            <i class="fas fa-sd-card"></i>
-                        </div>
-                        <div class="icono-item" data-icono="fa-hard-drive">
-                            <i class="fas fa-hard-drive"></i>
-                        </div>
-                        <div class="icono-item" data-icono="fa-print">
-                            <i class="fas fa-print"></i>
-                        </div>
-                    </div>
-                    <input type="hidden" id="categoriaIcono" required>
-                    <p class="icono-seleccionado" id="iconoSeleccionado" style="display:none; margin-top:10px; color:#2563eb;">
-                        <i class="fas fa-check-circle"></i> Icono seleccionado
-                    </p>
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-secondary" onclick="cerrarModalCategoria()">
-                        <i class="fas fa-times"></i> Cancelar
-                    </button>
-                    <button type="submit" class="btn btn-success">
-                        <i class="fas fa-save"></i> Guardar
-                    </button>
-                </div>
-            </form>
+    <hr />
+    <form id="loginForm" novalidate>
+      <h2 class="form-title">Iniciar sesión</h2>
+      <div class="form-group">
+        <label for="usuario">Usuario</label>
+        <div class="input-wrapper">
+          <i class="fas fa-user" aria-hidden="true"></i>
+          <input type="text" id="usuario" name="usuario" placeholder="Tu nombre de usuario"
+            autocomplete="username" required aria-required="true" aria-describedby="errorMsg" />
         </div>
-    </div>
-
-    <!-- Modal Confirmación de Venta -->
-    <div id="modalConfirmacion" class="modal">
-        <div class="modal-content modal-ticket">
-            <div class="modal-header">
-                <h3><i class="fas fa-receipt"></i> Confirmar Venta</h3>
-                <button class="modal-close" onclick="cerrarConfirmacion()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="ticket-preview" id="ticketPreview">
-                <!-- Filled by JS -->
-            </div>
-            <div class="modal-actions" style="padding: 0 25px 25px;">
-                <button type="button" class="btn btn-secondary" onclick="cerrarConfirmacion()">
-                    <i class="fas fa-arrow-left"></i> Volver
-                </button>
-                <button type="button" class="btn btn-success" onclick="procesarVenta()">
-                    <i class="fas fa-check-circle"></i> Confirmar y Registrar
-                </button>
-            </div>
+      </div>
+      <div class="form-group">
+        <label for="clave">Contraseña</label>
+        <div class="input-wrapper">
+          <i class="fas fa-lock" aria-hidden="true"></i>
+          <input type="password" id="clave" name="clave" placeholder="Tu contraseña"
+            autocomplete="current-password" required aria-required="true" aria-describedby="errorMsg" />
         </div>
-    </div>
+      </div>
+      <button type="submit" class="btn-login" id="loginBtn">
+        <span class="btn-text"><i class="fas fa-sign-in-alt" aria-hidden="true"></i> Iniciar sesión</span>
+        <span class="spinner" role="status" aria-label="Procesando..."></span>
+      </button>
+      <div class="error-msg" id="errorMsg" role="alert" aria-live="assertive">
+        <i class="fas fa-exclamation-circle" aria-hidden="true"></i>
+        <span id="errorText">Credenciales incorrectas. Intenta de nuevo.</span>
+      </div>
+    </form>
+    <div class="login-footer"><p>© <span id="year"></span> Panta Tec</p></div>
+  </div>
 
-    <!-- Modal Anular Venta -->
-    <div id="modalAnular" class="modal">
-        <div class="modal-content" style="max-width:450px;">
-            <div class="modal-header">
-                <h3><i class="fas fa-ban" style="color:#ef4444;"></i> Anular Venta</h3>
-                <button class="modal-close" onclick="cerrarModalAnular()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div style="padding:25px;">
-                <div id="anularVentaInfo" class="anular-venta-info"></div>
-                <div class="form-group" style="margin-top:20px;">
-                    <label><i class="fas fa-comment-alt"></i> Motivo de anulación:</label>
-                    <textarea id="motivoAnulacion" rows="3"
-                        placeholder="Ej: Error en el precio, cliente canceló el pedido..."
-                        style="resize:none;"></textarea>
-                    <p id="motivoError" style="color:#ef4444; font-size:12px; margin-top:5px; display:none;">
-                        <i class="fas fa-exclamation-circle"></i> El motivo es obligatorio
-                    </p>
-                </div>
-                <div class="anular-advertencia">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    Esta acción restaurará el stock de los productos y no se puede deshacer.
-                </div>
-            </div>
-            <div class="modal-actions" style="padding:0 25px 25px;">
-                <button class="btn btn-secondary" onclick="cerrarModalAnular()">
-                    <i class="fas fa-arrow-left"></i> Cancelar
-                </button>
-                <button class="btn btn-danger" onclick="confirmarAnulacion()">
-                    <i class="fas fa-ban"></i> Anular Venta
-                </button>
-            </div>
-        </div>
-    </div>
+  <script type="module">
+    import { login, isLoggedIn } from './js/auth.js';
 
-    <!-- Modal Carrito Móvil -->
-    <div id="modalCarritoMobile" class="modal">
-        <div class="modal-content modal-carrito-mobile">
-            <div class="modal-header">
-                <h3><i class="fas fa-shopping-cart"></i> Carrito</h3>
-                <button class="modal-close" onclick="cerrarCarritoMobile()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="carrito-mobile-body">
-                <div class="form-group">
-                    <label><i class="fas fa-user"></i> Cliente:</label>
-                    <input type="text" id="clienteVentaMobile" placeholder="Nombre del cliente">
-                </div>
+    if (isLoggedIn()) window.location.href = '/dashboard.html';
 
-                <div class="form-group metodo-pago-group">
-                    <label><i class="fas fa-credit-card"></i> Método de Pago:</label>
-                    <div class="metodo-pago-btns">
-                        <button type="button" class="metodo-pago-btn active" data-metodo="efectivo" onclick="seleccionarMetodoPagoMobile('efectivo')">
-                            <i class="fas fa-money-bill-wave"></i> Efectivo
-                        </button>
-                        <button type="button" class="metodo-pago-btn" data-metodo="tarjeta" onclick="seleccionarMetodoPagoMobile('tarjeta')">
-                            <i class="fas fa-credit-card"></i> Tarjeta
-                        </button>
-                        <button type="button" class="metodo-pago-btn" data-metodo="transferencia" onclick="seleccionarMetodoPagoMobile('transferencia')">
-                            <i class="fas fa-building-columns"></i> Transferencia
-                        </button>
-                        <button type="button" class="metodo-pago-btn" data-metodo="yape" onclick="seleccionarMetodoPagoMobile('yape')">
-                            <i class="fas fa-qrcode"></i> Yape
-                        </button>
-                    </div>
-                </div>
+    document.getElementById('year').textContent = new Date().getFullYear();
 
-                <div id="carritoItemsMobile" class="carrito-items"></div>
+    // Cargar nombre de tienda
+    (async () => {
+      try {
+        const base = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+          ? 'http://localhost:3000/api' : `${window.location.origin}/api`;
+        const res = await fetch(`${base}/configuracion/publica`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.nombre_tienda) {
+            document.getElementById('storeName').textContent = data.nombre_tienda;
+            document.title = `${data.nombre_tienda} — Iniciar sesión`;
+          }
+        }
+      } catch { /* silencioso */ }
+    })();
 
-                <div class="carrito-resumen">
-                    <div class="resumen-item">
-                        <span>Subtotal:</span>
-                        <span id="subtotalVentaMobile">$0.00</span>
-                    </div>
-                    <div class="resumen-item">
-                        <span>Items:</span>
-                        <span id="totalItemsMobile">0</span>
-                    </div>
-                    <div class="descuento-section">
-                        <div class="descuento-toggle">
-                            <label class="toggle-label">
-                                <input type="checkbox" id="descuentoToggleMobile" onchange="toggleDescuentoMobile()">
-                                <span class="toggle-slider"></span>
-                                <span><i class="fas fa-percent"></i> Aplicar Descuento</span>
-                            </label>
-                        </div>
-                        <div class="descuento-controls" id="descuentoControlsMobile" style="display:none;">
-                            <div class="descuento-tipo-btns">
-                                <button type="button" class="descuento-tipo-btn active" data-tipo="porcentaje" onclick="seleccionarTipoDescuentoMobile('porcentaje')">
-                                    <i class="fas fa-percent"></i> Porcentaje
-                                </button>
-                                <button type="button" class="descuento-tipo-btn" data-tipo="monto_fijo" onclick="seleccionarTipoDescuentoMobile('monto_fijo')">
-                                    <i class="fas fa-dollar-sign"></i> Monto Fijo
-                                </button>
-                            </div>
-                            <div class="descuento-input-group">
-                                <input type="number" id="descuentoValorMobile" placeholder="0" min="0" step="0.01" oninput="calcularDescuentoMobile()">
-                                <span id="descuentoSufijoMobile">%</span>
-                            </div>
-                            <div class="descuento-resultado">
-                                <span>Descuento:</span>
-                                <span id="descuentoCalculadoMobile" class="descuento-monto">-$0.00</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="resumen-total">
-                        <span>TOTAL:</span>
-                        <span id="totalVentaMobile">$0.00</span>
-                    </div>
-                </div>
+    const form    = document.getElementById('loginForm');
+    const btn     = document.getElementById('loginBtn');
+    const errorEl = document.getElementById('errorMsg');
+    const errorTx = document.getElementById('errorText');
 
-                <div class="form-group">
-                    <label><i class="fas fa-sticky-note"></i> Nota (opcional):</label>
-                    <input type="text" id="notaVentaMobile" placeholder="Observaciones...">
-                </div>
-            </div>
-            <div class="carrito-mobile-footer">
-                <button class="btn btn-secondary" onclick="limpiarCarritoMobile()">
-                    <i class="fas fa-trash"></i> Limpiar
-                </button>
-                <button class="btn btn-success" onclick="procesarVentaMobile()">
-                    <i class="fas fa-check-circle"></i> Procesar Venta
-                </button>
-            </div>
-        </div>
-    </div>
+    const setLoading = (v) => { btn.disabled = v; btn.classList.toggle('loading', v); };
+    const showError  = (msg) => { errorTx.textContent = msg; errorEl.classList.add('visible'); };
+    const hideError  = () => errorEl.classList.remove('visible');
 
-    <!-- Overlay para cerrar sidebar en móvil -->
-    <div id="sidebarOverlay" class="sidebar-overlay"></div>
-
-    <script src="app.js?v=10"></script>
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideError();
+      const usuario = document.getElementById('usuario').value.trim();
+      const clave   = document.getElementById('clave').value;
+      if (!usuario || !clave) { showError('Por favor completa todos los campos.'); return; }
+      setLoading(true);
+      const { ok, data } = await login(usuario, clave);
+      setLoading(false);
+      if (ok) {
+        window.location.href = '/dashboard.html';
+      } else {
+        showError(data?.error || 'Credenciales incorrectas. Intenta de nuevo.');
+        document.getElementById('clave').value = '';
+        document.getElementById('clave').focus();
+      }
+    });
+  </script>
 </body>
 </html>
