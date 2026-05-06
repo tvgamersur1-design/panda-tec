@@ -13,18 +13,36 @@ export async function init(container, user) {
 
   container.innerHTML = `
     <style>
-      .conf-card { background:#fff; border-radius:12px; border:1px solid #E2E8F0; padding:2rem; max-width:600px; }
+      .conf-card { background:#fff; border-radius:12px; border:1px solid #E2E8F0; padding:1.5rem; max-width:700px; margin:0 auto; }
       .conf-card h2 { font-size:1.125rem; font-weight:700; margin-bottom:1.5rem; display:flex; align-items:center; gap:0.5rem; }
       .form-group { display:flex; flex-direction:column; gap:0.375rem; margin-bottom:1rem; }
       .form-group label { font-size:0.8125rem; font-weight:600; color:#374151; }
-      .form-group input { padding:0.5rem 0.75rem; border:1px solid #E2E8F0; border-radius:8px; font-size:0.875rem; color:#1E293B; outline:none; }
-      .form-group input:focus { border-color:#2563EB; }
+      .form-group input, .form-group textarea { padding:0.5rem 0.75rem; border:1px solid #E2E8F0; border-radius:8px; font-size:0.875rem; color:#1E293B; outline:none; width:100%; box-sizing:border-box; }
+      .form-group input:focus, .form-group textarea:focus { border-color:#2563EB; }
+      .form-group textarea { resize:vertical; font-family:inherit; min-height:80px; }
       .form-group .hint { font-size:0.75rem; color:#64748B; margin-top:0.25rem; }
       .form-group .error-hint { font-size:0.75rem; color:#DC2626; margin-top:0.25rem; display:none; }
-      .form-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
-      .btn-primary { display:inline-flex; align-items:center; gap:0.5rem; padding:0.625rem 1.25rem; background:#2563EB; color:#fff; border:none; border-radius:8px; font-size:0.875rem; font-weight:600; cursor:pointer; margin-top:0.5rem; }
+      .form-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem; }
+      .btn-primary { display:inline-flex; align-items:center; justify-content:center; gap:0.5rem; padding:0.625rem 1.25rem; background:#2563EB; color:#fff; border:none; border-radius:8px; font-size:0.875rem; font-weight:600; cursor:pointer; margin-top:0.5rem; width:100%; }
       .btn-primary:hover { background:#1D4ED8; }
       .btn-primary:disabled { background:#94A3B8; cursor:not-allowed; }
+      
+      /* Responsive para móviles */
+      @media (max-width: 768px) {
+        .conf-card { padding:1rem; border-radius:8px; }
+        .conf-card h2 { font-size:1rem; margin-bottom:1rem; }
+        .form-row { grid-template-columns:1fr; gap:0; }
+        .form-group { margin-bottom:0.875rem; }
+        .form-group label { font-size:0.8125rem; }
+        .form-group input, .form-group textarea { font-size:0.875rem; padding:0.625rem 0.75rem; }
+        .btn-primary { padding:0.75rem 1rem; font-size:0.9375rem; }
+      }
+      
+      @media (max-width: 480px) {
+        .conf-card { padding:0.875rem; margin:0; border-radius:0; border-left:none; border-right:none; }
+        .conf-card h2 { font-size:0.9375rem; }
+        .form-group input, .form-group textarea { font-size:16px; /* Evita zoom en iOS */ }
+      }
     </style>
 
     <div class="conf-card">
@@ -49,18 +67,18 @@ export async function init(container, user) {
     <form id="confForm">
       <div class="form-group">
         <label for="fNombreTienda">Nombre de la tienda *</label>
-        <input id="fNombreTienda" name="nombre_tienda" type="text" required value="${conf.nombre_tienda || ''}" placeholder="Ej: Panta Tec" />
+        <input id="fNombreTienda" name="nombre_tienda" type="text" required value="${conf.nombre_tienda || ''}" placeholder="Ej: Panda Tec" />
       </div>
       <div class="form-row">
         <div class="form-group">
           <label for="fRuc">RUC * (11 dígitos)</label>
-          <input id="fRuc" name="ruc" type="text" maxlength="11" required value="${conf.ruc || ''}" placeholder="20123456789" />
+          <input id="fRuc" name="ruc" type="text" maxlength="11" required value="${conf.ruc || ''}" placeholder="20123456789" inputmode="numeric" />
           <span class="error-hint" id="rucError">El RUC debe tener exactamente 11 dígitos numéricos.</span>
           <span class="hint">Solo números, sin guiones</span>
         </div>
         <div class="form-group">
           <label for="fTelefono">Teléfono</label>
-          <input id="fTelefono" name="telefono" type="text" value="${conf.telefono || ''}" placeholder="Ej: 01-234-5678" />
+          <input id="fTelefono" name="telefono" type="tel" value="${conf.telefono || ''}" placeholder="Ej: 01-234-5678" />
         </div>
       </div>
       <div class="form-group">
@@ -69,7 +87,7 @@ export async function init(container, user) {
       </div>
       <div class="form-group">
         <label for="fCorreo">Correo electrónico</label>
-        <input id="fCorreo" name="correo" type="email" value="${conf.correo || ''}" placeholder="contacto@pantatec.com" />
+        <input id="fCorreo" name="correo" type="email" value="${conf.correo || ''}" placeholder="contacto@pantatec.com" inputmode="email" />
       </div>
       <div class="form-group">
         <label for="fMensaje">Mensaje de cierre del ticket</label>
@@ -78,7 +96,7 @@ export async function init(container, user) {
       </div>
       <div class="form-group">
         <label for="fTerminos">Términos y condiciones del ticket</label>
-        <textarea id="fTerminos" name="terminos" rows="3" style="padding:0.5rem 0.75rem;border:1px solid #E2E8F0;border-radius:8px;font-size:0.875rem;color:#1E293B;outline:none;resize:vertical;font-family:inherit;" placeholder="Ej: No se aceptan devoluciones. Reclamos dentro de las 24h.">${conf.terminos || 'No se aceptan devoluciones de dinero. Cualquier reclamo debe realizarse dentro de las 24 horas de la compra.'}</textarea>
+        <textarea id="fTerminos" name="terminos" rows="3" placeholder="Ej: No se aceptan devoluciones. Reclamos dentro de las 24h.">${conf.terminos || 'No se aceptan devoluciones de dinero. Cualquier reclamo debe realizarse dentro de las 24 horas de la compra.'}</textarea>
         <span class="hint">Se imprime al pie del ticket</span>
       </div>
       <button type="submit" class="btn-primary" id="btnGuardar">

@@ -32,10 +32,11 @@ productoSchema.pre('findOneAndUpdate', function (next) {
   next();
 });
 
-// Índices
-productoSchema.index({ nombre: 'text' });
+// Índices optimizados para búsqueda rápida
+productoSchema.index({ nombre: 1 }); // Índice regular para búsquedas con regex
 productoSchema.index({ categoria_id: 1 });
 productoSchema.index({ estado: 1 });
 productoSchema.index({ stock_actual: 1 });
+productoSchema.index({ eliminado: 1, nombre: 1 }); // Índice compuesto para filtrar eliminados + buscar
 
 module.exports = mongoose.model('Producto', productoSchema);

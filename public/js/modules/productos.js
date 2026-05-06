@@ -60,7 +60,10 @@ export async function init(container, user) {
 
     <div class="prod-header">
       <div class="prod-filters">
-        <input type="text" id="searchInput" placeholder="🔍 Buscar producto..." style="min-width:200px;" />
+        <div style="position:relative;min-width:200px;">
+          <i class="fas fa-search" style="position:absolute;left:0.75rem;top:50%;transform:translateY(-50%);color:#94A3B8;font-size:0.875rem;pointer-events:none;"></i>
+          <input type="text" id="searchInput" placeholder="Buscar producto..." style="min-width:200px;padding-left:2.25rem;" />
+        </div>
         <select id="catFilter"><option value="">Todas las categorías</option></select>
       </div>
       ${puedeEditar ? `<button class="btn-primary" id="btnNuevo"><i class="fas fa-plus"></i> Nuevo Producto</button>` : ''}
@@ -106,7 +109,7 @@ export async function init(container, user) {
       _filtroSearch = e.target.value.trim();
       _paginaActual = 1;
       cargarProductos(container, puedeEditar);
-    }, 400);
+    }, 300); // Reducido a 300ms para mayor velocidad de respuesta
   });
 
   catFilter.addEventListener('change', e => {
@@ -319,11 +322,11 @@ function abrirModal(container, producto = null) {
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label for="fPrecioVenta">Precio venta (S/) *</label>
+                <label for="fPrecioVenta">Precio venta *</label>
                 <input id="fPrecioVenta" name="precio_venta" type="number" min="0" step="0.01" required value="${producto?.precio_venta ?? ''}" />
               </div>
               <div class="form-group">
-                <label for="fPrecioCompra">Precio compra (S/) *</label>
+                <label for="fPrecioCompra">Precio compra *</label>
                 <input id="fPrecioCompra" name="precio_compra" type="number" min="0" step="0.01" required value="${producto?.precio_compra ?? ''}" />
               </div>
             </div>

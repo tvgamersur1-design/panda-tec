@@ -39,9 +39,10 @@ export async function init(container, user) {
       .cat-btn { padding:0.3rem 0.75rem; border-radius:999px; border:1px solid #E2E8F0; background:#fff; font-size:0.8125rem; cursor:pointer; transition:all 0.15s; }
       .cat-btn.active { background:#2563EB; color:#fff; border-color:#2563EB; }
       .prod-results { display:flex; flex-direction:column; gap:0.5rem; margin-top:0.75rem; max-height:320px; overflow-y:auto; }
-      .prod-result-item { display:flex; align-items:center; justify-content:space-between; padding:0.625rem 0.875rem; border:1px solid #E2E8F0; border-radius:8px; cursor:pointer; transition:background 0.15s; }
-      .prod-result-item:hover { background:#F8FAFC; }
-      .prod-result-item.sin-stock { opacity:0.5; cursor:not-allowed; }
+      .prod-result-item { display:flex; align-items:center; justify-content:space-between; padding:0.625rem 0.875rem; border:1px solid #E2E8F0; border-radius:8px; cursor:pointer; transition:all 0.15s; gap:0.75rem; }
+      .prod-result-item:hover { background:#F8FAFC; border-color:#BFDBFE; }
+      .prod-result-item.sin-stock { opacity:0.5; cursor:not-allowed; background:#FAFAFA; }
+      .prod-result-item.sin-stock:hover { background:#FAFAFA; border-color:#E2E8F0; }
       .btn-agregar { padding:0.35rem 0.75rem; background:#2563EB; color:#fff; border:none; border-radius:6px; font-size:0.8125rem; font-weight:600; cursor:pointer; }
       .btn-agregar:disabled { background:#94A3B8; cursor:not-allowed; }
       .carrito-items { display:flex; flex-direction:column; gap:0.5rem; max-height:280px; overflow-y:auto; }
@@ -104,7 +105,10 @@ export async function init(container, user) {
           <div class="pos-card">
             <div class="pos-card-header"><i class="fas fa-search" style="color:#2563EB;"></i> Buscar Producto</div>
             <div class="pos-card-body">
-              <input class="search-input" id="prodSearch" type="text" placeholder="Nombre del producto..." autocomplete="off" />
+              <div style="position:relative;">
+                <i class="fas fa-search" style="position:absolute;left:0.75rem;top:50%;transform:translateY(-50%);color:#94A3B8;font-size:0.875rem;pointer-events:none;"></i>
+                <input class="search-input" id="prodSearch" type="text" placeholder="Buscar por nombre o código de barras..." autocomplete="off" style="padding-left:2.25rem;" />
+              </div>
               <div class="cat-filters" id="catFilters"></div>
               <div class="prod-results" id="prodResults">
                 <p style="color:#94A3B8;font-size:0.875rem;text-align:center;padding:1rem;">Escribe para buscar productos</p>
@@ -114,7 +118,10 @@ export async function init(container, user) {
           <div class="pos-card">
             <div class="pos-card-header"><i class="fas fa-user" style="color:#64748B;"></i> Cliente (opcional)</div>
             <div class="pos-card-body">
-              <input class="search-input" id="clienteSearch" type="text" placeholder="Buscar por DNI o nombre..." autocomplete="off" />
+              <div style="position:relative;">
+                <i class="fas fa-search" style="position:absolute;left:0.75rem;top:50%;transform:translateY(-50%);color:#94A3B8;font-size:0.875rem;pointer-events:none;"></i>
+                <input class="search-input" id="clienteSearch" type="text" placeholder="Buscar por DNI o nombre..." autocomplete="off" style="padding-left:2.25rem;" />
+              </div>
               <div id="clienteResults"></div>
               <div id="clienteSeleccionado"></div>
             </div>
@@ -224,10 +231,35 @@ export async function init(container, user) {
     });
   });
 
-  // Búsqueda de productos con debounce 500ms
-  container.querySelector('#prodSearch').addEventListener('input', e => {
+  // Búsqueda de productos con debounce optimizado a 250ms para POS
+  const searchInput = container.querySelector('#prodSearch');
+  searchInput.addEventListener('input', e => {
     clearTimeout(_searchTimer);
-    _searchTimer = setTimeout(() => buscarProductos(container, e.target.value, catActiva), 500);
+    const valor = e.target.value;
+    
+    // Mostrar indicador de búsqueda inmediatamente
+    if (valor.trim() || catActiva) {
+      const resultsEl = container.querySelector('#prodResults');
+      resultsEl.innerHTML = `<p style="color:#2563EB;font-size:0.875rem;text-align:center;padding:0.5rem;"><i class="fas fa-spinner fa-spin"></i> Buscando…</p>`;
+    }
+    
+    _searchTimer = setTimeout(() => buscarProductos(container, valor, catActiva), 250);
+  });
+
+  // Búsqueda al presionar Enter (instantánea) - útil para lectores de código de barras
+  searchInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      clearTimeout(_searchTimer);
+      const valor = e.target.value.trim();
+      
+      // Si es un código numérico largo (posible código de barras), buscar y agregar automáticamente
+      if (/^\d{8,}$/.test(valor)) {
+        buscarYAgregarPorCodigo(container, valor, catActiva);
+      } else {
+        buscarProductos(container, valor, catActiva);
+      }
+    }
   });
 
   // Búsqueda de cliente con debounce
@@ -270,34 +302,65 @@ export async function init(container, user) {
 
 async function buscarProductos(container, q, catId) {
   const resultsEl = container.querySelector('#prodResults');
-  if (!q && !catId) {
+  const searchTerm = q?.trim() || '';
+  
+  if (!searchTerm && !catId) {
     resultsEl.innerHTML = `<p style="color:#94A3B8;font-size:0.875rem;text-align:center;padding:1rem;">Escribe para buscar productos</p>`;
     return;
   }
-  resultsEl.innerHTML = `<p style="color:#94A3B8;font-size:0.875rem;text-align:center;padding:0.5rem;"><i class="fas fa-spinner fa-spin"></i> Buscando…</p>`;
-  let url = `/productos?`;
-  if (q) url += `search=${encodeURIComponent(q)}&`;
-  if (catId) url += `categoria=${catId}&`;
+  
+  resultsEl.innerHTML = `<p style="color:#2563EB;font-size:0.875rem;text-align:center;padding:0.5rem;"><i class="fas fa-spinner fa-spin"></i> Buscando…</p>`;
+  
+  // Optimización: limitar resultados desde el backend para POS
+  let url = `/productos?limit=30&estado=activo`;
+  if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`;
+  if (catId) url += `&categoria=${catId}`;
+  
   const res = await api.get(url);
   const prods = res.ok ? (res.data.productos || res.data || []) : [];
+  
   if (prods.length === 0) {
-    resultsEl.innerHTML = `<p style="color:#94A3B8;font-size:0.875rem;text-align:center;padding:1rem;">Sin resultados</p>`;
+    resultsEl.innerHTML = `
+      <div style="text-align:center;padding:1.5rem;color:#64748B;">
+        <i class="fas fa-search" style="font-size:2rem;opacity:0.3;display:block;margin-bottom:0.5rem;"></i>
+        <p style="font-size:0.875rem;">No se encontraron productos</p>
+        ${searchTerm ? `<p style="font-size:0.75rem;color:#94A3B8;margin-top:0.25rem;">Intenta con otro término de búsqueda</p>` : ''}
+      </div>
+    `;
     return;
   }
+  
+  // Mostrar solo los primeros 20 resultados para mejor rendimiento
   resultsEl.innerHTML = prods.slice(0, 20).map(p => {
     const sinStock = p.stock_actual === 0;
+    const stockBajo = p.stock_actual > 0 && p.stock_actual <= (p.stock_minimo || 5);
+    
     return `
       <div class="prod-result-item${sinStock ? ' sin-stock' : ''}" data-id="${p._id}">
-        <div>
-          <div style="font-weight:500;font-size:0.875rem;">${p.nombre}</div>
-          <div style="font-size:0.75rem;color:#64748B;">S/ ${Number(p.precio_venta).toLocaleString('es-PE',{minimumFractionDigits:2})} · Stock: ${p.stock_actual}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:500;font-size:0.875rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.nombre}</div>
+          <div style="font-size:0.75rem;color:#64748B;display:flex;align-items:center;gap:0.5rem;margin-top:0.125rem;">
+            <span style="font-weight:600;">S/ ${Number(p.precio_venta).toLocaleString('es-PE',{minimumFractionDigits:2})}</span>
+            <span style="color:${sinStock ? '#DC2626' : stockBajo ? '#D97706' : '#16A34A'};">
+              <i class="fas fa-box" style="font-size:0.7rem;"></i> ${p.stock_actual}
+            </span>
+          </div>
         </div>
         <button class="btn-agregar" data-id="${p._id}" ${sinStock ? 'disabled title="Sin stock"' : ''}>
-          ${sinStock ? 'Agotado' : '+ Agregar'}
+          ${sinStock ? '<i class="fas fa-times"></i> Agotado' : '<i class="fas fa-plus"></i> Agregar'}
         </button>
       </div>
     `;
   }).join('');
+
+  // Mostrar contador de resultados si hay más de 20
+  if (prods.length > 20) {
+    resultsEl.innerHTML += `
+      <div style="text-align:center;padding:0.5rem;font-size:0.75rem;color:#64748B;border-top:1px solid #F1F5F9;">
+        Mostrando 20 de ${prods.length} resultados. Refina tu búsqueda para ver más.
+      </div>
+    `;
+  }
 
   resultsEl.querySelectorAll('.btn-agregar:not([disabled])').forEach(btn => {
     btn.addEventListener('click', e => {
@@ -306,6 +369,53 @@ async function buscarProductos(container, q, catId) {
       if (prod) agregarAlCarrito(container, prod);
     });
   });
+  
+  // Permitir agregar con clic en toda la fila (excepto si está agotado)
+  resultsEl.querySelectorAll('.prod-result-item:not(.sin-stock)').forEach(item => {
+    item.style.cursor = 'pointer';
+    item.addEventListener('click', e => {
+      if (e.target.tagName !== 'BUTTON') {
+        const prod = prods.find(p => p._id === item.dataset.id);
+        if (prod) agregarAlCarrito(container, prod);
+      }
+    });
+  });
+}
+
+// Función para búsqueda rápida por código (útil para código de barras)
+async function buscarYAgregarPorCodigo(container, codigo, catId) {
+  const searchInput = container.querySelector('#prodSearch');
+  const resultsEl = container.querySelector('#prodResults');
+  
+  resultsEl.innerHTML = `<p style="color:#2563EB;font-size:0.875rem;text-align:center;padding:0.5rem;"><i class="fas fa-barcode"></i> Buscando código…</p>`;
+  
+  let url = `/productos?limit=5&estado=activo&search=${encodeURIComponent(codigo)}`;
+  if (catId) url += `&categoria=${catId}`;
+  
+  const res = await api.get(url);
+  const prods = res.ok ? (res.data.productos || res.data || []) : [];
+  
+  if (prods.length === 1) {
+    // Si hay exactamente 1 resultado, agregarlo automáticamente
+    agregarAlCarrito(container, prods[0]);
+    searchInput.value = '';
+    searchInput.focus();
+    resultsEl.innerHTML = `
+      <div style="text-align:center;padding:1rem;color:#16A34A;">
+        <i class="fas fa-check-circle" style="font-size:1.5rem;display:block;margin-bottom:0.5rem;"></i>
+        <p style="font-size:0.875rem;font-weight:600;">${prods[0].nombre}</p>
+        <p style="font-size:0.75rem;margin-top:0.25rem;">Agregado al carrito</p>
+      </div>
+    `;
+    setTimeout(() => {
+      if (resultsEl.innerHTML.includes('Agregado al carrito')) {
+        resultsEl.innerHTML = `<p style="color:#94A3B8;font-size:0.875rem;text-align:center;padding:1rem;">Escribe para buscar productos</p>`;
+      }
+    }, 2000);
+  } else {
+    // Si hay 0 o múltiples resultados, mostrar búsqueda normal
+    buscarProductos(container, codigo, catId);
+  }
 }
 
 function agregarAlCarrito(container, prod) {

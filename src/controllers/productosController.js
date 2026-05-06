@@ -13,7 +13,15 @@ exports.listar = async (req, res) => {
     const filtro = { eliminado: false };
     if (categoria) filtro.categoria_id = categoria;
     if (estado)    filtro.estado = estado;
-    if (search)    filtro.$text = { $search: search };
+    
+    // Búsqueda mejorada: regex case-insensitive para buscar desde el inicio
+    if (search && search.trim()) {
+      const searchTerm = search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // Escapar caracteres especiales
+      filtro.$or = [
+        { nombre: { $regex: searchTerm, $options: 'i' } },
+        { descripcion: { $regex: searchTerm, $options: 'i' } }
+      ];
+    }
 
     const pageNum  = Math.max(1, parseInt(page));
     const limitNum = Math.min(50, Math.max(1, parseInt(limit)));

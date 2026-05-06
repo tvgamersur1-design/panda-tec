@@ -50,7 +50,10 @@ export async function init(container, user) {
     </style>
 
     <div class="cli-header">
-      <input type="text" id="searchInput" class="search-input" placeholder="🔍 Buscar por nombre o DNI..." />
+      <div style="position:relative;flex:1;max-width:400px;">
+        <i class="fas fa-search" style="position:absolute;left:0.75rem;top:50%;transform:translateY(-50%);color:#94A3B8;font-size:0.875rem;pointer-events:none;"></i>
+        <input type="text" id="searchInput" class="search-input" placeholder="Buscar por nombre o DNI..." style="padding-left:2.25rem;" />
+      </div>
       ${puedeEditar ? `<button class="btn-primary" id="btnNuevo"><i class="fas fa-plus"></i> Nuevo Cliente</button>` : ''}
     </div>
     <div class="table-wrap">
