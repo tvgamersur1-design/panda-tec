@@ -8,27 +8,33 @@ const MovimientoInventario = require('../models/MovimientoInventario');
  */
 exports.listar = async (req, res) => {
   try {
-    const { categoria, search, estado } = req.query;
+    const { categoria, search, estado, page = 1, limit = 10 } = req.query;
 
     const filtro = { eliminado: false };
+    if (categoria) filtro.categoria_id = categoria;
+    if (estado)    filtro.estado = estado;
+    if (search)    filtro.$text = { $search: search };
 
-    if (categoria) {
-      filtro.categoria_id = categoria;
-    }
+    const pageNum  = Math.max(1, parseInt(page));
+    const limitNum = Math.min(50, Math.max(1, parseInt(limit)));
+    const skip     = (pageNum - 1) * limitNum;
 
-    if (estado) {
-      filtro.estado = estado;
-    }
+    const [productos, total] = await Promise.all([
+      Producto.find(filtro)
+        .populate('categoria_id', 'nombre')
+        .sort({ nombre: 1 })
+        .skip(skip)
+        .limit(limitNum),
+      Producto.countDocuments(filtro),
+    ]);
 
-    if (search) {
-      filtro.$text = { $search: search };
-    }
-
-    const productos = await Producto.find(filtro)
-      .populate('categoria_id', 'nombre')
-      .sort({ nombre: 1 });
-
-    res.json(productos);
+    res.json({
+      productos,
+      total,
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(total / limitNum),
+    });
   } catch (error) {
     console.error('Error en productosController.listar:', error);
     res.status(500).json({ error: 'Error interno del servidor' });

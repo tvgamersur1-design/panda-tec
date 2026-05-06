@@ -14,7 +14,15 @@ exports.publica = async (req, res) => {
       return res.json({ nombre_tienda: 'Panta Tec', telefono: '' });
     }
 
-    res.json({ nombre_tienda: config.nombre_tienda, telefono: config.telefono || '' });
+    res.json({
+      nombre_tienda: config.nombre_tienda,
+      telefono: config.telefono || '',
+      ruc: config.ruc || '',
+      direccion: config.direccion || '',
+      correo: config.correo || '',
+      terminos: config.terminos || '',
+      mensaje_ticket: config.mensaje_ticket || '¡Gracias por su compra!',
+    });
   } catch (error) {
     console.error('Error al obtener configuración pública:', error);
     res.status(500).json({ error: 'Error al obtener configuración pública' });
@@ -47,22 +55,20 @@ exports.obtener = async (req, res) => {
  */
 exports.guardar = async (req, res) => {
   try {
-    const { nombre_tienda, ruc, direccion, telefono, correo } = req.body;
+    const { nombre_tienda, ruc, direccion, telefono, correo, terminos, mensaje_ticket } = req.body;
 
-    // Validar RUC si se proporciona
     if (ruc !== undefined && !RUC_REGEX.test(ruc)) {
-      return res.status(400).json({
-        error: 'El RUC debe tener exactamente 11 dígitos numéricos',
-        campo: 'ruc',
-      });
+      return res.status(400).json({ error: 'El RUC debe tener exactamente 11 dígitos numéricos', campo: 'ruc' });
     }
 
     const datos = {};
-    if (nombre_tienda !== undefined) datos.nombre_tienda = nombre_tienda;
-    if (ruc !== undefined) datos.ruc = ruc;
-    if (direccion !== undefined) datos.direccion = direccion;
-    if (telefono !== undefined) datos.telefono = telefono;
-    if (correo !== undefined) datos.correo = correo;
+    if (nombre_tienda  !== undefined) datos.nombre_tienda  = nombre_tienda;
+    if (ruc            !== undefined) datos.ruc            = ruc;
+    if (direccion      !== undefined) datos.direccion      = direccion;
+    if (telefono       !== undefined) datos.telefono       = telefono;
+    if (correo         !== undefined) datos.correo         = correo;
+    if (terminos       !== undefined) datos.terminos       = terminos;
+    if (mensaje_ticket !== undefined) datos.mensaje_ticket = mensaje_ticket;
 
     // Upsert: actualizar el único documento o crearlo si no existe
     const config = await Configuracion.findOneAndUpdate(

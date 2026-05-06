@@ -11,6 +11,8 @@ const configuracionSchema = new mongoose.Schema(
     direccion: { type: String },
     telefono: { type: String },
     correo: { type: String },
+    terminos: { type: String, default: 'No se aceptan devoluciones de dinero. Cualquier reclamo debe realizarse dentro de las 24 horas de la compra.' },
+    mensaje_ticket: { type: String, default: '¡Gracias por su compra!' },
   },
   { timestamps: false }
 );

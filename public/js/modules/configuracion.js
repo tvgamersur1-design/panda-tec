@@ -71,6 +71,16 @@ export async function init(container, user) {
         <label for="fCorreo">Correo electrónico</label>
         <input id="fCorreo" name="correo" type="email" value="${conf.correo || ''}" placeholder="contacto@pantatec.com" />
       </div>
+      <div class="form-group">
+        <label for="fMensaje">Mensaje de cierre del ticket</label>
+        <input id="fMensaje" name="mensaje_ticket" type="text" value="${conf.mensaje_ticket || '¡Gracias por su compra!'}" placeholder="¡Gracias por su compra!" />
+        <span class="hint">Aparece al final del ticket de venta</span>
+      </div>
+      <div class="form-group">
+        <label for="fTerminos">Términos y condiciones del ticket</label>
+        <textarea id="fTerminos" name="terminos" rows="3" style="padding:0.5rem 0.75rem;border:1px solid #E2E8F0;border-radius:8px;font-size:0.875rem;color:#1E293B;outline:none;resize:vertical;font-family:inherit;" placeholder="Ej: No se aceptan devoluciones. Reclamos dentro de las 24h.">${conf.terminos || 'No se aceptan devoluciones de dinero. Cualquier reclamo debe realizarse dentro de las 24 horas de la compra.'}</textarea>
+        <span class="hint">Se imprime al pie del ticket</span>
+      </div>
       <button type="submit" class="btn-primary" id="btnGuardar">
         <i class="fas fa-save"></i> Guardar configuración
       </button>

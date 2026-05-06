@@ -3,6 +3,7 @@ const Venta = require('../models/Venta');
 const DetalleVenta = require('../models/DetalleVenta');
 const Producto = require('../models/Producto');
 const MovimientoInventario = require('../models/MovimientoInventario');
+const Cliente = require('../models/Cliente');
 
 /**
  * GET /api/ventas?desde=&hasta=&estado=&metodo_pago=
@@ -62,6 +63,7 @@ exports.crear = async (req, res) => {
       items,
       metodo_pago,
       cliente_id = null,
+      cliente_nuevo = null,   // { dni, nombre, apellido_paterno, apellido_materno, telefono? }
       descuento_tipo = null,
       descuento_valor = 0,
       monto_recibido,
@@ -149,12 +151,34 @@ exports.crear = async (req, res) => {
     }
     const numero_venta = `${prefijo}${String(secuencia).padStart(3, '0')}`;
 
+    // Si viene cliente_nuevo, crearlo dentro de la transacción
+    let clienteIdFinal = cliente_id || null;
+    if (!clienteIdFinal && cliente_nuevo && cliente_nuevo.dni) {
+      // Verificar si ya existe (puede haberse creado en otra venta simultánea)
+      const existente = await Cliente.findOne({ dni: cliente_nuevo.dni }).session(session);
+      if (existente) {
+        clienteIdFinal = existente._id;
+      } else {
+        const [nuevoCliente] = await Cliente.create(
+          [{ 
+            dni: cliente_nuevo.dni,
+            nombre: cliente_nuevo.nombre || '',
+            apellido_paterno: cliente_nuevo.apellido_paterno || '',
+            apellido_materno: cliente_nuevo.apellido_materno || '',
+            telefono: cliente_nuevo.telefono || '000000000',
+          }],
+          { session }
+        );
+        clienteIdFinal = nuevoCliente._id;
+      }
+    }
+
     // Crear documento Venta
     const [venta] = await Venta.create(
       [
         {
           numero_venta,
-          cliente_id: cliente_id || null,
+          cliente_id: clienteIdFinal,
           vendedor_id: req.user.id,
           metodo_pago,
           subtotal,
@@ -225,7 +249,13 @@ exports.crear = async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
-    res.status(201).json({ venta, detalles });
+    // Enriquecer detalles con nombre del producto para el ticket
+    const detallesConNombre = detalles.map((d, i) => ({
+      ...d.toObject(),
+      nombre: productosData[i]?.producto?.nombre || '',
+    }));
+
+    res.status(201).json({ venta, detalles: detallesConNombre });
   } catch (error) {
     await session.abortTransaction();
     session.endSession();

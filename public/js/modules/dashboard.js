@@ -38,9 +38,9 @@ export async function init(container, user) {
   }
 
   const d = result.data;
-  const ventasHoy = d.ventas_hoy ?? 0;
-  const ingresosHoy = d.ingresos_hoy ?? 0;
-  const stockBajo = d.stock_bajo ?? [];
+  const ventasHoy    = d.total_ventas_dia ?? d.ventas_hoy ?? 0;
+  const ingresosHoy  = d.ingresos_dia     ?? d.ingresos_hoy ?? 0;
+  const stockBajo    = d.stock_bajo    ?? [];
   const ultimasVentas = d.ultimas_ventas ?? [];
 
   container.innerHTML = `

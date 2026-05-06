@@ -9,6 +9,10 @@ let _categorias = [];
 let _productos = [];
 let _filtroSearch = '';
 let _filtroCategoria = '';
+let _paginaActual = 1;
+let _totalPaginas = 1;
+let _totalProductos = 0;
+const _LIMIT = 10;
 
 export async function init(container, user) {
   const puedeEditar = user && (user.rol === 'admin' || user.rol === 'almacen');
@@ -76,6 +80,7 @@ export async function init(container, user) {
         <tbody id="prodTbody"></tbody>
       </table>
     </div>
+    <div id="prodPaginador" style="display:flex;align-items:center;justify-content:space-between;margin-top:1rem;flex-wrap:wrap;gap:0.5rem;"></div>
     <div id="modalContainer"></div>
   `;
 
@@ -99,13 +104,15 @@ export async function init(container, user) {
     clearTimeout(searchTimer);
     searchTimer = setTimeout(() => {
       _filtroSearch = e.target.value.trim();
-      renderTabla(container, puedeEditar);
-    }, 300);
+      _paginaActual = 1;
+      cargarProductos(container, puedeEditar);
+    }, 400);
   });
 
   catFilter.addEventListener('change', e => {
     _filtroCategoria = e.target.value;
-    renderTabla(container, puedeEditar);
+    _paginaActual = 1;
+    cargarProductos(container, puedeEditar);
   });
 
   if (puedeEditar) {
@@ -114,25 +121,90 @@ export async function init(container, user) {
 }
 
 async function cargarProductos(container, puedeEditar) {
-  const res = await api.get('/productos');
-  _productos = res.ok ? (res.data.productos || res.data || []) : [];
+  const tbody = container.querySelector('#prodTbody');
+  tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:#94A3B8;"><i class="fas fa-spinner fa-spin"></i></td></tr>`;
+
+  let url = `/productos?page=${_paginaActual}&limit=${_LIMIT}`;
+  if (_filtroSearch)    url += `&search=${encodeURIComponent(_filtroSearch)}`;
+  if (_filtroCategoria) url += `&categoria=${_filtroCategoria}`;
+
+  const res = await api.get(url);
+  if (res.ok) {
+    _productos      = res.data.productos || [];
+    _totalProductos = res.data.total     || 0;
+    _totalPaginas   = res.data.totalPages || 1;
+    _paginaActual   = res.data.page       || 1;
+  } else {
+    _productos = [];
+  }
+
   renderTabla(container, puedeEditar);
+  renderPaginador(container, puedeEditar);
+}
+
+function renderPaginador(container, puedeEditar) {
+  const el = container.querySelector('#prodPaginador');
+  if (!el) return;
+
+  if (_totalPaginas <= 1) { el.innerHTML = ''; return; }
+
+  const desde = (_paginaActual - 1) * _LIMIT + 1;
+  const hasta  = Math.min(_paginaActual * _LIMIT, _totalProductos);
+
+  // Generar botones de página (máx 5 visibles)
+  const btnStyle = (activo) => `
+    padding:0.375rem 0.625rem;border-radius:7px;border:1px solid #E2E8F0;
+    background:${activo ? '#0a0a0a' : '#fff'};color:${activo ? '#fff' : '#374151'};
+    font-size:0.8125rem;font-weight:${activo ? '700' : '500'};cursor:${activo ? 'default' : 'pointer'};
+    min-width:34px;text-align:center;
+  `;
+
+  let pagBtns = '';
+  const rango = 2;
+  for (let p = 1; p <= _totalPaginas; p++) {
+    if (
+      p === 1 || p === _totalPaginas ||
+      (p >= _paginaActual - rango && p <= _paginaActual + rango)
+    ) {
+      pagBtns += `<button data-pag="${p}" style="${btnStyle(p === _paginaActual)}" ${p === _paginaActual ? 'disabled' : ''}>${p}</button>`;
+    } else if (
+      p === _paginaActual - rango - 1 ||
+      p === _paginaActual + rango + 1
+    ) {
+      pagBtns += `<span style="padding:0 0.25rem;color:#94A3B8;">…</span>`;
+    }
+  }
+
+  el.innerHTML = `
+    <span style="font-size:0.8125rem;color:#64748B;">
+      Mostrando <strong>${desde}–${hasta}</strong> de <strong>${_totalProductos}</strong> productos
+    </span>
+    <div style="display:flex;align-items:center;gap:0.375rem;">
+      <button data-pag="${_paginaActual - 1}" ${_paginaActual === 1 ? 'disabled' : ''} style="${btnStyle(false)}opacity:${_paginaActual === 1 ? '0.4' : '1'};">
+        <i class="fas fa-chevron-left"></i>
+      </button>
+      ${pagBtns}
+      <button data-pag="${_paginaActual + 1}" ${_paginaActual === _totalPaginas ? 'disabled' : ''} style="${btnStyle(false)}opacity:${_paginaActual === _totalPaginas ? '0.4' : '1'};">
+        <i class="fas fa-chevron-right"></i>
+      </button>
+    </div>
+  `;
+
+  el.querySelectorAll('[data-pag]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const p = parseInt(btn.dataset.pag);
+      if (p >= 1 && p <= _totalPaginas && p !== _paginaActual) {
+        _paginaActual = p;
+        cargarProductos(container, puedeEditar);
+        container.querySelector('.prod-table-wrap')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
 }
 
 function renderTabla(container, puedeEditar) {
   const tbody = container.querySelector('#prodTbody');
-  let lista = _productos;
-
-  if (_filtroSearch) {
-    const q = _filtroSearch.toLowerCase();
-    lista = lista.filter(p => p.nombre.toLowerCase().includes(q) || (p.descripcion || '').toLowerCase().includes(q));
-  }
-  if (_filtroCategoria) {
-    lista = lista.filter(p => {
-      const catId = p.categoria_id?._id || p.categoria_id;
-      return catId === _filtroCategoria;
-    });
-  }
+  const lista = _productos;
 
   if (lista.length === 0) {
     tbody.innerHTML = `<tr><td colspan="${puedeEditar ? 6 : 5}"><div class="empty-state"><i class="fas fa-mobile-screen"></i><p>No hay productos que mostrar</p></div></td></tr>`;
@@ -148,7 +220,7 @@ function renderTabla(container, puedeEditar) {
         : `<span class="badge badge-ok"><i class="fas fa-check-circle"></i> ${p.stock_actual}</span>`;
 
     const imgHtml = p.imagen
-      ? `<img src="${p.imagen}" alt="${p.nombre}" class="prod-img" loading="lazy" />`
+      ? `<img src="${p.imagen}" alt="${p.nombre}" class="prod-img prod-img-zoom" loading="lazy" data-src="${p.imagen}" data-nombre="${p.nombre}" style="cursor:zoom-in;" />`
       : `<div class="prod-img-placeholder"><i class="fas fa-mobile-alt"></i></div>`;
 
     return `
@@ -170,6 +242,11 @@ function renderTabla(container, puedeEditar) {
     `;
   }).join('');
 
+  // Lightbox al hacer clic en imagen
+  tbody.querySelectorAll('.prod-img-zoom').forEach(img => {
+    img.addEventListener('click', () => abrirLightbox(img.dataset.src, img.dataset.nombre));
+  });
+
   if (puedeEditar) {
     tbody.querySelectorAll('[data-action="editar"]').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -181,6 +258,42 @@ function renderTabla(container, puedeEditar) {
       btn.addEventListener('click', () => confirmarEliminar(container, btn.dataset.id));
     });
   }
+}
+
+function abrirLightbox(src, nombre) {
+  // Reutilizar si ya existe
+  let lb = document.getElementById('prodLightbox');
+  if (!lb) {
+    lb = document.createElement('div');
+    lb.id = 'prodLightbox';
+    lb.style.cssText = `
+      position:fixed;inset:0;z-index:9999;
+      background:rgba(0,0,0,0.85);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      padding:1.5rem;cursor:zoom-out;
+      animation:lbFadeIn 0.2s ease;
+    `;
+    lb.innerHTML = `
+      <style>
+        @keyframes lbFadeIn { from{opacity:0;transform:scale(0.96)} to{opacity:1;transform:scale(1)} }
+      </style>
+      <button id="lbClose" style="position:absolute;top:1rem;right:1rem;background:rgba(255,255,255,0.1);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:1.25rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+        <i class="fas fa-times"></i>
+      </button>
+      <img id="lbImg" style="max-width:90vw;max-height:80vh;border-radius:10px;object-fit:contain;box-shadow:0 8px 40px rgba(0,0,0,0.5);" />
+      <p id="lbNombre" style="color:rgba(255,255,255,0.75);margin-top:1rem;font-size:0.9rem;text-align:center;"></p>
+    `;
+    document.body.appendChild(lb);
+
+    const cerrar = () => lb.remove();
+    lb.addEventListener('click', e => { if (e.target === lb) cerrar(); });
+    lb.querySelector('#lbClose').addEventListener('click', cerrar);
+    document.addEventListener('keydown', function esc(e) {
+      if (e.key === 'Escape') { cerrar(); document.removeEventListener('keydown', esc); }
+    });
+  }
+  lb.querySelector('#lbImg').src = src;
+  lb.querySelector('#lbNombre').textContent = nombre;
 }
 
 function abrirModal(container, producto = null) {
@@ -352,13 +465,7 @@ function abrirModal(container, producto = null) {
     if (res.ok) {
       window.showToast(esEdicion ? 'Producto actualizado correctamente' : 'Producto creado correctamente', 'success');
       cerrar();
-      if (esEdicion) {
-        const idx = _productos.findIndex(p => p._id === producto._id);
-        if (idx !== -1) _productos[idx] = res.data;
-      } else {
-        _productos.push(res.data);
-      }
-      renderTabla(container, true);
+      cargarProductos(container, true);
     } else {
       window.showToast(res.data?.error || 'Error al guardar el producto', 'error');
       btn.disabled = false;
@@ -398,8 +505,7 @@ async function confirmarEliminar(container, id) {
     if (res.ok) {
       window.showToast('Producto eliminado', 'success');
       cerrar();
-      _productos = _productos.filter(p => p._id !== id);
-      renderTabla(container, true);
+      cargarProductos(container, true);
     } else {
       window.showToast(res.data?.error || 'Error al eliminar', 'error');
     }

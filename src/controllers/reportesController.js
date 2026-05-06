@@ -2,21 +2,38 @@ const Venta = require('../models/Venta');
 const DetalleVenta = require('../models/DetalleVenta');
 const Producto = require('../models/Producto');
 
+// Offset Perú UTC-5
+const OFFSET_MS = 5 * 60 * 60 * 1000;
+
+function rangoDiaPerú(fechaInput) {
+  const base = fechaInput ? new Date(fechaInput) : new Date();
+  const localMs   = base.getTime() - OFFSET_MS;
+  const localDate = new Date(localMs);
+  const y = localDate.getUTCFullYear();
+  const m = localDate.getUTCMonth();
+  const d = localDate.getUTCDate();
+  return {
+    inicio: new Date(Date.UTC(y, m, d,  0,  0,  0,   0) + OFFSET_MS),
+    fin:    new Date(Date.UTC(y, m, d, 23, 59, 59, 999) + OFFSET_MS),
+  };
+}
+
+function rangoMesPerú(mes0, anio) {
+  // mes0 = 0-indexed
+  return {
+    inicio: new Date(Date.UTC(anio, mes0,  1,  0,  0,  0,   0) + OFFSET_MS),
+    fin:    new Date(Date.UTC(anio, mes0 + 1, 0, 23, 59, 59, 999) + OFFSET_MS),
+  };
+}
+
 /**
  * GET /api/reportes/ventas-dia?fecha=YYYY-MM-DD
  * Reporte de ventas completadas en una fecha específica (default: hoy).
  */
 exports.ventasDia = async (req, res) => {
   try {
-    let fecha;
-    if (req.query.fecha) {
-      fecha = new Date(req.query.fecha);
-    } else {
-      fecha = new Date();
-    }
-
-    const inicioDia = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate(), 0, 0, 0, 0);
-    const finDia = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate(), 23, 59, 59, 999);
+    const fechaInput = req.query.fecha ? new Date(req.query.fecha + 'T12:00:00') : null;
+    const { inicio: inicioDia, fin: finDia } = rangoDiaPerú(fechaInput);
 
     const ventas = await Venta.find({
       estado: 'completada',
@@ -57,11 +74,9 @@ exports.ventasDia = async (req, res) => {
 exports.ventasMes = async (req, res) => {
   try {
     const ahora = new Date();
-    const mes = req.query.mes ? parseInt(req.query.mes, 10) - 1 : ahora.getMonth(); // 0-indexed
-    const anio = req.query.anio ? parseInt(req.query.anio, 10) : ahora.getFullYear();
-
-    const inicioMes = new Date(anio, mes, 1, 0, 0, 0, 0);
-    const finMes = new Date(anio, mes + 1, 0, 23, 59, 59, 999); // último día del mes
+    const mes  = req.query.mes  ? parseInt(req.query.mes,  10) - 1 : ahora.getMonth();
+    const anio = req.query.anio ? parseInt(req.query.anio, 10)     : ahora.getFullYear();
+    const { inicio: inicioMes, fin: finMes } = rangoMesPerú(mes, anio);
 
     const ventas = await Venta.find({
       estado: 'completada',

@@ -4,6 +4,7 @@
  */
 
 import { api } from '../api.js';
+import { generarTicketSVG, mostrarModalTicket } from './ticket.js';
 
 let _carrito = [];
 let _categorias = [];
@@ -15,9 +16,14 @@ let _clienteSeleccionado = null;
 let _searchTimer = null;
 let _clienteTimer = null;
 let _historialVentas = [];
+let _configTienda = {};
 
 export async function init(container, user) {
   const puedeAnular = user && user.rol === 'admin';
+
+  // Cargar config de tienda para el ticket
+  const cfgRes = await api.get('/configuracion/publica');
+  if (cfgRes.ok) _configTienda = cfgRes.data || {};
 
   container.innerHTML = `
     <style>
@@ -176,8 +182,8 @@ export async function init(container, user) {
       <div class="pos-card">
         <div class="hist-table-wrap">
           <table class="data-table">
-            <thead><tr><th>N° Venta</th><th>Cliente</th><th>Total</th><th>Método</th><th>Estado</th><th>Fecha</th>${puedeAnular?'<th>Acciones</th>':''}</tr></thead>
-            <tbody id="histTbody"><tr><td colspan="${puedeAnular?7:6}" style="text-align:center;padding:2rem;color:#94A3B8;">Cargando historial…</td></tr></tbody>
+            <thead><tr><th>N° Venta</th><th>Cliente</th><th>Total</th><th>Método</th><th>Estado</th><th>Fecha</th>${puedeAnular?'<th>Vendedor</th><th>Acciones</th>':''}</tr></thead>
+            <tbody id="histTbody"><tr><td colspan="${puedeAnular?8:6}" style="text-align:center;padding:2rem;color:#94A3B8;">Cargando historial…</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -397,35 +403,133 @@ function calcularVuelto(container) {
 }
 
 async function buscarCliente(container, q) {
+  const resultsEl   = container.querySelector('#clienteResults');
+  const searchInput = container.querySelector('#clienteSearch');
+  const selEl       = container.querySelector('#clienteSeleccionado');
+
+  // Si son exactamente 8 dígitos, buscar primero en BD local
+  const esDNI = /^\d{8}$/.test(q);
+
   const res = await api.get(`/clientes?search=${encodeURIComponent(q)}`);
   const clientes = res.ok ? (res.data.clientes || res.data || []) : [];
-  const resultsEl = container.querySelector('#clienteResults');
-  if (clientes.length === 0) {
-    resultsEl.innerHTML = `<p style="font-size:0.8125rem;color:#94A3B8;margin-top:0.375rem;">Sin resultados</p>`;
-    return;
-  }
-  resultsEl.innerHTML = clientes.slice(0, 5).map(c => `
-    <div class="cliente-result" data-id="${c._id}">
-      ${c.nombre || ''} ${c.apellido_paterno || ''} — DNI: ${c.dni}
-    </div>
-  `).join('');
-  resultsEl.querySelectorAll('.cliente-result').forEach(el => {
-    el.addEventListener('click', () => {
-      _clienteSeleccionado = clientes.find(c => c._id === el.dataset.id);
-      resultsEl.innerHTML = '';
-      container.querySelector('#clienteSearch').value = '';
-      const selEl = container.querySelector('#clienteSeleccionado');
-      selEl.innerHTML = `
-        <div class="cliente-selected">
-          <span><i class="fas fa-user" style="color:#2563EB;margin-right:0.375rem;"></i>${_clienteSeleccionado.nombre || ''} ${_clienteSeleccionado.apellido_paterno || ''} (${_clienteSeleccionado.dni})</span>
-          <button id="btnQuitarCliente" style="background:none;border:none;color:#DC2626;cursor:pointer;font-size:0.875rem;" aria-label="Quitar cliente"><i class="fas fa-times"></i></button>
-        </div>
-      `;
-      selEl.querySelector('#btnQuitarCliente').addEventListener('click', () => {
-        _clienteSeleccionado = null;
-        selEl.innerHTML = '';
+
+  if (clientes.length > 0) {
+    // Encontrado en BD — mostrar lista normal
+    resultsEl.innerHTML = clientes.slice(0, 5).map(c => `
+      <div class="cliente-result" data-id="${c._id}" style="padding:0.5rem 0.75rem;border:1px solid #E2E8F0;border-radius:8px;cursor:pointer;font-size:0.875rem;margin-top:0.375rem;transition:background 0.15s;">
+        <i class="fas fa-user" style="color:#64748B;margin-right:0.375rem;"></i>
+        ${c.nombre || ''} ${c.apellido_paterno || ''} — <strong>DNI: ${c.dni}</strong>
+      </div>
+    `).join('');
+
+    resultsEl.querySelectorAll('.cliente-result').forEach(el => {
+      el.addEventListener('mouseenter', () => el.style.background = '#F8FAFC');
+      el.addEventListener('mouseleave', () => el.style.background = '');
+      el.addEventListener('click', () => {
+        _clienteSeleccionado = clientes.find(c => c._id === el.dataset.id);
+        resultsEl.innerHTML = '';
+        searchInput.value = '';
+        mostrarClienteSeleccionado(selEl, _clienteSeleccionado);
       });
     });
+    return;
+  }
+
+  // No encontrado en BD
+  if (esDNI) {
+    // Mostrar botón para consultar RENIEC
+    resultsEl.innerHTML = `
+      <div style="margin-top:0.5rem;padding:0.75rem;background:#FFF7ED;border:1px solid #FED7AA;border-radius:8px;font-size:0.8125rem;">
+        <div style="color:#92400E;margin-bottom:0.5rem;"><i class="fas fa-exclamation-circle" style="margin-right:0.375rem;"></i>DNI <strong>${q}</strong> no está registrado.</div>
+        <button id="btnBuscarReniec" style="display:inline-flex;align-items:center;gap:0.375rem;padding:0.4rem 0.875rem;background:#0a0a0a;color:#fff;border:none;border-radius:6px;font-size:0.8125rem;font-weight:600;cursor:pointer;">
+          <i class="fas fa-search"></i> Buscar en RENIEC
+        </button>
+      </div>
+    `;
+    resultsEl.querySelector('#btnBuscarReniec').addEventListener('click', () => consultarReniecEnVenta(container, q));
+  } else {
+    resultsEl.innerHTML = `<p style="font-size:0.8125rem;color:#94A3B8;margin-top:0.375rem;">Sin resultados</p>`;
+  }
+}
+
+async function consultarReniecEnVenta(container, dni) {
+  const resultsEl = container.querySelector('#clienteResults');
+  const selEl     = container.querySelector('#clienteSeleccionado');
+
+  resultsEl.innerHTML = `
+    <div style="margin-top:0.5rem;padding:0.75rem;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;font-size:0.8125rem;color:#1D4ED8;">
+      <i class="fas fa-spinner fa-spin" style="margin-right:0.375rem;"></i> Consultando RENIEC…
+    </div>
+  `;
+
+  const res = await api.get(`/clientes/dni/${dni}`);
+
+  if (!res.ok || res.data.encontrado === false) {
+    resultsEl.innerHTML = `
+      <div style="margin-top:0.5rem;padding:0.75rem;background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;font-size:0.8125rem;color:#DC2626;">
+        <i class="fas fa-times-circle" style="margin-right:0.375rem;"></i> No se encontró información en RENIEC para el DNI <strong>${dni}</strong>.
+      </div>
+    `;
+    return;
+  }
+
+  const d = res.data;
+  const nombreCompleto = [d.nombre, d.apellido_paterno, d.apellido_materno].filter(Boolean).join(' ');
+
+  // Mostrar card de confirmación con los datos obtenidos
+  resultsEl.innerHTML = `
+    <div style="margin-top:0.5rem;padding:0.875rem;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;font-size:0.875rem;">
+      <div style="font-weight:600;color:#15803D;margin-bottom:0.5rem;"><i class="fas fa-check-circle" style="margin-right:0.375rem;"></i>Encontrado en RENIEC</div>
+      <div style="color:#1E293B;margin-bottom:0.125rem;"><span style="color:#64748B;font-size:0.8125rem;">Nombre:</span> <strong>${nombreCompleto}</strong></div>
+      <div style="color:#1E293B;margin-bottom:0.75rem;"><span style="color:#64748B;font-size:0.8125rem;">DNI:</span> <strong>${dni}</strong></div>
+      <div style="display:flex;gap:0.5rem;">
+        <button id="btnUsarReniec" style="flex:1;padding:0.4rem 0.75rem;background:#0a0a0a;color:#fff;border:none;border-radius:6px;font-size:0.8125rem;font-weight:600;cursor:pointer;">
+          <i class="fas fa-user-plus"></i> Usar este cliente
+        </button>
+        <button id="btnCancelarReniec" style="padding:0.4rem 0.75rem;background:#F1F5F9;color:#64748B;border:1px solid #E2E8F0;border-radius:6px;font-size:0.8125rem;cursor:pointer;">
+          Cancelar
+        </button>
+      </div>
+    </div>
+  `;
+
+  resultsEl.querySelector('#btnUsarReniec').addEventListener('click', () => {
+    // Guardar en memoria como cliente temporal (sin _id, con flag nuevo)
+    _clienteSeleccionado = {
+      _id: null,
+      esNuevo: true,
+      dni,
+      nombre: d.nombre || '',
+      apellido_paterno: d.apellido_paterno || '',
+      apellido_materno: d.apellido_materno || '',
+    };
+    resultsEl.innerHTML = '';
+    container.querySelector('#clienteSearch').value = '';
+    mostrarClienteSeleccionado(container.querySelector('#clienteSeleccionado'), _clienteSeleccionado);
+  });
+
+  resultsEl.querySelector('#btnCancelarReniec').addEventListener('click', () => {
+    resultsEl.innerHTML = '';
+    container.querySelector('#clienteSearch').value = '';
+  });
+}
+
+function mostrarClienteSeleccionado(selEl, cliente) {
+  const esNuevo = cliente.esNuevo;
+  selEl.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.75rem;background:${esNuevo ? '#F0FDF4' : '#EFF6FF'};border:1px solid ${esNuevo ? '#BBF7D0' : '#BFDBFE'};border-radius:8px;margin-top:0.375rem;font-size:0.875rem;">
+      <span>
+        <i class="fas fa-user${esNuevo ? '-plus' : ''}" style="color:${esNuevo ? '#16A34A' : '#2563EB'};margin-right:0.375rem;"></i>
+        <strong>${cliente.nombre || ''} ${cliente.apellido_paterno || ''}</strong>
+        <span style="color:#64748B;font-size:0.8125rem;"> — ${cliente.dni}</span>
+        ${esNuevo ? '<span style="margin-left:0.375rem;font-size:0.75rem;background:#DCFCE7;color:#15803D;padding:0.1rem 0.4rem;border-radius:999px;font-weight:600;">Nuevo</span>' : ''}
+      </span>
+      <button id="btnQuitarCliente" style="background:none;border:none;color:#DC2626;cursor:pointer;font-size:0.875rem;" aria-label="Quitar cliente"><i class="fas fa-times"></i></button>
+    </div>
+  `;
+  selEl.querySelector('#btnQuitarCliente').addEventListener('click', () => {
+    _clienteSeleccionado = null;
+    selEl.innerHTML = '';
   });
 }
 
@@ -461,7 +565,7 @@ function mostrarConfirmacion(container, user) {
             <div style="display:flex;justify-content:space-between;font-weight:700;font-size:1rem;border-top:1px solid #E2E8F0;padding-top:0.5rem;"><span>TOTAL:</span><span>S/ ${total.toLocaleString('es-PE',{minimumFractionDigits:2})}</span></div>
             <div style="display:flex;justify-content:space-between;"><span>Método de pago:</span><span style="text-transform:capitalize;">${_metodoPago}</span></div>
             ${_metodoPago === 'efectivo' ? `<div style="display:flex;justify-content:space-between;"><span>Vuelto:</span><span style="color:#16A34A;font-weight:600;">S/ ${Math.max(0, montoRecibido - total).toLocaleString('es-PE',{minimumFractionDigits:2})}</span></div>` : ''}
-            ${_clienteSeleccionado ? `<div style="display:flex;justify-content:space-between;"><span>Cliente:</span><span>${_clienteSeleccionado.nombre || ''} ${_clienteSeleccionado.apellido_paterno || ''}</span></div>` : ''}
+            ${_clienteSeleccionado ? `<div style="display:flex;justify-content:space-between;"><span>Cliente:</span><span>${_clienteSeleccionado.nombre || ''} ${_clienteSeleccionado.apellido_paterno || ''} ${_clienteSeleccionado.esNuevo ? '<em style="font-size:0.75rem;color:#16A34A;">(nuevo)</em>' : ''}</span></div>` : ''}
           </div>
         </div>
         <div class="modal-footer">
@@ -491,6 +595,12 @@ function mostrarConfirmacion(container, user) {
       monto_recibido: _metodoPago === 'efectivo' ? montoRecibido : undefined,
       vuelto: _metodoPago === 'efectivo' ? Math.max(0, montoRecibido - total) : undefined,
       cliente_id: _clienteSeleccionado?._id || null,
+      cliente_nuevo: _clienteSeleccionado?.esNuevo ? {
+        dni: _clienteSeleccionado.dni,
+        nombre: _clienteSeleccionado.nombre,
+        apellido_paterno: _clienteSeleccionado.apellido_paterno,
+        apellido_materno: _clienteSeleccionado.apellido_materno,
+      } : null,
     };
 
     const res = await api.post('/ventas', payload);
@@ -498,12 +608,37 @@ function mostrarConfirmacion(container, user) {
       api.invalidatePrefix('/productos');
       api.invalidatePrefix('/dashboard');
       api.invalidatePrefix('/ventas');
-      window.showToast(`Venta ${res.data.venta?.numero_venta || ''} registrada correctamente`, 'success', 5000);
+
+      const ventaData = res.data.venta || res.data;
+      // Enriquecer con detalles e info del cliente para el ticket
+      ventaData.detalles = res.data.detalles || [];
+      ventaData.cliente_id = _clienteSeleccionado;
+      ventaData.vendedor   = user?.nombre_completo || user?.usuario || '';
+
+      // Generar SVG del ticket
+      const svgTicket = generarTicketSVG(ventaData, _configTienda);
+
+      // Mostrar modal del ticket automáticamente
+      cerrar();
+      mostrarModalTicket(svgTicket, ventaData.numero_venta);
+
+      window.showToast(
+        `Venta ${ventaData.numero_venta || ''} registrada — <a href="#" id="toastVerTicket" style="color:#fff;text-decoration:underline;font-weight:600;">Ver ticket</a>`,
+        'success', 6000
+      );
+
+      // Listener del link en el toast
+      setTimeout(() => {
+        document.getElementById('toastVerTicket')?.addEventListener('click', e => {
+          e.preventDefault();
+          mostrarModalTicket(svgTicket, ventaData.numero_venta);
+        });
+      }, 100);
+
       _carrito = [];
       _descuentoActivo = false;
       _descuentoValor = 0;
       _clienteSeleccionado = null;
-      cerrar();
       renderCarrito(container);
       container.querySelector('#chkDescuento').checked = false;
       container.querySelector('#descuentoPanel').style.display = 'none';
@@ -518,7 +653,7 @@ function mostrarConfirmacion(container, user) {
 
 async function cargarHistorial(container, puedeAnular) {
   const tbody = container.querySelector('#histTbody');
-  tbody.innerHTML = `<tr><td colspan="${puedeAnular?7:6}" style="text-align:center;padding:2rem;color:#94A3B8;"><i class="fas fa-spinner fa-spin"></i> Cargando…</td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="${puedeAnular?8:6}" style="text-align:center;padding:2rem;color:#94A3B8;"><i class="fas fa-spinner fa-spin"></i> Cargando…</td></tr>`;
 
   let url = '/ventas?';
   const desde = container.querySelector('#histDesde').value;
@@ -540,7 +675,7 @@ function renderHistorial(container, puedeAnular) {
   const tbody = container.querySelector('#histTbody');
 
   if (_historialVentas.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="${puedeAnular?7:6}" style="text-align:center;padding:2rem;color:#94A3B8;">Sin ventas en el período seleccionado</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="${puedeAnular?8:6}" style="text-align:center;padding:2rem;color:#94A3B8;">Sin ventas en el período seleccionado</td></tr>`;
     return;
   }
 
@@ -552,9 +687,29 @@ function renderHistorial(container, puedeAnular) {
       <td data-label="Método" style="text-transform:capitalize;">${v.metodo_pago}</td>
       <td data-label="Estado"><span class="badge ${v.estado==='completada'?'badge-ok':'badge-danger'}">${v.estado}</span></td>
       <td data-label="Fecha">${new Date(v.fecha_venta).toLocaleDateString('es-PE')}</td>
-      ${puedeAnular ? `<td data-label="Acciones">${v.estado==='completada'?`<button class="btn-danger" data-id="${v._id}" data-action="anular" style="padding:0.3rem 0.6rem;font-size:0.75rem;"><i class="fas fa-ban"></i> Anular</button>`:'—'}</td>` : ''}
+      ${puedeAnular ? `<td data-label="Vendedor" style="font-size:0.8125rem;">${v.vendedor_id?.nombre_completo || v.vendedor_id?.usuario || '—'}</td>
+      <td data-label="Acciones">
+        <div style="display:flex;gap:0.375rem;">
+          <button class="btn-ticket" data-id="${v._id}" style="display:inline-flex;align-items:center;gap:0.25rem;padding:0.3rem 0.6rem;background:#F0FDF4;color:#16A34A;border:none;border-radius:6px;font-size:0.75rem;font-weight:600;cursor:pointer;"><i class="fas fa-receipt"></i> Ticket</button>
+          ${v.estado==='completada'?`<button class="btn-danger" data-id="${v._id}" data-action="anular" style="padding:0.3rem 0.6rem;font-size:0.75rem;"><i class="fas fa-ban"></i> Anular</button>`:'—'}
+        </div>
+      </td>` : `<td><button class="btn-ticket" data-id="${v._id}" style="display:inline-flex;align-items:center;gap:0.25rem;padding:0.3rem 0.6rem;background:#F0FDF4;color:#16A34A;border:none;border-radius:6px;font-size:0.75rem;font-weight:600;cursor:pointer;"><i class="fas fa-receipt"></i> Ticket</button></td>`}
     </tr>
   `).join('');
+
+  // Botones ticket del historial
+  tbody.querySelectorAll('.btn-ticket').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const venta = _historialVentas.find(v => v._id === btn.dataset.id);
+      if (!venta) return;
+      // Obtener detalles completos de la venta
+      const detRes = await api.get(`/ventas/${venta._id}`);
+      const ventaCompleta = detRes.ok ? (detRes.data.venta || detRes.data) : venta;
+      ventaCompleta.detalles = detRes.ok ? (detRes.data.detalles || []) : [];
+      const svgTicket = generarTicketSVG(ventaCompleta, _configTienda);
+      mostrarModalTicket(svgTicket, ventaCompleta.numero_venta);
+    });
+  });
 
   if (puedeAnular) {
     tbody.querySelectorAll('[data-action="anular"]').forEach(btn => {
@@ -589,7 +744,7 @@ function confirmarAnulacion(container, ventaId, puedeAnular) {
   modalContainer.querySelector('#btnConfirmarAnul').addEventListener('click', async () => {
     const motivo = modalContainer.querySelector('#motivoAnulacion').value.trim();
     if (!motivo) { window.showToast('El motivo es obligatorio', 'warning'); return; }
-    const res = await api.put(`/ventas/${ventaId}/anular`, { motivo_anulacion: motivo });
+    const res = await api.put(`/ventas/${ventaId}/anular`, { motivo });
     if (res.ok) {
       window.showToast('Venta anulada correctamente', 'success');
       cerrar();

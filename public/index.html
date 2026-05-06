@@ -6,128 +6,294 @@
   <title>Panta Tec — Iniciar sesión</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link rel="stylesheet" href="css/responsive.css" />
   <style>
     :root {
-      --color-primary: #2563EB;
-      --color-primary-dark: #1D4ED8;
-      --color-primary-light: #DBEAFE;
-      --color-danger: #DC2626;
-      --color-bg: #F8FAFC;
-      --color-surface: #FFFFFF;
-      --color-border: #E2E8F0;
-      --color-text: #1E293B;
-      --color-text-muted: #64748B;
+      --black:   #0a0a0a;
+      --black-2: #1a1a1a;
+      --white:   #ffffff;
+      --gray-50: #f9fafb;
+      --gray-200:#e5e7eb;
+      --gray-400:#9ca3af;
+      --gray-600:#4b5563;
+      --danger:  #dc2626;
+      --focus:   rgba(10,10,10,0.15);
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: var(--color-bg);
-      color: var(--color-text);
       min-height: 100vh;
       display: flex;
+    }
+
+    /* ── Panel izquierdo (negro / marca) ── */
+    .brand-panel {
+      flex: 1;
+      background: var(--black);
+      display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 1rem;
+      padding: 3rem 2.5rem;
+      position: relative;
+      overflow: hidden;
     }
-    .login-card {
-      background: var(--color-surface);
-      border: 1px solid var(--color-border);
-      border-radius: 12px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-      padding: 2.5rem 2rem;
-      width: 100%;
-      max-width: 400px;
+
+    /* Círculo decorativo de fondo */
+    .brand-panel::before {
+      content: '';
+      position: absolute;
+      width: 500px; height: 500px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.05);
+      top: -120px; left: -120px;
     }
-    .brand { text-align: center; margin-bottom: 0.5rem; }
-    .brand-icon {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 56px; height: 56px;
-      background: var(--color-primary-light); border-radius: 14px; margin-bottom: 0.75rem;
+    .brand-panel::after {
+      content: '';
+      position: absolute;
+      width: 350px; height: 350px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.05);
+      bottom: -80px; right: -80px;
     }
-    .brand-icon i { font-size: 1.75rem; color: var(--color-primary); }
-    .brand-name { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; }
-    .brand-store { font-size: 0.875rem; color: var(--color-text-muted); margin-top: 0.25rem; min-height: 1.25rem; }
-    hr { border: none; border-top: 1px solid var(--color-border); margin: 1.5rem 0; }
-    .form-title { font-size: 1.125rem; font-weight: 600; margin-bottom: 1.25rem; }
-    .form-group { margin-bottom: 1rem; }
-    .form-group label { display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.375rem; }
+
+    .brand-logo {
+      width: 320px;
+      height: auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .brand-title {
+      font-size: 2.25rem;
+      font-weight: 800;
+      color: var(--white);
+      letter-spacing: -0.03em;
+      position: relative;
+      z-index: 1;
+    }
+
+    .brand-subtitle {
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.45);
+      margin-top: 0.5rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      position: relative;
+      z-index: 1;
+    }
+
+    .brand-divider {
+      width: 40px;
+      height: 3px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 2px;
+      margin: 1.25rem auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .brand-tagline {
+      font-size: 0.875rem;
+      color: rgba(255,255,255,0.35);
+      text-align: center;
+      max-width: 260px;
+      line-height: 1.6;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── Panel derecho (formulario) ── */
+    .form-panel {
+      width: 420px;
+      min-width: 420px;
+      background: var(--white);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2.5rem;
+    }
+
+    .form-inner { width: 100%; }
+
+    .form-header { margin-bottom: 2rem; }
+    .form-header h2 {
+      font-size: 1.625rem;
+      font-weight: 700;
+      color: var(--black);
+      letter-spacing: -0.02em;
+    }
+    .form-header p {
+      font-size: 0.875rem;
+      color: var(--gray-400);
+      margin-top: 0.375rem;
+    }
+
+    .form-group { margin-bottom: 1.125rem; }
+    .form-group label {
+      display: block;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--gray-600);
+      margin-bottom: 0.4rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
     .input-wrapper { position: relative; }
-    .input-wrapper i { position: absolute; left: 0.875rem; top: 50%; transform: translateY(-50%); color: var(--color-text-muted); font-size: 0.875rem; pointer-events: none; }
+    .input-wrapper > i {
+      position: absolute; left: 0.875rem; top: 50%;
+      transform: translateY(-50%);
+      color: var(--gray-400); font-size: 0.875rem; pointer-events: none;
+    }
     .form-group input {
-      width: 100%; padding: 0.625rem 0.875rem 0.625rem 2.5rem;
-      border: 1px solid var(--color-border); border-radius: 8px;
-      font-family: inherit; font-size: 1rem; color: var(--color-text);
-      background: var(--color-surface); outline: none;
-      transition: border-color 0.15s, box-shadow 0.15s;
+      width: 100%;
+      padding: 0.75rem 2.75rem 0.75rem 2.5rem;
+      border: 1.5px solid var(--gray-200);
+      border-radius: 8px;
+      font-family: inherit; font-size: 0.9375rem;
+      color: var(--black);
+      background: var(--gray-50);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
     }
-    .form-group input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
-    .form-group input::placeholder { color: var(--color-text-muted); }
+    .form-group input:focus {
+      border-color: var(--black);
+      background: var(--white);
+      box-shadow: 0 0 0 3px var(--focus);
+    }
+    .form-group input::placeholder { color: var(--gray-400); }
+    .toggle-password {
+      position: absolute; right: 0.75rem; top: 50%;
+      transform: translateY(-50%);
+      background: none; border: none; cursor: pointer;
+      color: var(--gray-400); font-size: 1rem; padding: 0.25rem;
+      display: flex; align-items: center; line-height: 1;
+      transition: color 0.15s;
+    }
+    .toggle-password:hover { color: var(--black); }
+
     .btn-login {
-      width: 100%; padding: 0.75rem; background: var(--color-primary); color: #fff;
-      border: none; border-radius: 8px; font-family: inherit; font-size: 1rem; font-weight: 600;
-      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
-      transition: background 0.15s; margin-top: 1.25rem;
+      width: 100%; padding: 0.8125rem;
+      background: var(--black); color: var(--white);
+      border: none; border-radius: 8px;
+      font-family: inherit; font-size: 0.9375rem; font-weight: 600;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+      transition: background 0.15s, transform 0.1s;
+      margin-top: 1.5rem;
+      letter-spacing: 0.01em;
     }
-    .btn-login:hover:not(:disabled) { background: var(--color-primary-dark); }
-    .btn-login:disabled { opacity: 0.7; cursor: not-allowed; }
+    .btn-login:hover:not(:disabled) { background: var(--black-2); transform: translateY(-1px); }
+    .btn-login:active:not(:disabled) { transform: translateY(0); }
+    .btn-login:disabled { opacity: 0.6; cursor: not-allowed; }
+
     .spinner {
-      width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.4);
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
       border-top-color: #fff; border-radius: 50%;
       animation: spin 0.7s linear infinite; display: none;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
     .btn-login.loading .spinner { display: block; }
     .btn-login.loading .btn-text { display: none; }
+
     .error-msg {
       display: none; align-items: center; gap: 0.5rem;
-      background: #FEF2F2; border: 1px solid #FECACA; color: var(--color-danger);
-      border-radius: 8px; padding: 0.625rem 0.875rem; font-size: 0.875rem; margin-top: 1rem;
+      background: #fef2f2; border: 1px solid #fecaca; color: var(--danger);
+      border-radius: 8px; padding: 0.625rem 0.875rem;
+      font-size: 0.875rem; margin-top: 1rem;
     }
     .error-msg.visible { display: flex; }
-    .login-footer { text-align: center; margin-top: 1.5rem; font-size: 0.875rem; color: var(--color-text-muted); }
-    @media (max-width: 440px) { .login-card { padding: 2rem 1.25rem; } }
+
+    .form-footer {
+      text-align: center; margin-top: 2.5rem;
+      font-size: 0.8125rem; color: var(--gray-400);
+    }
+
+    /* ── Responsive: una columna en móvil ── */
+    @media (max-width: 768px) {
+      body { flex-direction: column; }
+      .brand-panel {
+        padding: 2.5rem 1.5rem;
+        flex: none;
+      }
+      .brand-logo { width: 220px; margin-bottom: 1.25rem; }
+      .brand-title { font-size: 1.75rem; }
+      .brand-tagline { display: none; }
+      .form-panel { width: 100%; min-width: unset; padding: 2rem 1.5rem; }
+    }
   </style>
 </head>
 <body>
-  <div class="login-card" role="main">
-    <div class="brand">
-      <div class="brand-icon" aria-hidden="true"><i class="fas fa-mobile-alt"></i></div>
-      <h1 class="brand-name">Panta Tec</h1>
-      <p class="brand-store" id="storeName">Sistema de Gestión</p>
-    </div>
-    <hr />
-    <form id="loginForm" method="post" novalidate>
-      <h2 class="form-title">Iniciar sesión</h2>
-      <div class="form-group">
-        <label for="usuario">Usuario</label>
-        <div class="input-wrapper">
-          <i class="fas fa-user" aria-hidden="true"></i>
-          <input type="text" id="usuario" name="usuario" placeholder="Tu nombre de usuario"
-            autocomplete="username" required aria-required="true" aria-describedby="errorMsg" />
-        </div>
-      </div>
-      <div class="form-group">
-        <label for="clave">Contraseña</label>
-        <div class="input-wrapper">
-          <i class="fas fa-lock" aria-hidden="true"></i>
-          <input type="password" id="clave" name="clave" placeholder="Tu contraseña"
-            autocomplete="current-password" required aria-required="true" aria-describedby="errorMsg" />
-        </div>
-      </div>
-      <button type="submit" class="btn-login" id="loginBtn">
-        <span class="btn-text"><i class="fas fa-sign-in-alt" aria-hidden="true"></i> Iniciar sesión</span>
-        <span class="spinner" role="status" aria-label="Procesando..."></span>
-      </button>
-      <div class="error-msg" id="errorMsg" role="alert" aria-live="assertive">
-        <i class="fas fa-exclamation-circle" aria-hidden="true"></i>
-        <span id="errorText">Credenciales incorrectas. Intenta de nuevo.</span>
-      </div>
-    </form>
-    <div class="login-footer"><p>© <span id="year"></span> Panta Tec</p></div>
+
+  <!-- Panel izquierdo: marca -->
+  <div class="brand-panel">
+    <img src="img/panda-tec-black-1.svg" alt="Panta Tec" class="brand-logo" />
+    <div class="brand-divider"></div>
+    <p class="brand-tagline" id="storeName">Control total de tu negocio de celulares</p>
   </div>
+
+  <!-- Panel derecho: formulario -->
+  <div class="form-panel">
+    <div class="form-inner">
+      <div class="form-header">
+        <h2>Bienvenido</h2>
+        <p>Ingresa tus credenciales para continuar</p>
+      </div>
+
+      <form id="loginForm" method="post" novalidate>
+        <div class="form-group">
+          <label for="usuario">Usuario</label>
+          <div class="input-wrapper">
+            <i class="fas fa-user" aria-hidden="true"></i>
+            <input type="text" id="usuario" name="usuario" placeholder="Tu nombre de usuario"
+              autocomplete="username" required aria-required="true" aria-describedby="errorMsg" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="clave">Contraseña</label>
+          <div class="input-wrapper">
+            <i class="fas fa-lock" aria-hidden="true"></i>
+            <input type="password" id="clave" name="clave" placeholder="Tu contraseña"
+              autocomplete="current-password" required aria-required="true" aria-describedby="errorMsg" />
+            <button type="button" class="toggle-password" id="togglePassword" aria-label="Mostrar contraseña">
+              <i class="fas fa-eye" id="eyeIcon"></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-login" id="loginBtn">
+          <span class="btn-text"><i class="fas fa-arrow-right-to-bracket" aria-hidden="true"></i> Iniciar sesión</span>
+          <span class="spinner" role="status" aria-label="Procesando..."></span>
+        </button>
+
+        <div class="error-msg" id="errorMsg" role="alert" aria-live="assertive">
+          <i class="fas fa-exclamation-circle" aria-hidden="true"></i>
+          <span id="errorText">Credenciales incorrectas. Intenta de nuevo.</span>
+        </div>
+      </form>
+
+      <div class="form-footer">
+        <p>© <span id="year"></span> Panta Tec</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('togglePassword').addEventListener('click', function() {
+      const input = document.getElementById('clave');
+      const icon  = document.getElementById('eyeIcon');
+      const show  = input.type === 'password';
+      input.type     = show ? 'text' : 'password';
+      icon.className = show ? 'fas fa-eye-slash' : 'fas fa-eye';
+      this.setAttribute('aria-label', show ? 'Ocultar contraseña' : 'Mostrar contraseña');
+    });
+  </script>
 
   <script type="module">
     import { login, isLoggedIn } from './js/auth.js';
@@ -136,7 +302,6 @@
 
     document.getElementById('year').textContent = new Date().getFullYear();
 
-    // Cargar nombre de tienda
     (async () => {
       try {
         const base = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')

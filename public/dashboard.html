@@ -19,32 +19,30 @@
       --color-success: #16A34A; --color-warning: #D97706; --color-danger: #DC2626; --color-info: #0891B2;
       --color-bg: #F8FAFC; --color-surface: #FFFFFF; --color-border: #E2E8F0;
       --color-text: #1E293B; --color-text-muted: #64748B;
-      --sidebar-bg: #1E293B; --sidebar-text: #CBD5E1; --sidebar-active: #2563EB;
+      --sidebar-bg: #0a0a0a; --sidebar-text: #a1a1aa; --sidebar-active: #ffffff;
       --sidebar-width: 240px; --topbar-height: 64px;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--color-bg); color: var(--color-text); min-height: 100vh; display: flex; }
 
-    /* Sidebar */
     .sidebar { width: var(--sidebar-width); min-height: 100vh; background: var(--sidebar-bg); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; z-index: 100; transition: transform 0.25s ease; }
-    .sidebar-logo { display: flex; align-items: center; gap: 0.75rem; padding: 1.25rem 1.25rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.08); }
-    .sidebar-logo-icon { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: var(--color-primary); border-radius: 8px; flex-shrink: 0; }
-    .sidebar-logo-icon i { color: #fff; font-size: 1rem; }
-    .sidebar-logo-text { font-size: 1.125rem; font-weight: 700; color: #fff; }
+    .sidebar-logo { display: flex; align-items: center; justify-content: center; padding: 1.25rem 1.25rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.07); }
+    .sidebar-logo-img { width: 148px; height: auto; }
     .sidebar-nav { flex: 1; padding: 0.75rem 0; overflow-y: auto; }
-    .nav-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(203,213,225,0.5); padding: 0.75rem 1.25rem 0.25rem; }
-    .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 1.25rem; color: var(--sidebar-text); font-size: 0.875rem; font-weight: 500; background: none; border: none; width: 100%; text-align: left; cursor: pointer; transition: background 0.15s, color 0.15s; }
-    .nav-item i { width: 18px; text-align: center; font-size: 0.9rem; flex-shrink: 0; }
-    .nav-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
-    .nav-item.active { background: var(--sidebar-active); color: #fff; }
-    .sidebar-footer { padding: 0.75rem 0; border-top: 1px solid rgba(255,255,255,0.08); }
+    .nav-label { font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.25); padding: 0.875rem 1.25rem 0.25rem; }
+    .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 1rem; margin: 0.125rem 0.625rem; border-radius: 7px; color: var(--sidebar-text); font-size: 0.875rem; font-weight: 500; background: none; border: none; width: calc(100% - 1.25rem); text-align: left; cursor: pointer; transition: background 0.15s, color 0.15s; }
+    .nav-item i { width: 18px; text-align: center; font-size: 0.875rem; flex-shrink: 0; }
+    .nav-item:hover { background: rgba(255,255,255,0.07); color: #fff; }
+    .nav-item.active { background: #ffffff; color: #0a0a0a; font-weight: 600; }
+    .nav-item.active i { color: #0a0a0a; }
+    .sidebar-footer { padding: 0.75rem 0; border-top: 1px solid rgba(255,255,255,0.07); }
     .sidebar-user { display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 1.25rem; color: var(--sidebar-text); font-size: 0.875rem; }
-    .sidebar-user i { font-size: 1.25rem; color: rgba(203,213,225,0.6); }
+    .sidebar-user i { font-size: 1.25rem; color: rgba(255,255,255,0.3); }
     .sidebar-user-name { font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .sidebar-user-role { font-size: 0.75rem; color: rgba(203,213,225,0.6); text-transform: capitalize; }
-    .btn-logout { display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 1.25rem; color: #FDA4AF; font-size: 0.875rem; font-weight: 500; background: none; border: none; width: 100%; text-align: left; cursor: pointer; transition: background 0.15s; }
+    .sidebar-user-role { font-size: 0.75rem; color: rgba(255,255,255,0.35); text-transform: capitalize; }
+    .btn-logout { display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 1.25rem; color: #f87171; font-size: 0.875rem; font-weight: 500; background: none; border: none; width: 100%; text-align: left; cursor: pointer; transition: background 0.15s; }
     .btn-logout i { width: 18px; text-align: center; }
-    .btn-logout:hover { background: rgba(220,38,38,0.15); color: #FCA5A5; }
+    .btn-logout:hover { background: rgba(220,38,38,0.12); color: #fca5a5; }
 
     /* Main */
     .main-wrapper { margin-left: var(--sidebar-width); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
@@ -89,8 +87,7 @@
 
   <aside class="sidebar" id="sidebar" role="navigation" aria-label="Menú principal">
     <div class="sidebar-logo">
-      <div class="sidebar-logo-icon" aria-hidden="true"><i class="fas fa-mobile-alt"></i></div>
-      <span class="sidebar-logo-text">Panta Tec</span>
+      <img src="/img/panda-tec-black-1.svg" alt="Panta Tec" class="sidebar-logo-img" />
     </div>
     <nav class="sidebar-nav">
       <span class="nav-label">Principal</span>
@@ -102,10 +99,6 @@
       <span class="nav-label">Clientes y Pedidos</span>
       <button class="nav-item" data-module="clientes"><i class="fas fa-users"></i><span>Clientes</span></button>
       <button class="nav-item" data-module="pedidos"><i class="fas fa-truck"></i><span>Pedidos</span></button>
-      <span class="nav-label">Administración</span>
-      <button class="nav-item" data-module="reportes"><i class="fas fa-chart-bar"></i><span>Reportes</span></button>
-      <button class="nav-item" data-module="usuarios"><i class="fas fa-user-cog"></i><span>Usuarios</span></button>
-      <button class="nav-item" data-module="configuracion"><i class="fas fa-cog"></i><span>Configuración</span></button>
     </nav>
     <div class="sidebar-footer">
       <div class="sidebar-user">
@@ -169,6 +162,17 @@
       document.getElementById('sidebarUserName').textContent = name;
       document.getElementById('sidebarUserRole').textContent = user.rol || '';
       document.getElementById('topbarUserName').textContent = name;
+
+      // Sección Administración solo para admin
+      if (user.rol === 'admin') {
+        const nav = document.querySelector('.sidebar-nav');
+        nav.insertAdjacentHTML('beforeend', `
+          <span class="nav-label">Administración</span>
+          <button class="nav-item" data-module="reportes"><i class="fas fa-chart-bar"></i><span>Reportes</span></button>
+          <button class="nav-item" data-module="usuarios"><i class="fas fa-user-cog"></i><span>Usuarios</span></button>
+          <button class="nav-item" data-module="configuracion"><i class="fas fa-cog"></i><span>Configuración</span></button>
+        `);
+      }
     }
 
     // Fecha
