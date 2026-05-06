@@ -79,9 +79,12 @@
       .topbar-date { display: none; }
       .content-area { padding: 1rem; }
     }
+
+    /* Ocultar todo hasta verificar autenticación */
+    body.auth-pending { visibility: hidden; }
   </style>
 </head>
-<body>
+<body class="auth-pending">
   <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
 
   <aside class="sidebar" id="sidebar" role="navigation" aria-label="Menú principal">
@@ -135,6 +138,12 @@
   <!-- Toast container -->
   <div id="toastContainer" aria-live="polite" aria-atomic="false"></div>
 
+  <script>
+    // Redirección inmediata si no hay token (antes de renderizar nada)
+    if (!localStorage.getItem('panta_token')) {
+      window.location.replace('/index.html');
+    }
+  </script>
   <script type="module">
     import { isLoggedIn, getUser, logout } from './js/auth.js';
     import { api } from './js/api.js';
@@ -148,6 +157,9 @@
       if (!ok) {
         localStorage.clear();
         window.location.replace('/index.html');
+      } else {
+        // Token válido, mostrar la página
+        document.body.classList.remove('auth-pending');
       }
     })();
 
