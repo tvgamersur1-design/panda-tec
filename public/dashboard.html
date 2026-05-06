@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Evitar que el navegador cachee esta página -->
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>Panta Tec — Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -133,8 +137,19 @@
 
   <script type="module">
     import { isLoggedIn, getUser, logout } from './js/auth.js';
+    import { api } from './js/api.js';
 
-    if (!isLoggedIn()) { window.location.href = '/index.html'; }
+    // Verificar token localmente primero (rápido)
+    if (!isLoggedIn()) { window.location.replace('/index.html'); }
+
+    // Verificar token contra el servidor (evita acceso con token expirado o inválido)
+    (async () => {
+      const { ok } = await api.get('/auth/verificar');
+      if (!ok) {
+        localStorage.clear();
+        window.location.replace('/index.html');
+      }
+    })();
 
     const user = getUser();
     if (user) {

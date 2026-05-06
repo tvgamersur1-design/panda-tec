@@ -24,7 +24,9 @@ export function isLoggedIn() {
 export function logout() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
-  window.location.href = '/index.html';
+  sessionStorage.clear();
+  // Reemplaza la entrada del historial para que el botón atrás no regrese al dashboard
+  window.location.replace('/index.html');
 }
 
 export async function login(usuario, clave) {
