@@ -266,8 +266,100 @@ export function mostrarModalTicket(svgContent, numeroVenta) {
 }
 
 function imprimirTicket(svgContent, numeroVenta) {
-  const win = window.open('', '_blank', 'width=420,height=750');
-  win.document.write(`<!DOCTYPE html>
+  // Detectar si es móvil
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  
+  if (isMobile) {
+    // En móviles: abrir en nueva pestaña sin auto-imprimir
+    const win = window.open('', '_blank');
+    if (!win) {
+      alert('Por favor, permite las ventanas emergentes para imprimir el ticket');
+      return;
+    }
+    
+    win.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ticket ${numeroVenta || ''}</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { 
+      background:#fff; 
+      display:flex; 
+      flex-direction:column;
+      align-items:center;
+      padding:16px; 
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    svg { 
+      display:block; 
+      max-width:100%;
+      height:auto;
+      margin-bottom:20px;
+    }
+    .btn-container {
+      display:flex;
+      gap:12px;
+      width:100%;
+      max-width:400px;
+      padding:16px;
+      position:sticky;
+      bottom:0;
+      background:#fff;
+      border-top:1px solid #e5e7eb;
+    }
+    .btn {
+      flex:1;
+      padding:14px 20px;
+      border:none;
+      border-radius:8px;
+      font-size:15px;
+      font-weight:600;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+    }
+    .btn-print {
+      background:#2563eb;
+      color:#fff;
+    }
+    .btn-close {
+      background:#e5e7eb;
+      color:#1e293b;
+    }
+    @media print {
+      body { padding:0; }
+      .btn-container { display:none; }
+      @page { margin:3mm; size:80mm auto; }
+    }
+  </style>
+</head>
+<body>
+  ${svgContent}
+  <div class="btn-container">
+    <button class="btn btn-print" onclick="window.print()">
+      🖨️ Imprimir
+    </button>
+    <button class="btn btn-close" onclick="window.close()">
+      ✕ Cerrar
+    </button>
+  </div>
+</body>
+</html>`);
+    win.document.close();
+  } else {
+    // En desktop: comportamiento original con auto-impresión
+    const win = window.open('', '_blank', 'width=420,height=750');
+    if (!win) {
+      alert('Por favor, permite las ventanas emergentes para imprimir el ticket');
+      return;
+    }
+    
+    win.document.write(`<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8"/>
@@ -284,8 +376,9 @@ function imprimirTicket(svgContent, numeroVenta) {
 </head>
 <body>
   ${svgContent}
-  <script>window.onload=function(){setTimeout(function(){window.print();window.close();},300);};<\/script>
+  <script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>
 </body>
 </html>`);
-  win.document.close();
+    win.document.close();
+  }
 }

@@ -105,12 +105,27 @@ canvas {
   transform: translateX(-100%);
   transition: transform 0.25s ease;
   z-index: 100;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 /* Sidebar abierto (clase añadida por JS) */
 .sidebar.open {
   transform: translateX(0);
+}
+
+/* Asegurar que sidebar-nav tenga scroll */
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* Footer siempre al fondo */
+.sidebar-footer {
+  flex-shrink: 0;
+  margin-top: auto;
 }
 
 /* Overlay semitransparente sobre el content area */
