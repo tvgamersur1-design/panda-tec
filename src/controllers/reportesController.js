@@ -37,7 +37,13 @@ exports.ventasDia = async (req, res) => {
       };
     }
 
-    res.json({ total_ventas, monto_total, desglose_metodo_pago });
+    // Alias para compatibilidad con el frontend
+    const por_metodo_pago = {};
+    for (const [metodo, datos] of Object.entries(desglose_metodo_pago)) {
+      por_metodo_pago[metodo] = { count: datos.total_ventas, total: datos.monto };
+    }
+
+    res.json({ total_ventas, monto_total, por_metodo_pago, desglose_metodo_pago });
   } catch (error) {
     console.error('Error en reporte ventas-dia:', error);
     res.status(500).json({ error: 'Error al generar reporte de ventas del día' });
@@ -80,6 +86,9 @@ exports.ventasMes = async (req, res) => {
     const desglose_diario = Object.values(diasMap).map((d) => ({
       ...d,
       monto: parseFloat(d.monto.toFixed(2)),
+      // Alias para compatibilidad con el frontend
+      count: d.total_ventas,
+      total: parseFloat(d.monto.toFixed(2)),
     }));
 
     res.json({ total_ventas, monto_total, desglose_diario });
@@ -119,6 +128,7 @@ exports.productosMasVendidos = async (req, res) => {
         $group: {
           _id: '$producto_id',
           cantidad_total: { $sum: '$cantidad' },
+          ingresos: { $sum: { $multiply: ['$cantidad', '$precio_unitario'] } },
         },
       },
       { $sort: { cantidad_total: -1 } },
@@ -131,18 +141,20 @@ exports.productosMasVendidos = async (req, res) => {
           as: 'producto',
         },
       },
-      { $unwind: { path: '$producto', preserveNullAndEmpty: false } },
+      { $unwind: { path: '$producto', preserveNullAndEmptyArrays: false } },
       {
         $project: {
           _id: 0,
           producto_id: '$_id',
           nombre: '$producto.nombre',
           cantidad_total: 1,
+          total_vendido: '$cantidad_total',
+          ingresos: 1,
         },
       },
     ]);
 
-    res.json(resultado);
+    res.json({ productos: resultado });
   } catch (error) {
     console.error('Error en reporte productos-mas-vendidos:', error);
     res.status(500).json({ error: 'Error al generar reporte de productos más vendidos' });

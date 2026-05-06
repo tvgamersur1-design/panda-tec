@@ -232,9 +232,27 @@ function abrirModal(container, producto = null) {
               </select>
             </div>
             <div class="form-group">
-              <label for="fImagen">Imagen del producto</label>
-              <input id="fImagen" name="imagen" type="file" accept="image/jpeg,image/png,image/webp" />
-              ${producto?.imagen ? `<img src="${producto.imagen}" alt="Imagen actual" style="width:80px;height:80px;object-fit:cover;border-radius:8px;margin-top:0.5rem;" />` : ''}
+              <label>Imagen del producto</label>
+              <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem;">
+                <button type="button" id="btnDesdeArchivo" style="flex:1;padding:0.5rem;border:1px solid #E2E8F0;border-radius:8px;background:#F8FAFC;cursor:pointer;font-size:0.8125rem;font-weight:600;color:#374151;display:flex;align-items:center;justify-content:center;gap:0.4rem;">
+                  <i class="fas fa-folder-open"></i> Cargar archivo
+                </button>
+                <button type="button" id="btnDesdeCamara" style="flex:1;padding:0.5rem;border:1px solid #E2E8F0;border-radius:8px;background:#F8FAFC;cursor:pointer;font-size:0.8125rem;font-weight:600;color:#374151;display:flex;align-items:center;justify-content:center;gap:0.4rem;">
+                  <i class="fas fa-camera"></i> Usar cámara
+                </button>
+              </div>
+              <input id="fImagen" name="imagen" type="file" accept="image/jpeg,image/png,image/webp" style="display:none;" />
+              <div id="camaraContainer" style="display:none;flex-direction:column;align-items:center;gap:0.5rem;">
+                <video id="camaraVideo" autoplay playsinline style="width:100%;max-height:220px;border-radius:8px;background:#000;"></video>
+                <div style="display:flex;gap:0.5rem;">
+                  <button type="button" id="btnCapturar" style="padding:0.4rem 1rem;background:#2563EB;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:0.8125rem;font-weight:600;"><i class="fas fa-circle"></i> Capturar</button>
+                  <button type="button" id="btnCerrarCamara" style="padding:0.4rem 1rem;background:#F1F5F9;color:#374151;border:none;border-radius:8px;cursor:pointer;font-size:0.8125rem;">Cancelar</button>
+                </div>
+                <canvas id="camaraCanvas" style="display:none;"></canvas>
+              </div>
+              <div id="imagenPreview" style="margin-top:0.5rem;">
+                ${producto?.imagen ? `<img src="${producto.imagen}" alt="Imagen actual" style="width:80px;height:80px;object-fit:cover;border-radius:8px;" />` : ''}
+              </div>
             </div>
           </div>
           <div class="modal-footer">
@@ -248,11 +266,72 @@ function abrirModal(container, producto = null) {
     </div>
   `;
 
-  const cerrar = () => { modalContainer.innerHTML = ''; };
+  let streamActivo = null;
+
+  const cerrar = () => {
+    if (streamActivo) streamActivo.getTracks().forEach(t => t.stop());
+    modalContainer.innerHTML = '';
+  };
   modalContainer.querySelector('#btnCerrarModal').addEventListener('click', cerrar);
   modalContainer.querySelector('#btnCancelarModal').addEventListener('click', cerrar);
   modalContainer.querySelector('#prodModal').addEventListener('click', e => { if (e.target.id === 'prodModal') cerrar(); });
   document.addEventListener('keydown', function esc(e) { if (e.key === 'Escape') { cerrar(); document.removeEventListener('keydown', esc); } });
+
+  // Lógica de imagen: archivo o cámara
+  const btnArchivo = modalContainer.querySelector('#btnDesdeArchivo');
+  const btnCamara = modalContainer.querySelector('#btnDesdeCamara');
+  const inputFile = modalContainer.querySelector('#fImagen');
+  const camaraContainer = modalContainer.querySelector('#camaraContainer');
+  const video = modalContainer.querySelector('#camaraVideo');
+  const canvas = modalContainer.querySelector('#camaraCanvas');
+  const preview = modalContainer.querySelector('#imagenPreview');
+
+  btnArchivo.addEventListener('click', () => inputFile.click());
+
+  inputFile.addEventListener('change', () => {
+    const file = inputFile.files[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    preview.innerHTML = `<img src="${url}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;" />`;
+  });
+
+  btnCamara.addEventListener('click', async () => {
+    try {
+      streamActivo = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      video.srcObject = streamActivo;
+      camaraContainer.style.display = 'flex';
+      btnCamara.style.background = '#DBEAFE';
+      btnCamara.style.color = '#2563EB';
+    } catch {
+      window.showToast('No se pudo acceder a la cámara', 'error');
+    }
+  });
+
+  modalContainer.querySelector('#btnCerrarCamara').addEventListener('click', () => {
+    if (streamActivo) { streamActivo.getTracks().forEach(t => t.stop()); streamActivo = null; }
+    camaraContainer.style.display = 'none';
+    btnCamara.style.background = '';
+    btnCamara.style.color = '';
+  });
+
+  modalContainer.querySelector('#btnCapturar').addEventListener('click', () => {
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    canvas.toBlob(blob => {
+      const file = new File([blob], 'captura.jpg', { type: 'image/jpeg' });
+      // Reemplazar el input file con el archivo capturado
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      inputFile.files = dt.files;
+      const url = URL.createObjectURL(blob);
+      preview.innerHTML = `<img src="${url}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;" />`;
+      if (streamActivo) { streamActivo.getTracks().forEach(t => t.stop()); streamActivo = null; }
+      camaraContainer.style.display = 'none';
+      btnCamara.style.background = '';
+      btnCamara.style.color = '';
+    }, 'image/jpeg', 0.9);
+  });
 
   modalContainer.querySelector('#prodForm').addEventListener('submit', async e => {
     e.preventDefault();
