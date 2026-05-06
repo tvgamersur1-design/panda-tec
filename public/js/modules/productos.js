@@ -62,7 +62,7 @@ export async function init(container, user) {
       ${puedeEditar ? `<button class="btn-primary" id="btnNuevo"><i class="fas fa-plus"></i> Nuevo Producto</button>` : ''}
     </div>
     <div class="prod-table-wrap">
-      <table>
+      <table class="data-table">
         <thead>
           <tr>
             <th>Foto</th>
@@ -153,13 +153,13 @@ function renderTabla(container, puedeEditar) {
 
     return `
       <tr>
-        <td>${imgHtml}</td>
-        <td><div style="font-weight:500;">${p.nombre}</div><div style="font-size:0.75rem;color:#64748B;">${p.descripcion ? p.descripcion.substring(0,50) + (p.descripcion.length > 50 ? '…' : '') : ''}</div></td>
-        <td>${catNombre}</td>
-        <td style="font-weight:600;">S/ ${Number(p.precio_venta).toLocaleString('es-PE', { minimumFractionDigits: 2 })}</td>
-        <td>${stockBadge}</td>
+        <td data-label="Foto">${imgHtml}</td>
+        <td data-label="Nombre"><div style="font-weight:500;">${p.nombre}</div><div style="font-size:0.75rem;color:#64748B;">${p.descripcion ? p.descripcion.substring(0,50) + (p.descripcion.length > 50 ? '…' : '') : ''}</div></td>
+        <td data-label="Categoría">${catNombre}</td>
+        <td data-label="Precio" style="font-weight:600;">S/ ${Number(p.precio_venta).toLocaleString('es-PE', { minimumFractionDigits: 2 })}</td>
+        <td data-label="Stock">${stockBadge}</td>
         ${puedeEditar ? `
-          <td>
+          <td data-label="Acciones">
             <div style="display:flex;gap:0.5rem;">
               <button class="btn-edit" data-id="${p._id}" data-action="editar"><i class="fas fa-pen"></i> Editar</button>
               <button class="btn-danger" data-id="${p._id}" data-action="eliminar"><i class="fas fa-trash"></i></button>
@@ -273,7 +273,13 @@ function abrirModal(container, producto = null) {
     if (res.ok) {
       window.showToast(esEdicion ? 'Producto actualizado correctamente' : 'Producto creado correctamente', 'success');
       cerrar();
-      await cargarProductos(container, true);
+      if (esEdicion) {
+        const idx = _productos.findIndex(p => p._id === producto._id);
+        if (idx !== -1) _productos[idx] = res.data;
+      } else {
+        _productos.push(res.data);
+      }
+      renderTabla(container, true);
     } else {
       window.showToast(res.data?.error || 'Error al guardar el producto', 'error');
       btn.disabled = false;
@@ -313,7 +319,8 @@ async function confirmarEliminar(container, id) {
     if (res.ok) {
       window.showToast('Producto eliminado', 'success');
       cerrar();
-      await cargarProductos(container, true);
+      _productos = _productos.filter(p => p._id !== id);
+      renderTabla(container, true);
     } else {
       window.showToast(res.data?.error || 'Error al eliminar', 'error');
     }

@@ -59,7 +59,7 @@ export async function init(container, user) {
       <button class="btn-primary" id="btnNuevoUsr"><i class="fas fa-plus"></i> Nuevo Usuario</button>
     </div>
     <div class="table-wrap">
-      <table>
+      <table class="data-table">
         <thead>
           <tr>
             <th>Nombre</th>
@@ -86,6 +86,12 @@ async function cargarUsuarios(container, user) {
   const res = await api.get('/usuarios');
   _usuarios = res.ok ? (res.data.usuarios || res.data || []) : [];
 
+  renderUsuarios(container, user);
+}
+
+function renderUsuarios(container, user) {
+  const tbody = container.querySelector('#usrTbody');
+
   if (_usuarios.length === 0) {
     tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><i class="fas fa-users"></i><p>No hay usuarios registrados</p></div></td></tr>`;
     return;
@@ -95,16 +101,16 @@ async function cargarUsuarios(container, user) {
     const rolClass = u.rol === 'admin' ? 'rol-admin' : u.rol === 'vendedor' ? 'rol-vendedor' : 'rol-almacen';
     return `
       <tr>
-        <td style="font-weight:500;">${u.nombre_completo}</td>
-        <td>${u.usuario}</td>
-        <td>${u.correo}</td>
-        <td><span class="rol-badge ${rolClass}">${u.rol}</span></td>
-        <td>
+        <td data-label="Nombre" style="font-weight:500;">${u.nombre_completo}</td>
+        <td data-label="Usuario">${u.usuario}</td>
+        <td data-label="Correo">${u.correo}</td>
+        <td data-label="Rol"><span class="rol-badge ${rolClass}">${u.rol}</span></td>
+        <td data-label="Estado">
           <span class="badge ${u.activo ? 'badge-ok' : 'badge-muted'}">
             ${u.activo ? '● Activo' : '○ Inactivo'}
           </span>
         </td>
-        <td>
+        <td data-label="Acciones">
           <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
             <button class="btn-edit" data-id="${u._id}" data-action="editar"><i class="fas fa-pen"></i></button>
             <button class="toggle-btn ${u.activo ? 'toggle-on' : 'toggle-off'}" data-id="${u._id}" data-action="toggle" title="${u.activo ? 'Desactivar' : 'Activar'}">
@@ -198,7 +204,14 @@ function abrirModal(container, usuario = null, user) {
     if (res.ok) {
       window.showToast(esEdicion ? 'Usuario actualizado' : 'Usuario creado correctamente', 'success');
       cerrar();
-      await cargarUsuarios(container, user);
+      const usuarioData = res.data.usuario || res.data;
+      if (esEdicion) {
+        const idx = _usuarios.findIndex(x => x._id === usuario._id);
+        if (idx !== -1) _usuarios[idx] = usuarioData;
+      } else {
+        _usuarios.push(usuarioData);
+      }
+      renderUsuarios(container, user);
     } else {
       window.showToast(res.data?.error || 'Error al guardar', 'error');
       btn.disabled = false;
@@ -214,7 +227,9 @@ async function toggleEstado(container, id, user) {
   const res = await api.patch(`/usuarios/${id}/estado`, { activo: nuevoEstado });
   if (res.ok) {
     window.showToast(`Usuario ${nuevoEstado ? 'activado' : 'desactivado'}`, 'success');
-    await cargarUsuarios(container, user);
+    const idx = _usuarios.findIndex(x => x._id === id);
+    if (idx !== -1) _usuarios[idx] = { ..._usuarios[idx], activo: nuevoEstado };
+    renderUsuarios(container, user);
   } else {
     window.showToast(res.data?.error || 'Error al cambiar estado', 'error');
   }
@@ -249,7 +264,8 @@ async function confirmarEliminar(container, id, user) {
     if (res.ok) {
       window.showToast('Usuario eliminado', 'success');
       cerrar();
-      await cargarUsuarios(container, user);
+      _usuarios = _usuarios.filter(x => x._id !== id);
+      renderUsuarios(container, user);
     } else {
       window.showToast(res.data?.error || 'Error al eliminar', 'error');
     }

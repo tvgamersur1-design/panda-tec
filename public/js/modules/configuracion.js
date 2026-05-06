@@ -107,6 +107,7 @@ export async function init(container, user) {
 
     const res = await api.put('/configuracion', body);
     if (res.ok) {
+      api.invalidate('/configuracion');
       window.showToast('Configuración guardada correctamente', 'success');
     } else {
       window.showToast(res.data?.error || 'Error al guardar la configuración', 'error');

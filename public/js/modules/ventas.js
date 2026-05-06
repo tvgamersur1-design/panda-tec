@@ -14,6 +14,7 @@ let _metodoPago = 'efectivo';
 let _clienteSeleccionado = null;
 let _searchTimer = null;
 let _clienteTimer = null;
+let _historialVentas = [];
 
 export async function init(container, user) {
   const puedeAnular = user && user.rol === 'admin';
@@ -174,7 +175,7 @@ export async function init(container, user) {
       </div>
       <div class="pos-card">
         <div class="hist-table-wrap">
-          <table>
+          <table class="data-table">
             <thead><tr><th>N° Venta</th><th>Cliente</th><th>Total</th><th>Método</th><th>Estado</th><th>Fecha</th>${puedeAnular?'<th>Acciones</th>':''}</tr></thead>
             <tbody id="histTbody"><tr><td colspan="${puedeAnular?7:6}" style="text-align:center;padding:2rem;color:#94A3B8;">Cargando historial…</td></tr></tbody>
           </table>
@@ -494,6 +495,9 @@ function mostrarConfirmacion(container, user) {
 
     const res = await api.post('/ventas', payload);
     if (res.ok) {
+      api.invalidatePrefix('/productos');
+      api.invalidatePrefix('/dashboard');
+      api.invalidatePrefix('/ventas');
       window.showToast(`Venta ${res.data.venta?.numero_venta || ''} registrada correctamente`, 'success', 5000);
       _carrito = [];
       _descuentoActivo = false;
@@ -527,22 +531,28 @@ async function cargarHistorial(container, puedeAnular) {
   if (metodo) url += `metodo_pago=${metodo}&`;
 
   const res = await api.get(url);
-  const ventas = res.ok ? (res.data.ventas || res.data || []) : [];
+  _historialVentas = res.ok ? (res.data.ventas || res.data || []) : [];
 
-  if (ventas.length === 0) {
+  renderHistorial(container, puedeAnular);
+}
+
+function renderHistorial(container, puedeAnular) {
+  const tbody = container.querySelector('#histTbody');
+
+  if (_historialVentas.length === 0) {
     tbody.innerHTML = `<tr><td colspan="${puedeAnular?7:6}" style="text-align:center;padding:2rem;color:#94A3B8;">Sin ventas en el período seleccionado</td></tr>`;
     return;
   }
 
-  tbody.innerHTML = ventas.map(v => `
+  tbody.innerHTML = _historialVentas.map(v => `
     <tr>
-      <td style="font-weight:500;">${v.numero_venta || '—'}</td>
-      <td>${v.cliente_id?.nombre ? `${v.cliente_id.nombre} ${v.cliente_id.apellido_paterno||''}`.trim() : 'Público general'}</td>
-      <td style="font-weight:600;">S/ ${Number(v.total).toLocaleString('es-PE',{minimumFractionDigits:2})}</td>
-      <td style="text-transform:capitalize;">${v.metodo_pago}</td>
-      <td><span class="badge ${v.estado==='completada'?'badge-ok':'badge-danger'}">${v.estado}</span></td>
-      <td>${new Date(v.fecha_venta).toLocaleDateString('es-PE')}</td>
-      ${puedeAnular ? `<td>${v.estado==='completada'?`<button class="btn-danger" data-id="${v._id}" data-action="anular" style="padding:0.3rem 0.6rem;font-size:0.75rem;"><i class="fas fa-ban"></i> Anular</button>`:'—'}</td>` : ''}
+      <td data-label="N° Venta" style="font-weight:500;">${v.numero_venta || '—'}</td>
+      <td data-label="Cliente">${v.cliente_id?.nombre ? `${v.cliente_id.nombre} ${v.cliente_id.apellido_paterno||''}`.trim() : 'Público general'}</td>
+      <td data-label="Total" style="font-weight:600;">S/ ${Number(v.total).toLocaleString('es-PE',{minimumFractionDigits:2})}</td>
+      <td data-label="Método" style="text-transform:capitalize;">${v.metodo_pago}</td>
+      <td data-label="Estado"><span class="badge ${v.estado==='completada'?'badge-ok':'badge-danger'}">${v.estado}</span></td>
+      <td data-label="Fecha">${new Date(v.fecha_venta).toLocaleDateString('es-PE')}</td>
+      ${puedeAnular ? `<td data-label="Acciones">${v.estado==='completada'?`<button class="btn-danger" data-id="${v._id}" data-action="anular" style="padding:0.3rem 0.6rem;font-size:0.75rem;"><i class="fas fa-ban"></i> Anular</button>`:'—'}</td>` : ''}
     </tr>
   `).join('');
 
@@ -583,7 +593,13 @@ function confirmarAnulacion(container, ventaId, puedeAnular) {
     if (res.ok) {
       window.showToast('Venta anulada correctamente', 'success');
       cerrar();
-      cargarHistorial(container, puedeAnular);
+      api.invalidatePrefix('/productos');
+      api.invalidatePrefix('/dashboard');
+      const idx = _historialVentas.findIndex(v => v._id === ventaId);
+      if (idx !== -1) {
+        _historialVentas[idx] = { ..._historialVentas[idx], estado: 'anulada' };
+      }
+      renderHistorial(container, puedeAnular);
     } else {
       window.showToast(res.data?.error || 'Error al anular la venta', 'error');
     }

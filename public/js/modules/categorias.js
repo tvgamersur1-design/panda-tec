@@ -61,6 +61,12 @@ async function cargarCategorias(container, puedeEditar) {
   const res = await api.get('/categorias');
   _categorias = res.ok ? (res.data.categorias || res.data || []) : [];
 
+  renderCategorias(container, puedeEditar);
+}
+
+function renderCategorias(container, puedeEditar) {
+  const grid = container.querySelector('#catGrid');
+
   if (_categorias.length === 0) {
     grid.innerHTML = `
       <div class="empty-state" style="grid-column:1/-1;">
@@ -152,7 +158,13 @@ function abrirModal(container, categoria = null) {
     if (res.ok) {
       window.showToast(esEdicion ? 'Categoría actualizada' : 'Categoría creada correctamente', 'success');
       cerrar();
-      await cargarCategorias(container, true);
+      if (esEdicion) {
+        const idx = _categorias.findIndex(c => c._id === categoria._id);
+        if (idx !== -1) _categorias[idx] = res.data;
+      } else {
+        _categorias.push(res.data);
+      }
+      renderCategorias(container, true);
     } else {
       window.showToast(res.data?.error || 'Error al guardar', 'error');
       btn.disabled = false;
@@ -193,7 +205,8 @@ async function confirmarEliminar(container, id) {
     if (res.ok) {
       window.showToast('Categoría eliminada', 'success');
       cerrar();
-      await cargarCategorias(container, true);
+      _categorias = _categorias.filter(c => c._id !== id);
+      renderCategorias(container, true);
     } else {
       window.showToast(res.data?.error || 'Error al eliminar', 'error');
     }

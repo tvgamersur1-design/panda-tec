@@ -7,6 +7,7 @@ import { api } from '../api.js';
 
 let _proveedores = [];
 let _productos = [];
+let _pedidos = [];
 
 export async function init(container, user) {
   const puedeEditar = user && (user.rol === 'admin' || user.rol === 'almacen');
@@ -109,7 +110,7 @@ async function renderPedidos(container, puedeEditar) {
       ${puedeEditar ? `<button class="btn-primary" id="btnNuevoPedido"><i class="fas fa-plus"></i> Nuevo Pedido</button>` : ''}
     </div>
     <div class="table-wrap">
-      <table>
+      <table class="data-table">
         <thead><tr><th>ID</th><th>Proveedor</th><th>Productos</th><th>Estado</th><th>Fecha</th>${puedeEditar?'<th>Acciones</th>':''}</tr></thead>
         <tbody id="pedidosTbody"><tr><td colspan="${puedeEditar?6:5}" style="text-align:center;padding:2rem;color:#94A3B8;"><i class="fas fa-spinner fa-spin"></i></td></tr></tbody>
       </table>
@@ -133,25 +134,31 @@ async function cargarPedidos(container, puedeEditar) {
   if (provId) url += `proveedor_id=${provId}&`;
 
   const res = await api.get(url);
-  const pedidos = res.ok ? (res.data.pedidos || res.data || []) : [];
+  _pedidos = res.ok ? (res.data.pedidos || res.data || []) : [];
 
-  if (pedidos.length === 0) {
+  renderPedidosTbody(container, puedeEditar);
+}
+
+function renderPedidosTbody(container, puedeEditar) {
+  const tbody = container.querySelector('#pedidosTbody');
+
+  if (_pedidos.length === 0) {
     tbody.innerHTML = `<tr><td colspan="${puedeEditar?6:5}"><div class="empty-state"><i class="fas fa-truck"></i><p>No hay pedidos registrados</p></div></td></tr>`;
     return;
   }
 
-  tbody.innerHTML = pedidos.map(p => {
+  tbody.innerHTML = _pedidos.map(p => {
     const provNombre = p.proveedor_id?.nombre || _proveedores.find(x => x._id === p.proveedor_id)?.nombre || '—';
     const itemsCount = p.items?.length || 0;
     return `
       <tr>
-        <td style="font-size:0.75rem;color:#64748B;">${p._id.slice(-6).toUpperCase()}</td>
-        <td style="font-weight:500;">${provNombre}</td>
-        <td>${itemsCount} producto(s)</td>
-        <td><span class="badge ${p.estado==='recibido'?'badge-ok':'badge-warning'}">${p.estado}</span></td>
-        <td>${new Date(p.fecha_creacion).toLocaleDateString('es-PE')}</td>
+        <td data-label="ID" style="font-size:0.75rem;color:#64748B;">${p._id.slice(-6).toUpperCase()}</td>
+        <td data-label="Proveedor" style="font-weight:500;">${provNombre}</td>
+        <td data-label="Productos">${itemsCount} producto(s)</td>
+        <td data-label="Estado"><span class="badge ${p.estado==='recibido'?'badge-ok':'badge-warning'}">${p.estado}</span></td>
+        <td data-label="Fecha">${new Date(p.fecha_creacion).toLocaleDateString('es-PE')}</td>
         ${puedeEditar ? `
-          <td>
+          <td data-label="Acciones">
             ${p.estado === 'pendiente' ? `<button class="btn-success" data-id="${p._id}" data-action="recibir"><i class="fas fa-check"></i> Marcar recibido</button>` : '—'}
           </td>
         ` : ''}
@@ -253,7 +260,9 @@ function abrirModalPedido(container, puedeEditar) {
     if (res.ok) {
       window.showToast('Pedido creado correctamente', 'success');
       cerrar();
-      await cargarPedidos(container, puedeEditar);
+      const nuevoPedido = res.data.pedido || res.data;
+      _pedidos.unshift(nuevoPedido);
+      renderPedidosTbody(container, puedeEditar);
     } else {
       window.showToast(res.data?.error || 'Error al crear el pedido', 'error');
       btn.disabled = false;
@@ -289,7 +298,13 @@ function confirmarRecibir(container, id, puedeEditar) {
     if (res.ok) {
       window.showToast('Pedido marcado como recibido. Stock actualizado.', 'success');
       cerrar();
-      await cargarPedidos(container, puedeEditar);
+      api.invalidatePrefix('/productos');
+      api.invalidatePrefix('/dashboard');
+      const idx = _pedidos.findIndex(p => p._id === id);
+      if (idx !== -1) {
+        _pedidos[idx] = { ..._pedidos[idx], estado: 'recibido' };
+      }
+      renderPedidosTbody(container, puedeEditar);
     } else {
       window.showToast(res.data?.error || 'Error al actualizar el pedido', 'error');
     }
@@ -304,7 +319,7 @@ async function renderProveedores(container, puedeEditar) {
       ${puedeEditar ? `<button class="btn-primary" id="btnNuevoProv"><i class="fas fa-plus"></i> Nuevo Proveedor</button>` : ''}
     </div>
     <div class="table-wrap">
-      <table>
+      <table class="data-table">
         <thead><tr><th>Nombre</th><th>Teléfono</th><th>Correo</th>${puedeEditar?'<th>Acciones</th>':''}</tr></thead>
         <tbody id="provTbody"></tbody>
       </table>
@@ -327,11 +342,11 @@ function renderProvTbody(container, puedeEditar) {
   }
   tbody.innerHTML = _proveedores.map(p => `
     <tr>
-      <td style="font-weight:500;">${p.nombre}</td>
-      <td>${p.telefono}</td>
-      <td>${p.correo}</td>
+      <td data-label="Nombre" style="font-weight:500;">${p.nombre}</td>
+      <td data-label="Teléfono">${p.telefono}</td>
+      <td data-label="Correo">${p.correo}</td>
       ${puedeEditar ? `
-        <td>
+        <td data-label="Acciones">
           <button class="btn-edit" data-id="${p._id}" data-action="editar"><i class="fas fa-pen"></i> Editar</button>
         </td>
       ` : ''}
@@ -393,8 +408,13 @@ function abrirModalProveedor(container, proveedor = null, puedeEditar) {
     const res = esEdicion ? await api.put(`/proveedores/${proveedor._id}`, body) : await api.post('/proveedores', body);
     if (res.ok) {
       window.showToast(esEdicion ? 'Proveedor actualizado' : 'Proveedor creado', 'success');
-      const provRes = await api.get('/proveedores');
-      _proveedores = provRes.ok ? (provRes.data.proveedores || provRes.data || []) : [];
+      const provData = res.data.proveedor || res.data;
+      if (esEdicion) {
+        const idx = _proveedores.findIndex(x => x._id === proveedor._id);
+        if (idx !== -1) _proveedores[idx] = provData;
+      } else {
+        _proveedores.push(provData);
+      }
       cerrar();
       renderProvTbody(container, puedeEditar);
     } else {

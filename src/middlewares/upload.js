@@ -53,7 +53,8 @@ function uploadImagen(req, res, next) {
       req.cloudinaryUrl = url;
       next();
     } catch (cloudErr) {
-      return res.status(500).json({ error: 'Error al subir imagen' });
+      console.error('Error Cloudinary:', cloudErr.message || cloudErr);
+      return res.status(500).json({ error: 'Error al subir imagen: ' + (cloudErr.message || 'verifica las credenciales de Cloudinary en .env') });
     }
   });
 }

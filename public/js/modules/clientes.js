@@ -54,7 +54,7 @@ export async function init(container, user) {
       ${puedeEditar ? `<button class="btn-primary" id="btnNuevo"><i class="fas fa-plus"></i> Nuevo Cliente</button>` : ''}
     </div>
     <div class="table-wrap">
-      <table>
+      <table class="data-table">
         <thead>
           <tr>
             <th>DNI</th>
@@ -90,6 +90,12 @@ async function cargarClientes(container, puedeEditar, puedeEliminar, search = ''
   const res = await api.get(url);
   _clientes = res.ok ? (res.data.clientes || res.data || []) : [];
 
+  renderClientes(container, puedeEditar, puedeEliminar);
+}
+
+function renderClientes(container, puedeEditar, puedeEliminar) {
+  const tbody = container.querySelector('#cliTbody');
+
   if (_clientes.length === 0) {
     tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><i class="fas fa-users"></i><p>No hay clientes registrados</p></div></td></tr>`;
     return;
@@ -97,11 +103,11 @@ async function cargarClientes(container, puedeEditar, puedeEliminar, search = ''
 
   tbody.innerHTML = _clientes.map(c => `
     <tr>
-      <td style="font-weight:500;">${c.dni}</td>
-      <td>${[c.nombre, c.apellido_paterno, c.apellido_materno].filter(Boolean).join(' ') || '—'}</td>
-      <td>${c.telefono || '—'}</td>
-      <td>${c.email || '—'}</td>
-      <td>
+      <td data-label="DNI" style="font-weight:500;">${c.dni}</td>
+      <td data-label="Nombre">${[c.nombre, c.apellido_paterno, c.apellido_materno].filter(Boolean).join(' ') || '—'}</td>
+      <td data-label="Teléfono">${c.telefono || '—'}</td>
+      <td data-label="Email">${c.email || '—'}</td>
+      <td data-label="Acciones">
         <div style="display:flex;gap:0.5rem;">
           <button class="btn-info" data-id="${c._id}" data-action="ver"><i class="fas fa-eye"></i> Ver</button>
           ${puedeEditar ? `<button class="btn-info" data-id="${c._id}" data-action="editar" style="background:#F0FDF4;color:#16A34A;"><i class="fas fa-pen"></i></button>` : ''}
@@ -225,7 +231,14 @@ function abrirModal(container, cliente = null, puedeEditar) {
     if (res.ok) {
       window.showToast(esEdicion ? 'Cliente actualizado' : 'Cliente creado correctamente', 'success');
       cerrar();
-      await cargarClientes(container, puedeEditar, true);
+      const clienteData = res.data.cliente || res.data;
+      if (esEdicion) {
+        const idx = _clientes.findIndex(x => x._id === cliente._id);
+        if (idx !== -1) _clientes[idx] = clienteData;
+      } else {
+        _clientes.push(clienteData);
+      }
+      renderClientes(container, puedeEditar, true);
     } else {
       window.showToast(res.data?.error || 'Error al guardar', 'error');
       btn.disabled = false;
@@ -349,7 +362,8 @@ async function confirmarEliminar(container, id, puedeEditar, puedeEliminar) {
     if (res.ok) {
       window.showToast('Cliente eliminado', 'success');
       cerrar();
-      await cargarClientes(container, puedeEditar, puedeEliminar);
+      _clientes = _clientes.filter(x => x._id !== id);
+      renderClientes(container, puedeEditar, puedeEliminar);
     } else {
       window.showToast(res.data?.error || 'Error al eliminar', 'error');
     }

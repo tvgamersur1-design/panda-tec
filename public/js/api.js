@@ -47,9 +47,35 @@ async function request(path, options = {}) {
   }
 }
 
+const _cache = new Map();
+const CACHE_TTL = 60000;
+
 export const api = {
-  get(path) {
-    return request(path, { method: 'GET', headers: buildHeaders() });
+  async get(path) {
+    const cached = _cache.get(path);
+    if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+      return cached.result;
+    }
+    const result = await request(path, { method: 'GET', headers: buildHeaders() });
+    if (result.ok) {
+      _cache.set(path, { result, timestamp: Date.now() });
+    }
+    return result;
+  },
+  getCached(path) {
+    const cached = _cache.get(path);
+    if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+      return cached.result;
+    }
+    return null;
+  },
+  invalidate(path) {
+    _cache.delete(path);
+  },
+  invalidatePrefix(prefix) {
+    for (const key of _cache.keys()) {
+      if (key.startsWith(prefix)) _cache.delete(key);
+    }
   },
   post(path, body) {
     return request(path, { method: 'POST', headers: buildHeaders(), body: JSON.stringify(body) });

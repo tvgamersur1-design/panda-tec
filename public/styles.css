@@ -177,9 +177,6 @@ body {
     gap: 20px;
     margin-bottom: 30px;
 }
-    gap: 20px;
-    margin-bottom: 30px;
-}
 
 .stat-card {
     background: white;
@@ -415,12 +412,6 @@ body {
     border-color: var(--primary);
 }
 
-.form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-}
-
 /* Productos Grid */
 .productos-grid {
     display: grid;
@@ -580,90 +571,7 @@ body {
     flex: 1;
 }
 
-/* Tarjetas compactas en 2 columnas móvil */
-@media (max-width: 768px) {
-    .producto-card {
-        padding: 12px;
-    }
-
-    .producto-card h3 {
-        font-size: 13px;
-        margin-bottom: 6px;
-    }
-
-    .producto-card p {
-        font-size: 12px;
-        margin-bottom: 8px;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-
-    .producto-info {
-        flex-direction: column;
-        gap: 4px;
-        padding: 10px;
-        margin: 8px 0;
-    }
-
-    .precio {
-        font-size: 16px;
-    }
-
-    .producto-actions {
-        flex-direction: column;
-        gap: 6px;
-    }
-
-    .producto-actions .btn {
-        padding: 8px;
-        font-size: 12px;
-        justify-content: center;
-    }
-
-    .categoria-badge {
-        font-size: 10px;
-        padding: 3px 7px;
-    }
-
-    /* Categorías compactas */
-    .categoria-card {
-        padding: 15px 10px;
-    }
-
-    .categoria-card-icon {
-        width: 55px;
-        height: 55px;
-        font-size: 24px;
-        margin-bottom: 10px;
-    }
-
-    .categoria-card h3 {
-        font-size: 13px;
-        margin-bottom: 10px;
-    }
-
-    .categoria-card-actions {
-        flex-direction: column;
-        gap: 6px;
-    }
-
-    .categoria-card-actions .btn {
-        padding: 7px;
-        font-size: 12px;
-        justify-content: center;
-    }
-}
-
 /* Productos Venta */
-.ventas-layout {
-    display: grid;
-    grid-template-columns: 1fr 420px;
-    gap: 20px;
-    align-items: start;
-}
-
 .productos-disponibles {
     max-height: calc(100vh - 150px);
     overflow-y: auto;
@@ -1627,42 +1535,6 @@ body {
 
 .motivo-texto {
     color: #7f1d1d;
-}
-
-/* ===== CARRITO FAB MÓVIL ===== */
-.carrito-fab {
-    display: none;
-}
-
-@media (max-width: 768px) {
-    .carrito-fab {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        position: fixed;
-        bottom: 24px;
-        right: 20px;
-        z-index: 900;
-        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-        color: white;
-        border: none;
-        border-radius: 50px;
-        padding: 14px 20px;
-        font-size: 15px;
-        font-weight: 600;
-        font-family: 'Inter', sans-serif;
-        box-shadow: 0 6px 20px rgba(37,99,235,0.45);
-        cursor: pointer;
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
-
-    .carrito-fab:active {
-        transform: scale(0.95);
-    }
-
-    .carrito-fab.oculto {
-        display: none !important;
-    }
 }
 
 .carrito-fab-badge {

@@ -177,33 +177,41 @@ exports.eliminar = async (req, res) => {
 
 /**
  * GET /api/clientes/dni/:dni
- * Consultar datos de persona en RENIEC por DNI.
+ * Consultar datos de persona en RENIEC por DNI usando API Decolecta.
+ * Endpoint: GET https://api.decolecta.com/v1/reniec/dni?numero=<dni>
+ * Header: Authorization: Bearer <API_KEY>
+ * Respuesta: { first_name, first_last_name, second_last_name, full_name, document_number }
  */
 exports.consultarDNI = async (req, res) => {
   try {
     const { dni } = req.params;
 
-    // Validar formato DNI
     if (!dni || !/^\d{8}$/.test(dni)) {
       return res.status(400).json({ error: 'El DNI debe tener exactamente 8 dígitos numéricos' });
     }
 
-    // Decolecta: GET /v1/reniec/dni?numero=<dni>
-    // Header: Authorization: Bearer <token>
-    const url = process.env.RENIEC_API_URL; // ej: https://api.decolecta.com/v1/reniec/dni
-    const token = process.env.RENIEC_API_KEY;
+    const apiUrl  = process.env.RENIEC_API_URL;  // https://api.decolecta.com/v1/reniec/dni
+    const apiKey  = process.env.RENIEC_API_KEY;  // tu token de Decolecta
+
+    if (!apiUrl || !apiKey) {
+      console.error('[RENIEC] RENIEC_API_URL o RENIEC_API_KEY no configurados en .env');
+      return res.status(200).json({ encontrado: false, mensaje: 'Servicio RENIEC no configurado' });
+    }
 
     let respuesta;
     try {
-      respuesta = await axios.get(url, {
+      respuesta = await axios.get(apiUrl, {
         headers: {
           'Content-Type': 'application/json',
-          Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}`,
+          Authorization: apiKey.startsWith('Bearer ') ? apiKey : `Bearer ${apiKey}`,
         },
         params: { numero: dni },
-        timeout: 8000,
+        timeout: 10000,
       });
     } catch (err) {
+      const status  = err.response?.status;
+      const errData = err.response?.data;
+      console.error(`[RENIEC] Error HTTP ${status}:`, errData || err.message);
       return res.status(200).json({
         encontrado: false,
         mensaje: 'No se encontró información para ese DNI',
@@ -212,16 +220,13 @@ exports.consultarDNI = async (req, res) => {
 
     const data = respuesta.data;
 
-    // Campos de la API Decolecta
-    const nombre          = data.first_name        || data.nombres          || data.nombre || null;
-    const apellido_paterno = data.first_last_name  || data.apellidoPaterno  || null;
-    const apellido_materno = data.second_last_name || data.apellidoMaterno  || null;
+    // Campos de Decolecta: first_name, first_last_name, second_last_name
+    const nombre           = data.first_name        || null;
+    const apellido_paterno = data.first_last_name   || null;
+    const apellido_materno = data.second_last_name  || null;
 
     if (!nombre && !apellido_paterno && !apellido_materno) {
-      return res.status(200).json({
-        encontrado: false,
-        mensaje: 'No se encontró información para ese DNI',
-      });
+      return res.status(200).json({ encontrado: false, mensaje: 'No se encontró información para ese DNI' });
     }
 
     return res.status(200).json({
@@ -231,10 +236,7 @@ exports.consultarDNI = async (req, res) => {
       apellido_materno,
     });
   } catch (error) {
-    console.error('Error al consultar DNI:', error);
-    return res.status(200).json({
-      encontrado: false,
-      mensaje: 'No se encontró información para ese DNI',
-    });
+    console.error('[RENIEC] Error inesperado:', error.message);
+    return res.status(200).json({ encontrado: false, mensaje: 'Error al consultar RENIEC' });
   }
 };
