@@ -16,6 +16,14 @@ exports.solicitarCodigo = async (req, res) => {
       return res.status(400).json({ error: 'El correo es obligatorio' });
     }
 
+    // Verificar configuración de email
+    if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+      console.error('❌ Variables GMAIL_USER o GMAIL_APP_PASSWORD no configuradas');
+      return res.status(503).json({ 
+        error: 'El servicio de recuperación de contraseña no está disponible. Contacta al administrador.' 
+      });
+    }
+
     const usuario = await Usuario.findOne({ correo, eliminado: false, activo: true });
 
     // No revelar si el correo existe o no (seguridad)
@@ -42,20 +50,32 @@ exports.solicitarCodigo = async (req, res) => {
       ]);
       console.log(`✓ Código enviado a ${correo}`);
     } catch (emailError) {
-      console.error('Error al enviar email:', emailError.message);
+      console.error('❌ Error al enviar email:', emailError.message);
+      console.error('Detalles:', emailError);
+      
       // Revertir el código guardado si falla el envío
       usuario.codigo_recuperacion = null;
       usuario.codigo_expiracion = null;
       await usuario.save();
       
-      return res.status(503).json({ 
-        error: 'No se pudo enviar el email. Verifica tu conexión o intenta más tarde.' 
-      });
+      // Mensaje más específico según el error
+      let mensajeError = 'No se pudo enviar el email. ';
+      if (emailError.message.includes('Timeout')) {
+        mensajeError += 'El servidor de correo no responde. Intenta más tarde.';
+      } else if (emailError.message.includes('ECONNREFUSED') || emailError.message.includes('ETIMEDOUT')) {
+        mensajeError += 'No se puede conectar al servidor de correo. Contacta al administrador.';
+      } else if (emailError.message.includes('Invalid login')) {
+        mensajeError += 'Error de autenticación con el servidor de correo. Contacta al administrador.';
+      } else {
+        mensajeError += 'Error desconocido. Contacta al administrador.';
+      }
+      
+      return res.status(503).json({ error: mensajeError });
     }
 
     res.json({ mensaje: 'Si el correo está registrado, recibirás un código de recuperación.' });
   } catch (error) {
-    console.error('Error al solicitar recuperación:', error);
+    console.error('❌ Error al solicitar recuperación:', error);
     res.status(500).json({ error: 'Error al procesar la solicitud' });
   }
 };
