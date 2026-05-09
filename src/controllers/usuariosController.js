@@ -79,6 +79,7 @@ exports.crear = async (req, res) => {
       console.log(`✓ Credenciales enviadas a ${correo} (Usuario: ${nombre_completo})`);
     } catch (emailError) {
       console.error('❌ Error al enviar email de bienvenida:', emailError.message);
+      console.error('❌ Detalles del error:', emailError);
       errorEmail = emailError.message;
       // No fallar la creación si el email no se envía
     }

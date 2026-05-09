@@ -12,7 +12,8 @@ El sistema Panta Tec ahora soporta:
 
 | Paquete | Versión | Propósito |
 |---|---|---|
-| `nodemailer` | ^6.x | Envío de emails via Gmail SMTP |
+| `nodemailer` | ^6.x | Envío de emails via Gmail SMTP (fallback) |
+| `@sendgrid/mail` | ^8.x | Envío de emails via SendGrid (recomendado) |
 | `google-auth-library` | ^9.x | Verificación de tokens de Google OAuth |
 
 ---

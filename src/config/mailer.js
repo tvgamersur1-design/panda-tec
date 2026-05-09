@@ -154,9 +154,13 @@ async function enviarCodigoRecuperacion(destinatario, codigo, nombreUsuario) {
  * Envía un email genérico. Usa SendGrid > Resend > Gmail SMTP.
  */
 async function enviarEmail(destinatario, subject, html) {
+  console.log(`📧 Intentando enviar email a: ${destinatario} | Asunto: ${subject}`);
+  console.log(`📧 Proveedor: ${useSendGrid ? 'SendGrid' : useResend ? 'Resend' : 'Gmail SMTP'}`);
+
   // Prioridad 1: SendGrid
   if (useSendGrid) {
     const fromEmail = process.env.SENDGRID_FROM || process.env.GMAIL_USER;
+    console.log(`📧 SendGrid FROM: ${fromEmail}`);
     const msg = {
       to: destinatario,
       from: fromEmail,
@@ -171,6 +175,7 @@ async function enviarEmail(destinatario, subject, html) {
   // Prioridad 2: Resend
   if (useResend) {
     const fromEmail = process.env.RESEND_FROM || 'Panta Tec <onboarding@resend.dev>';
+    console.log(`📧 Resend FROM: ${fromEmail}`);
     const { data, error } = await resend.emails.send({
       from: fromEmail,
       to: [destinatario],
@@ -183,6 +188,7 @@ async function enviarEmail(destinatario, subject, html) {
   }
 
   // Fallback: Gmail SMTP
+  console.log(`📧 Gmail SMTP FROM: ${process.env.GMAIL_USER}`);
   const info = await transporter.sendMail({
     from: `"Panta Tec" <${process.env.GMAIL_USER}>`,
     to: destinatario,
