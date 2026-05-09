@@ -16,4 +16,21 @@ const loginRateLimiter = rateLimit({
   },
 });
 
-module.exports = loginRateLimiter;
+/**
+ * Rate limiter para recuperación de contraseña.
+ * Más estricto: máximo 3 solicitudes por IP en 15 minutos.
+ * Previene abuso del sistema de emails y enumeración de usuarios.
+ */
+const recoveryRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 3, // Solo 3 intentos
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    return res.status(429).json({
+      error: 'Demasiadas solicitudes de recuperación. Intenta de nuevo en 15 minutos',
+    });
+  },
+});
+
+module.exports = { loginRateLimiter, recoveryRateLimiter };

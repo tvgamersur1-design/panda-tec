@@ -5,7 +5,7 @@ const authController = require('../controllers/authController');
 const recoveryController = require('../controllers/recoveryController');
 const googleAuthController = require('../controllers/googleAuthController');
 const auth = require('../middlewares/auth');
-const loginRateLimiter = require('../config/rateLimiter');
+const { loginRateLimiter, recoveryRateLimiter } = require('../config/rateLimiter');
 
 // POST /api/auth/login — Público, con rate limiting
 router.post('/login', loginRateLimiter, authController.login);
@@ -14,9 +14,10 @@ router.post('/login', loginRateLimiter, authController.login);
 router.get('/verificar', auth, authController.verificar);
 
 // ── Recuperación de contraseña ───────────────────────────────────────────────
-router.post('/recuperar', loginRateLimiter, recoveryController.solicitarCodigo);
-router.post('/verificar-codigo', loginRateLimiter, recoveryController.verificarCodigo);
-router.post('/restablecer', loginRateLimiter, recoveryController.restablecerClave);
+// Rate limiting más estricto: solo 3 intentos cada 15 minutos
+router.post('/recuperar', recoveryRateLimiter, recoveryController.solicitarCodigo);
+router.post('/verificar-codigo', recoveryRateLimiter, recoveryController.verificarCodigo);
+router.post('/restablecer', recoveryRateLimiter, recoveryController.restablecerClave);
 
 // ── Google OAuth ─────────────────────────────────────────────────────────────
 router.post('/google', googleAuthController.loginConGoogle);

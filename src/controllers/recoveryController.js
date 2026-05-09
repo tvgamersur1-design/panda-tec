@@ -26,11 +26,16 @@ exports.solicitarCodigo = async (req, res) => {
 
     const usuario = await Usuario.findOne({ correo, eliminado: false, activo: true });
 
-    // No revelar si el correo existe o no (seguridad)
+    // ── Verificación de seguridad: solo usuarios registrados ────────────────
+    // No revelar si el correo existe o no (previene enumeración de usuarios)
+    // pero NO enviar email ni gastar recursos si no existe
     if (!usuario) {
+      console.log(`⚠️ Intento de recuperación con correo no registrado: ${correo}`);
+      // Respuesta genérica para no revelar si el usuario existe
       return res.json({ mensaje: 'Si el correo está registrado, recibirás un código de recuperación.' });
     }
 
+    // ── Usuario válido: generar y enviar código ─────────────────────────────
     // Generar código de 6 dígitos
     const codigo = crypto.randomInt(100000, 999999).toString();
     const expiracion = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
@@ -48,7 +53,7 @@ exports.solicitarCodigo = async (req, res) => {
           setTimeout(() => reject(new Error('Timeout al enviar email')), 30000)
         )
       ]);
-      console.log(`✓ Código enviado a ${correo}`);
+      console.log(`✓ Código enviado a ${correo} (Usuario: ${usuario.nombre_completo})`);
     } catch (emailError) {
       console.error('❌ Error al enviar email:', emailError.message);
       console.error('Detalles:', emailError);
