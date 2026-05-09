@@ -94,8 +94,11 @@ async function enviarCodigoRecuperacion(destinatario, codigo, nombreUsuario) {
       const fromEmail = process.env.SENDGRID_FROM || process.env.GMAIL_USER;
       const msg = {
         to: destinatario,
-        from: fromEmail,
-        subject: 'Código de recuperación — Panta Tec',
+        from: {
+          email: fromEmail,
+          name: 'Panta Tec'
+        },
+        subject: 'Codigo de recuperacion - Panta Tec',
         html: htmlContent,
       };
 
@@ -115,7 +118,7 @@ async function enviarCodigoRecuperacion(destinatario, codigo, nombreUsuario) {
       const { data, error } = await resend.emails.send({
         from: fromEmail,
         to: [destinatario],
-        subject: 'Código de recuperación — Panta Tec',
+        subject: 'Codigo de recuperacion - Panta Tec',
         html: htmlContent,
       });
 
@@ -136,9 +139,15 @@ async function enviarCodigoRecuperacion(destinatario, codigo, nombreUsuario) {
   const mailOptions = {
     from: `"Panta Tec" <${process.env.GMAIL_USER}>`,
     to: destinatario,
-    subject: 'Código de recuperación — Panta Tec',
+    subject: 'Codigo de recuperacion - Panta Tec',
     text: `Hola ${nombreUsuario},\n\nUsa este código para restablecer tu contraseña:\n\n${codigo}\n\nEste código expira en 15 minutos.\nSi no solicitaste este código, ignora este mensaje.\n\n© ${new Date().getFullYear()} Panta Tec`,
     html: htmlContent,
+    headers: {
+      'X-Priority': '1',
+      'X-MSMail-Priority': 'High',
+      'Importance': 'high',
+      'X-Mailer': 'Panta Tec System',
+    },
   };
 
   try {
@@ -164,7 +173,10 @@ async function enviarEmail(destinatario, subject, html) {
     console.log(`📧 SendGrid FROM: ${fromEmail}`);
     const msg = {
       to: destinatario,
-      from: fromEmail,
+      from: {
+        email: fromEmail,
+        name: 'Panta Tec'
+      },
       subject,
       html,
     };
