@@ -137,6 +137,7 @@ async function enviarCodigoRecuperacion(destinatario, codigo, nombreUsuario) {
     from: `"Panta Tec" <${process.env.GMAIL_USER}>`,
     to: destinatario,
     subject: 'Código de recuperación — Panta Tec',
+    text: `Hola ${nombreUsuario},\n\nUsa este código para restablecer tu contraseña:\n\n${codigo}\n\nEste código expira en 15 minutos.\nSi no solicitaste este código, ignora este mensaje.\n\n© ${new Date().getFullYear()} Panta Tec`,
     html: htmlContent,
   };
 

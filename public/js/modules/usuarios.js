@@ -66,6 +66,7 @@ export async function init(container, user) {
             <th>Usuario</th>
             <th>Correo</th>
             <th>Rol</th>
+            <th>Google</th>
             <th>Estado</th>
             <th>Acciones</th>
           </tr>
@@ -82,7 +83,7 @@ export async function init(container, user) {
 
 async function cargarUsuarios(container, user) {
   const tbody = container.querySelector('#usrTbody');
-  tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:#94A3B8;"><i class="fas fa-spinner fa-spin"></i></td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:#94A3B8;"><i class="fas fa-spinner fa-spin"></i></td></tr>`;
   const res = await api.get('/usuarios');
   _usuarios = res.ok ? (res.data.usuarios || res.data || []) : [];
 
@@ -93,18 +94,24 @@ function renderUsuarios(container, user) {
   const tbody = container.querySelector('#usrTbody');
 
   if (_usuarios.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><i class="fas fa-users"></i><p>No hay usuarios registrados</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><i class="fas fa-users"></i><p>No hay usuarios registrados</p></div></td></tr>`;
     return;
   }
 
   tbody.innerHTML = _usuarios.map(u => {
     const rolClass = u.rol === 'admin' ? 'rol-admin' : u.rol === 'vendedor' ? 'rol-vendedor' : 'rol-almacen';
+    const googleVinculado = u.google_id ? true : false;
     return `
       <tr>
         <td data-label="Nombre" style="font-weight:500;">${u.nombre_completo}</td>
         <td data-label="Usuario">${u.usuario}</td>
         <td data-label="Correo">${u.correo}</td>
         <td data-label="Rol"><span class="rol-badge ${rolClass}">${u.rol}</span></td>
+        <td data-label="Google">
+          <span class="badge ${googleVinculado ? 'badge-ok' : 'badge-muted'}" title="${googleVinculado ? 'Cuenta vinculada con Google' : 'No vinculada'}">
+            <i class="fab fa-google"></i> ${googleVinculado ? 'Vinculado' : 'No'}
+          </span>
+        </td>
         <td data-label="Estado">
           <span class="badge ${u.activo ? 'badge-ok' : 'badge-muted'}">
             ${u.activo ? '● Activo' : '○ Inactivo'}

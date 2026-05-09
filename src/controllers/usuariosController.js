@@ -55,25 +55,37 @@ exports.crear = async (req, res) => {
     try {
       await enviarEmail(
         correo,
-        'Tu cuenta ha sido creada — Panta Tec',
-        `
-          <div style="font-family:'Inter',Arial,sans-serif;max-width:480px;margin:0 auto;padding:2rem;">
-            <div style="text-align:center;margin-bottom:1.5rem;">
-              <h1 style="font-size:1.5rem;color:#0a0a0a;margin:0;">Panta Tec</h1>
-              <p style="color:#64748B;font-size:0.875rem;margin-top:0.25rem;">Sistema de Gestión</p>
-            </div>
-            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:1.5rem;">
-              <p style="color:#374151;margin:0 0 0.75rem;">Hola <strong>${nombre_completo}</strong>,</p>
-              <p style="color:#64748B;font-size:0.875rem;margin:0 0 1.25rem;">Se ha creado tu cuenta en el sistema. Aquí están tus credenciales de acceso:</p>
-              <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:1rem;margin-bottom:1rem;">
-                <p style="margin:0 0 0.5rem;font-size:0.875rem;"><strong style="color:#64748B;">Usuario:</strong> <code style="background:#f1f5f9;padding:0.15rem 0.5rem;border-radius:4px;font-weight:600;">${usuario}</code></p>
-                <p style="margin:0;font-size:0.875rem;"><strong style="color:#64748B;">Contraseña temporal:</strong> <code style="background:#fef3c7;padding:0.15rem 0.5rem;border-radius:4px;font-weight:600;color:#D97706;">${claveTemporal}</code></p>
-              </div>
-              <p style="color:#D97706;font-size:0.8125rem;margin:0;"><i>⚠️ Te recomendamos cambiar tu contraseña después del primer inicio de sesión.</i></p>
-            </div>
-            <p style="color:#CBD5E1;font-size:0.75rem;text-align:center;margin-top:1.5rem;">© ${new Date().getFullYear()} Panta Tec</p>
-          </div>
-        `
+        'Credenciales de acceso - Panta Tec',
+        `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#ffffff;">
+  <div style="font-family:Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;padding:2rem;">
+    <div style="text-align:center;margin-bottom:1.5rem;">
+      <h1 style="font-size:1.5rem;color:#0a0a0a;margin:0;">Panta Tec</h1>
+      <p style="color:#64748B;font-size:0.875rem;margin-top:0.25rem;">Sistema de Gestión</p>
+    </div>
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:1.5rem;">
+      <p style="color:#374151;margin:0 0 0.75rem;">Hola <strong>${nombre_completo}</strong>,</p>
+      <p style="color:#64748B;font-size:0.875rem;margin:0 0 1.25rem;">Se ha creado tu cuenta en el sistema. Aquí están tus credenciales de acceso:</p>
+      <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;padding:1rem;margin-bottom:1rem;">
+        <p style="margin:0 0 0.5rem;font-size:0.875rem;"><strong style="color:#64748B;">Usuario:</strong> <span style="background:#f1f5f9;padding:2px 8px;border-radius:4px;font-weight:600;">${usuario}</span></p>
+        <p style="margin:0;font-size:0.875rem;"><strong style="color:#64748B;">Contraseña temporal:</strong> <span style="background:#fef3c7;padding:2px 8px;border-radius:4px;font-weight:600;color:#D97706;">${claveTemporal}</span></p>
+      </div>
+      <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:0.875rem;margin-bottom:1rem;">
+        <p style="margin:0 0 0.5rem;font-size:0.8125rem;color:#1E40AF;font-weight:600;">
+          <i style="margin-right:0.25rem;">🔗</i> Vincular con Google
+        </p>
+        <p style="margin:0;font-size:0.8125rem;color:#1E40AF;line-height:1.4;">
+          Para vincular tu cuenta con Google y poder iniciar sesión más rápido, <strong>inicia sesión con el botón de Google</strong> en tu primera visita. Esto vinculará automáticamente tu cuenta.
+        </p>
+      </div>
+      <p style="color:#D97706;font-size:0.8125rem;margin:0;">Te recomendamos cambiar tu contraseña después del primer inicio de sesión.</p>
+    </div>
+    <p style="color:#CBD5E1;font-size:0.75rem;text-align:center;margin-top:1.5rem;">© ${new Date().getFullYear()} Panta Tec</p>
+  </div>
+</body>
+</html>`
       );
       emailEnviado = true;
       console.log(`✓ Credenciales enviadas a ${correo} (Usuario: ${nombre_completo})`);
