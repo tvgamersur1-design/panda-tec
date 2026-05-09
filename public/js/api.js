@@ -95,4 +95,31 @@ export const api = {
   putForm(path, formData) {
     return request(path, { method: 'PUT', headers: buildFormHeaders(), body: formData });
   },
+
+  // ── Polling ligero ──────────────────────────────────────────────────────
+  _pollTimer: null,
+  _pollCallback: null,
+  _pollInterval: 30000, // 30 segundos
+
+  startPolling(callback, interval) {
+    this.stopPolling();
+    if (interval) this._pollInterval = interval;
+    this._pollCallback = callback;
+    this._pollTimer = setInterval(() => {
+      if (this._pollCallback) this._pollCallback();
+    }, this._pollInterval);
+  },
+
+  stopPolling() {
+    if (this._pollTimer) {
+      clearInterval(this._pollTimer);
+      this._pollTimer = null;
+    }
+    this._pollCallback = null;
+  },
+
+  async checkForUpdates(endpoint) {
+    this.invalidate(endpoint);
+    return this.get(endpoint);
+  },
 };

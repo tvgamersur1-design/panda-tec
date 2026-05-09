@@ -165,6 +165,7 @@ function abrirModal(container, categoria = null) {
         _categorias.push(res.data);
       }
       renderCategorias(container, true);
+      api.invalidatePrefix('/categorias');
     } else {
       window.showToast(res.data?.error || 'Error al guardar', 'error');
       btn.disabled = false;
@@ -207,6 +208,7 @@ async function confirmarEliminar(container, id) {
       cerrar();
       _categorias = _categorias.filter(c => c._id !== id);
       renderCategorias(container, true);
+      api.invalidatePrefix('/categorias');
     } else {
       window.showToast(res.data?.error || 'Error al eliminar', 'error');
     }

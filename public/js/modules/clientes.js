@@ -242,6 +242,7 @@ function abrirModal(container, cliente = null, puedeEditar) {
         _clientes.push(clienteData);
       }
       renderClientes(container, puedeEditar, true);
+      api.invalidatePrefix('/clientes');
     } else {
       window.showToast(res.data?.error || 'Error al guardar', 'error');
       btn.disabled = false;
@@ -367,6 +368,7 @@ async function confirmarEliminar(container, id, puedeEditar, puedeEliminar) {
       cerrar();
       _clientes = _clientes.filter(x => x._id !== id);
       renderClientes(container, puedeEditar, puedeEliminar);
+      api.invalidatePrefix('/clientes');
     } else {
       window.showToast(res.data?.error || 'Error al eliminar', 'error');
     }

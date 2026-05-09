@@ -145,3 +145,20 @@ export async function init(container, user) {
     `).join('');
   }
 }
+
+export async function refresh(container) {
+  const result = await api.checkForUpdates('/dashboard');
+  if (!result.ok) return;
+
+  const d = result.data;
+
+  // Actualizar solo los valores numéricos sin re-renderizar todo
+  const ventasHoy = d.total_ventas_dia ?? d.ventas_hoy ?? 0;
+  const ingresosHoy = d.ingresos_dia ?? d.ingresos_hoy ?? 0;
+  const stockBajo = d.stock_bajo ?? [];
+
+  const statValues = container.querySelectorAll('.stat-value');
+  if (statValues[0]) statValues[0].textContent = ventasHoy;
+  if (statValues[1]) statValues[1].textContent = `S/ ${Number(ingresosHoy).toLocaleString('es-PE', { minimumFractionDigits: 2 })}`;
+  if (statValues[2]) statValues[2].textContent = stockBajo.length;
+}

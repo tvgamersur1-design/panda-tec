@@ -860,6 +860,7 @@ function confirmarAnulacion(container, ventaId, puedeAnular) {
       cerrar();
       api.invalidatePrefix('/productos');
       api.invalidatePrefix('/dashboard');
+      api.invalidatePrefix('/ventas');
       const idx = _historialVentas.findIndex(v => v._id === ventaId);
       if (idx !== -1) {
         _historialVentas[idx] = { ..._historialVentas[idx], estado: 'anulada' };

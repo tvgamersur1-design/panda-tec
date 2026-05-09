@@ -263,6 +263,7 @@ function abrirModalPedido(container, puedeEditar) {
       const nuevoPedido = res.data.pedido || res.data;
       _pedidos.unshift(nuevoPedido);
       renderPedidosTbody(container, puedeEditar);
+      api.invalidatePrefix('/pedidos');
     } else {
       window.showToast(res.data?.error || 'Error al crear el pedido', 'error');
       btn.disabled = false;
@@ -417,6 +418,7 @@ function abrirModalProveedor(container, proveedor = null, puedeEditar) {
       }
       cerrar();
       renderProvTbody(container, puedeEditar);
+      api.invalidatePrefix('/proveedores');
     } else {
       window.showToast(res.data?.error || 'Error al guardar', 'error');
     }

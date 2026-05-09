@@ -211,14 +211,28 @@
     const contentArea = document.getElementById('contentArea');
     const TITLES = { dashboard:'Dashboard', ventas:'Nueva Venta', productos:'Productos', categorias:'Categorías', clientes:'Clientes', pedidos:'Pedidos', reportes:'Reportes', usuarios:'Usuarios', configuracion:'Configuración' };
 
+    let _currentModule = null;
+
     async function loadModule(name) {
       navItems.forEach(i => { i.classList.toggle('active', i.dataset.module === name); });
       topbarTitle.textContent = TITLES[name] || name;
       closeSidebar();
+
+      // Detener polling del módulo anterior
+      api.stopPolling();
+      _currentModule = name;
+
       contentArea.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;min-height:300px;color:var(--color-text-muted);gap:0.75rem;"><i class="fas fa-spinner fa-spin" style="font-size:2rem;"></i><p>Cargando ${TITLES[name]}…</p></div>`;
       try {
         const mod = await import(`./js/modules/${name}.js`);
         if (mod.init) await mod.init(contentArea, user);
+
+        // Iniciar polling si el módulo exporta una función refresh
+        if (mod.refresh) {
+          api.startPolling(() => {
+            if (_currentModule === name) mod.refresh(contentArea, user);
+          }, 30000);
+        }
       } catch (e) {
         contentArea.innerHTML = `<div style="padding:2rem;color:var(--color-text-muted);text-align:center;"><i class="fas fa-tools" style="font-size:2rem;margin-bottom:0.75rem;display:block;"></i><p>Módulo <strong>${TITLES[name]}</strong> en construcción.</p></div>`;
       }

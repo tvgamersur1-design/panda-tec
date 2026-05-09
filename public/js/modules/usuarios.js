@@ -164,9 +164,9 @@ function abrirModal(container, usuario = null, user) {
               </div>
             </div>
             ${!esEdicion ? `
-              <div class="form-group">
-                <label for="fClave">Contraseña *</label>
-                <input id="fClave" name="clave" type="password" required minlength="6" />
+              <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:0.75rem;font-size:0.8125rem;color:#1E40AF;">
+                <i class="fas fa-info-circle" style="margin-right:0.375rem;"></i>
+                Se generará una contraseña temporal y se enviará al correo del usuario.
               </div>
             ` : ''}
             <div class="form-group">
@@ -202,9 +202,9 @@ function abrirModal(container, usuario = null, user) {
 
     const res = esEdicion ? await api.put(`/usuarios/${usuario._id}`, body) : await api.post('/usuarios', body);
     if (res.ok) {
-      window.showToast(esEdicion ? 'Usuario actualizado' : 'Usuario creado correctamente', 'success');
+      window.showToast(esEdicion ? 'Usuario actualizado' : 'Usuario creado. Credenciales enviadas por email.', 'success');
       cerrar();
-      const usuarioData = res.data.usuario || res.data;
+      const usuarioData = res.data._id ? res.data : (res.data.usuario || res.data);
       if (esEdicion) {
         const idx = _usuarios.findIndex(x => x._id === usuario._id);
         if (idx !== -1) _usuarios[idx] = usuarioData;
@@ -212,6 +212,7 @@ function abrirModal(container, usuario = null, user) {
         _usuarios.push(usuarioData);
       }
       renderUsuarios(container, user);
+      api.invalidatePrefix('/usuarios');
     } else {
       window.showToast(res.data?.error || 'Error al guardar', 'error');
       btn.disabled = false;
@@ -230,6 +231,7 @@ async function toggleEstado(container, id, user) {
     const idx = _usuarios.findIndex(x => x._id === id);
     if (idx !== -1) _usuarios[idx] = { ..._usuarios[idx], activo: nuevoEstado };
     renderUsuarios(container, user);
+    api.invalidatePrefix('/usuarios');
   } else {
     window.showToast(res.data?.error || 'Error al cambiar estado', 'error');
   }
@@ -266,6 +268,7 @@ async function confirmarEliminar(container, id, user) {
       cerrar();
       _usuarios = _usuarios.filter(x => x._id !== id);
       renderUsuarios(container, user);
+      api.invalidatePrefix('/usuarios');
     } else {
       window.showToast(res.data?.error || 'Error al eliminar', 'error');
     }

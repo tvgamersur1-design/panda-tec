@@ -5,6 +5,6 @@ const roles = require('../middlewares/roles');
 const dashboardController = require('../controllers/dashboardController');
 
 // GET /api/dashboard — métricas del día
-router.get('/', auth, roles(['admin', 'vendedor']), dashboardController.obtener);
+router.get('/', auth, roles(['admin', 'vendedor', 'almacen']), dashboardController.obtener);
 
 module.exports = router;

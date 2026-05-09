@@ -22,6 +22,7 @@ exports.publica = async (req, res) => {
       correo: config.correo || '',
       terminos: config.terminos || '',
       mensaje_ticket: config.mensaje_ticket || '¡Gracias por su compra!',
+      google_client_id: process.env.GOOGLE_CLIENT_ID || '',
     });
   } catch (error) {
     console.error('Error al obtener configuración pública:', error);

@@ -468,7 +468,17 @@ function abrirModal(container, producto = null) {
     if (res.ok) {
       window.showToast(esEdicion ? 'Producto actualizado correctamente' : 'Producto creado correctamente', 'success');
       cerrar();
-      cargarProductos(container, true);
+      const productoData = res.data.producto || res.data;
+      if (esEdicion) {
+        const idx = _productos.findIndex(p => p._id === producto._id);
+        if (idx !== -1) _productos[idx] = productoData;
+      } else {
+        _productos.push(productoData);
+        _totalProductos++;
+      }
+      renderTabla(container, true);
+      api.invalidatePrefix('/productos');
+      api.invalidatePrefix('/dashboard');
     } else {
       window.showToast(res.data?.error || 'Error al guardar el producto', 'error');
       btn.disabled = false;
@@ -508,9 +518,34 @@ async function confirmarEliminar(container, id) {
     if (res.ok) {
       window.showToast('Producto eliminado', 'success');
       cerrar();
-      cargarProductos(container, true);
+      _productos = _productos.filter(p => p._id !== id);
+      _totalProductos--;
+      renderTabla(container, true);
+      api.invalidatePrefix('/productos');
+      api.invalidatePrefix('/dashboard');
     } else {
       window.showToast(res.data?.error || 'Error al eliminar', 'error');
     }
   });
+}
+
+export async function refresh(container) {
+  const puedeEditar = true;
+  let url = `/productos?page=${_paginaActual}&limit=${_LIMIT}`;
+  if (_filtroSearch) url += `&search=${encodeURIComponent(_filtroSearch)}`;
+  if (_filtroCategoria) url += `&categoria=${_filtroCategoria}`;
+
+  api.invalidate(url);
+  const res = await api.get(url);
+  if (res.ok) {
+    const nuevos = res.data.productos || [];
+    // Solo actualizar si hay cambios reales
+    if (JSON.stringify(nuevos.map(p => p._id + p.stock_actual)) !== JSON.stringify(_productos.map(p => p._id + p.stock_actual))) {
+      _productos = nuevos;
+      _totalProductos = res.data.total || 0;
+      _totalPaginas = res.data.totalPages || 1;
+      renderTabla(container, puedeEditar);
+      renderPaginador(container, puedeEditar);
+    }
+  }
 }
