@@ -10,6 +10,7 @@ function auth(req, res, next) {
 
   // Verificar que el header exista y tenga el formato correcto
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    console.log(`⚠️ AUTH FAIL [${req.method} ${req.originalUrl}] — Header: ${authHeader || '(vacío)'}`);
     return res.status(401).json({ error: 'Token no proporcionado' });
   }
 
