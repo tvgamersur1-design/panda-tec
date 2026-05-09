@@ -43,6 +43,8 @@ export async function init(container, user) {
       .prod-result-item:hover { background:#F8FAFC; border-color:#BFDBFE; }
       .prod-result-item.sin-stock { opacity:0.5; cursor:not-allowed; background:#FAFAFA; }
       .prod-result-item.sin-stock:hover { background:#FAFAFA; border-color:#E2E8F0; }
+      .prod-thumb { width:40px; height:40px; object-fit:cover; border-radius:8px; background:#F1F5F9; flex-shrink:0; }
+      .prod-thumb-placeholder { width:40px; height:40px; border-radius:8px; background:#F1F5F9; display:flex; align-items:center; justify-content:center; color:#94A3B8; font-size:1.125rem; flex-shrink:0; }
       .btn-agregar { padding:0.35rem 0.75rem; background:#2563EB; color:#fff; border:none; border-radius:6px; font-size:0.8125rem; font-weight:600; cursor:pointer; }
       .btn-agregar:disabled { background:#94A3B8; cursor:not-allowed; }
       .carrito-items { display:flex; flex-direction:column; gap:0.5rem; max-height:280px; overflow-y:auto; }
@@ -335,8 +337,14 @@ async function buscarProductos(container, q, catId) {
     const sinStock = p.stock_actual === 0;
     const stockBajo = p.stock_actual > 0 && p.stock_actual <= (p.stock_minimo || 5);
     
+    // Imagen del producto
+    const imgHtml = p.imagen
+      ? `<img src="${p.imagen}" alt="${p.nombre}" class="prod-thumb" loading="lazy" data-src="${p.imagen}" data-nombre="${p.nombre}" style="cursor:zoom-in;" />`
+      : `<div class="prod-thumb-placeholder"><i class="fas fa-mobile-alt"></i></div>`;
+    
     return `
       <div class="prod-result-item${sinStock ? ' sin-stock' : ''}" data-id="${p._id}">
+        ${imgHtml}
         <div style="flex:1;min-width:0;">
           <div style="font-weight:500;font-size:0.875rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.nombre}</div>
           <div style="font-size:0.75rem;color:#64748B;display:flex;align-items:center;gap:0.5rem;margin-top:0.125rem;">
@@ -361,6 +369,14 @@ async function buscarProductos(container, q, catId) {
       </div>
     `;
   }
+
+  // Event listener para ampliar imagen
+  resultsEl.querySelectorAll('.prod-thumb').forEach(img => {
+    img.addEventListener('click', e => {
+      e.stopPropagation();
+      abrirLightbox(img.dataset.src, img.dataset.nombre);
+    });
+  });
 
   resultsEl.querySelectorAll('.btn-agregar:not([disabled])').forEach(btn => {
     btn.addEventListener('click', e => {
@@ -870,4 +886,41 @@ function confirmarAnulacion(container, ventaId, puedeAnular) {
       window.showToast(res.data?.error || 'Error al anular la venta', 'error');
     }
   });
+}
+
+// Función para abrir lightbox de imagen (ampliar foto del producto)
+function abrirLightbox(src, nombre) {
+  // Reutilizar si ya existe
+  let lb = document.getElementById('ventaLightbox');
+  if (!lb) {
+    lb = document.createElement('div');
+    lb.id = 'ventaLightbox';
+    lb.style.cssText = `
+      position:fixed;inset:0;z-index:9999;
+      background:rgba(0,0,0,0.85);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      padding:1.5rem;cursor:zoom-out;
+      animation:lbFadeIn 0.2s ease;
+    `;
+    lb.innerHTML = `
+      <style>
+        @keyframes lbFadeIn { from{opacity:0;transform:scale(0.96)} to{opacity:1;transform:scale(1)} }
+      </style>
+      <button id="lbClose" style="position:absolute;top:1rem;right:1rem;background:rgba(255,255,255,0.1);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:1.25rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+        <i class="fas fa-times"></i>
+      </button>
+      <img id="lbImg" style="max-width:90vw;max-height:80vh;border-radius:10px;object-fit:contain;box-shadow:0 8px 40px rgba(0,0,0,0.5);" />
+      <p id="lbNombre" style="color:rgba(255,255,255,0.75);margin-top:1rem;font-size:0.9rem;text-align:center;"></p>
+    `;
+    document.body.appendChild(lb);
+
+    const cerrar = () => lb.remove();
+    lb.addEventListener('click', e => { if (e.target === lb) cerrar(); });
+    lb.querySelector('#lbClose').addEventListener('click', cerrar);
+    document.addEventListener('keydown', function esc(e) {
+      if (e.key === 'Escape') { cerrar(); document.removeEventListener('keydown', esc); }
+    });
+  }
+  lb.querySelector('#lbImg').src = src;
+  lb.querySelector('#lbNombre').textContent = nombre;
 }
