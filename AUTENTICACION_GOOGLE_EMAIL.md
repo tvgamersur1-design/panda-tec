@@ -155,6 +155,29 @@ codigo_expiracion: Date     // Cuándo expira el código (15 min)
 - El endpoint `/api/auth/recuperar` **no revela** si el correo existe o no
 - Los tokens de Google se **verifican contra la API de Google** (no se confían ciegamente)
 - La contraseña de aplicación de Gmail **no es** la contraseña normal de la cuenta
+- **Timeouts configurados**: 10s para conexión, 30s para envío (evita que se quede colgado)
+
+---
+
+## ⚠️ Problemas Comunes
+
+### Email se queda cargando en producción
+
+Si funciona en local pero no en producción, revisa:
+
+1. **Variables de entorno**: `GMAIL_USER` y `GMAIL_APP_PASSWORD` configuradas en producción
+2. **Firewall**: El servidor debe permitir conexiones salientes al puerto 587 (SMTP)
+3. **CORS**: `ALLOWED_ORIGINS` debe incluir tu dominio de producción
+4. **Logs del servidor**: Busca mensajes de error al iniciar
+
+**Ver guía completa**: [CONFIGURACION_PRODUCCION.md](./CONFIGURACION_PRODUCCION.md)
+
+### Gmail SMTP bloqueado por el hosting
+
+Algunos proveedores bloquean Gmail SMTP. Alternativas:
+- **SendGrid** (100 emails/día gratis)
+- **Mailgun** (5,000 emails/mes gratis)
+- **Resend** (3,000 emails/mes gratis)
 
 ---
 

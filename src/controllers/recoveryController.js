@@ -32,8 +32,26 @@ exports.solicitarCodigo = async (req, res) => {
     usuario.codigo_expiracion = expiracion;
     await usuario.save();
 
-    // Enviar email
-    await enviarCodigoRecuperacion(correo, codigo, usuario.nombre_completo);
+    // Enviar email con timeout
+    try {
+      await Promise.race([
+        enviarCodigoRecuperacion(correo, codigo, usuario.nombre_completo),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout al enviar email')), 30000)
+        )
+      ]);
+      console.log(`✓ Código enviado a ${correo}`);
+    } catch (emailError) {
+      console.error('Error al enviar email:', emailError.message);
+      // Revertir el código guardado si falla el envío
+      usuario.codigo_recuperacion = null;
+      usuario.codigo_expiracion = null;
+      await usuario.save();
+      
+      return res.status(503).json({ 
+        error: 'No se pudo enviar el email. Verifica tu conexión o intenta más tarde.' 
+      });
+    }
 
     res.json({ mensaje: 'Si el correo está registrado, recibirás un código de recuperación.' });
   } catch (error) {

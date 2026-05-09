@@ -11,7 +11,31 @@ const transporter = nodemailer.createTransport({
     user: process.env.GMAIL_USER,
     pass: process.env.GMAIL_APP_PASSWORD,
   },
+  // Configuración adicional para producción
+  pool: true, // Usar pool de conexiones
+  maxConnections: 5,
+  maxMessages: 100,
+  rateDelta: 1000, // 1 segundo entre emails
+  rateLimit: 5, // Máximo 5 emails por segundo
+  // Timeouts para evitar que se quede colgado
+  connectionTimeout: 10000, // 10 segundos para conectar
+  greetingTimeout: 10000, // 10 segundos para el saludo SMTP
+  socketTimeout: 30000, // 30 segundos para operaciones
 });
+
+/**
+ * Verifica la conexión con el servidor SMTP
+ */
+async function verificarConexion() {
+  try {
+    await transporter.verify();
+    console.log('✓ Servidor SMTP listo para enviar emails');
+    return true;
+  } catch (error) {
+    console.error('✗ Error al conectar con el servidor SMTP:', error.message);
+    return false;
+  }
+}
 
 /**
  * Envía un correo con código de recuperación de contraseña.
@@ -41,7 +65,14 @@ async function enviarCodigoRecuperacion(destinatario, codigo, nombreUsuario) {
     `,
   };
 
-  return transporter.sendMail(mailOptions);
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log('✓ Email enviado:', info.messageId);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('✗ Error al enviar email:', error.message);
+    throw error;
+  }
 }
 
-module.exports = { transporter, enviarCodigoRecuperacion };
+module.exports = { transporter, enviarCodigoRecuperacion, verificarConexion };
