@@ -1,6 +1,6 @@
 const crypto = require('crypto');
 const Usuario = require('../models/Usuario');
-const { transporter } = require('../config/mailer');
+const { enviarEmail } = require('../config/mailer');
 
 /**
  * GET /api/usuarios
@@ -49,12 +49,14 @@ exports.crear = async (req, res) => {
     });
 
     // Enviar credenciales por email
+    let emailEnviado = false;
+    let errorEmail = null;
+
     try {
-      await transporter.sendMail({
-        from: `"Panta Tec" <${process.env.GMAIL_USER}>`,
-        to: correo,
-        subject: 'Tu cuenta ha sido creada — Panta Tec',
-        html: `
+      await enviarEmail(
+        correo,
+        'Tu cuenta ha sido creada — Panta Tec',
+        `
           <div style="font-family:'Inter',Arial,sans-serif;max-width:480px;margin:0 auto;padding:2rem;">
             <div style="text-align:center;margin-bottom:1.5rem;">
               <h1 style="font-size:1.5rem;color:#0a0a0a;margin:0;">Panta Tec</h1>
@@ -71,18 +73,32 @@ exports.crear = async (req, res) => {
             </div>
             <p style="color:#CBD5E1;font-size:0.75rem;text-align:center;margin-top:1.5rem;">© ${new Date().getFullYear()} Panta Tec</p>
           </div>
-        `,
-      });
+        `
+      );
+      emailEnviado = true;
+      console.log(`✓ Credenciales enviadas a ${correo} (Usuario: ${nombre_completo})`);
     } catch (emailError) {
-      console.error('Error al enviar email de bienvenida:', emailError.message);
+      console.error('❌ Error al enviar email de bienvenida:', emailError.message);
+      errorEmail = emailError.message;
       // No fallar la creación si el email no se envía
     }
 
-    // Retornar sin clave
+    // Retornar sin clave (excepto si el email falló)
     const resultado = nuevoUsuario.toObject();
     delete resultado.clave;
 
-    res.status(201).json(resultado);
+    // Si el email no se envió, incluir la contraseña temporal en la respuesta
+    // para que el admin pueda dársela manualmente al usuario
+    if (!emailEnviado) {
+      resultado.clave_temporal = claveTemporal;
+      resultado.advertencia = 'No se pudo enviar el email. Proporciona estas credenciales manualmente al usuario.';
+    }
+
+    res.status(201).json({
+      ...resultado,
+      email_enviado: emailEnviado,
+      ...(errorEmail && { error_email: errorEmail })
+    });
   } catch (error) {
     console.error('Error al crear usuario:', error);
     res.status(500).json({ error: 'Error al crear usuario' });

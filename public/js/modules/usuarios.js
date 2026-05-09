@@ -202,9 +202,23 @@ function abrirModal(container, usuario = null, user) {
 
     const res = esEdicion ? await api.put(`/usuarios/${usuario._id}`, body) : await api.post('/usuarios', body);
     if (res.ok) {
-      window.showToast(esEdicion ? 'Usuario actualizado' : 'Usuario creado. Credenciales enviadas por email.', 'success');
-      cerrar();
       const usuarioData = res.data._id ? res.data : (res.data.usuario || res.data);
+      
+      // Verificar si el email se envió correctamente
+      if (!esEdicion && usuarioData.email_enviado === false && usuarioData.clave_temporal) {
+        // Mostrar modal con la contraseña temporal
+        cerrar();
+        mostrarCredencialesManuales(container, usuarioData, user);
+      } else {
+        const mensaje = esEdicion 
+          ? 'Usuario actualizado' 
+          : usuarioData.email_enviado 
+            ? 'Usuario creado. Credenciales enviadas por email.' 
+            : 'Usuario creado correctamente.';
+        window.showToast(mensaje, 'success');
+        cerrar();
+      }
+      
       if (esEdicion) {
         const idx = _usuarios.findIndex(x => x._id === usuario._id);
         if (idx !== -1) _usuarios[idx] = usuarioData;
@@ -272,5 +286,72 @@ async function confirmarEliminar(container, id, user) {
     } else {
       window.showToast(res.data?.error || 'Error al eliminar', 'error');
     }
+  });
+}
+
+function mostrarCredencialesManuales(container, usuarioData, user) {
+  const modalContainer = container.querySelector('#modalContainer');
+  modalContainer.innerHTML = `
+    <div class="modal-overlay" id="credModal" role="dialog" aria-modal="true">
+      <div class="modal" style="max-width:500px;">
+        <div class="modal-header" style="background:#FEF3C7;border-bottom-color:#FDE68A;">
+          <h2><i class="fas fa-exclamation-triangle" style="color:#D97706;margin-right:0.5rem;"></i>Email no enviado</h2>
+          <button class="btn-close" id="btnCerrarCred"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+          <div style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:1rem;margin-bottom:1rem;">
+            <p style="margin:0;font-size:0.875rem;color:#92400E;">
+              <strong>⚠️ No se pudo enviar el email automáticamente.</strong><br>
+              Proporciona estas credenciales manualmente al usuario.
+            </p>
+          </div>
+          <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:1rem;">
+            <p style="margin:0 0 0.75rem;font-weight:600;color:#1E293B;">Credenciales de acceso:</p>
+            <div style="display:flex;flex-direction:column;gap:0.5rem;">
+              <div>
+                <span style="font-size:0.75rem;color:#64748B;text-transform:uppercase;font-weight:600;">Usuario:</span>
+                <div style="background:#fff;border:1px solid #E2E8F0;border-radius:6px;padding:0.5rem;margin-top:0.25rem;font-family:monospace;font-weight:600;color:#0F172A;">
+                  ${usuarioData.usuario}
+                </div>
+              </div>
+              <div>
+                <span style="font-size:0.75rem;color:#64748B;text-transform:uppercase;font-weight:600;">Contraseña temporal:</span>
+                <div style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:6px;padding:0.5rem;margin-top:0.25rem;font-family:monospace;font-weight:600;color:#D97706;">
+                  ${usuarioData.clave_temporal}
+                </div>
+              </div>
+            </div>
+          </div>
+          ${usuarioData.error_email ? `
+            <div style="margin-top:1rem;font-size:0.8125rem;color:#64748B;">
+              <strong>Error:</strong> ${usuarioData.error_email}
+            </div>
+          ` : ''}
+        </div>
+        <div class="modal-footer">
+          <button class="btn-primary" id="btnCopiar" style="flex:1;">
+            <i class="fas fa-copy"></i> Copiar credenciales
+          </button>
+          <button class="btn-secondary" id="btnCerrarCredBtn">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  const cerrar = () => { 
+    modalContainer.innerHTML = ''; 
+    window.showToast('Usuario creado correctamente', 'success');
+  };
+  
+  modalContainer.querySelector('#btnCerrarCred').addEventListener('click', cerrar);
+  modalContainer.querySelector('#btnCerrarCredBtn').addEventListener('click', cerrar);
+  
+  modalContainer.querySelector('#btnCopiar').addEventListener('click', () => {
+    const texto = `Usuario: ${usuarioData.usuario}\nContraseña temporal: ${usuarioData.clave_temporal}`;
+    navigator.clipboard.writeText(texto).then(() => {
+      window.showToast('Credenciales copiadas al portapapeles', 'success');
+    }).catch(() => {
+      window.showToast('No se pudo copiar. Copia manualmente.', 'error');
+    });
   });
 }
