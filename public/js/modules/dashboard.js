@@ -5,6 +5,73 @@
 
 import { api } from '../api.js';
 
+// Variables para paginación de stock bajo
+let stockBajoPaginaActual = 1;
+const ITEMS_POR_PAGINA = 5;
+
+/**
+ * Renderiza la lista de stock bajo con paginación
+ */
+function renderStockBajoPaginado(stockEl, stockBajo) {
+  const totalPaginas = Math.ceil(stockBajo.length / ITEMS_POR_PAGINA);
+  const inicio = (stockBajoPaginaActual - 1) * ITEMS_POR_PAGINA;
+  const fin = inicio + ITEMS_POR_PAGINA;
+  const productosPagina = stockBajo.slice(inicio, fin);
+
+  const itemsHTML = productosPagina.map(p => {
+    const agotado = p.stock_actual === 0;
+    return `
+      <div class="panel-row">
+        <div>
+          <div style="font-weight:500;">${p.nombre}</div>
+          <div style="font-size:0.75rem;color:#64748B;">${p.categoria || p.categoria_id?.nombre || '—'}</div>
+        </div>
+        <span class="badge ${agotado ? 'badge-danger' : 'badge-warning'}">
+          ${agotado ? '<i class="fas fa-times-circle"></i> Agotado' : `<i class="fas fa-exclamation-triangle"></i> Stock: ${p.stock_actual}`}
+        </span>
+      </div>
+    `;
+  }).join('');
+
+  const paginacionHTML = totalPaginas > 1 ? `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1.25rem;border-top:1px solid #E2E8F0;background:#F8FAFC;">
+      <button id="btnStockPrev" ${stockBajoPaginaActual === 1 ? 'disabled' : ''} 
+        style="padding:0.4rem 0.75rem;border:1px solid #CBD5E1;background:#fff;border-radius:6px;cursor:pointer;font-size:0.8125rem;color:#475569;${stockBajoPaginaActual === 1 ? 'opacity:0.5;cursor:not-allowed;' : ''}">
+        <i class="fas fa-chevron-left"></i> Anterior
+      </button>
+      <span style="font-size:0.8125rem;color:#64748B;font-weight:500;">
+        Página ${stockBajoPaginaActual} de ${totalPaginas} <span style="color:#94A3B8;">(${stockBajo.length} productos)</span>
+      </span>
+      <button id="btnStockNext" ${stockBajoPaginaActual === totalPaginas ? 'disabled' : ''} 
+        style="padding:0.4rem 0.75rem;border:1px solid #CBD5E1;background:#fff;border-radius:6px;cursor:pointer;font-size:0.8125rem;color:#475569;${stockBajoPaginaActual === totalPaginas ? 'opacity:0.5;cursor:not-allowed;' : ''}">
+        Siguiente <i class="fas fa-chevron-right"></i>
+      </button>
+    </div>
+  ` : '';
+
+  stockEl.innerHTML = itemsHTML + paginacionHTML;
+
+  // Event listeners para botones de paginación
+  if (totalPaginas > 1) {
+    const btnPrev = stockEl.querySelector('#btnStockPrev');
+    const btnNext = stockEl.querySelector('#btnStockNext');
+
+    if (btnPrev && stockBajoPaginaActual > 1) {
+      btnPrev.addEventListener('click', () => {
+        stockBajoPaginaActual--;
+        renderStockBajoPaginado(stockEl, stockBajo);
+      });
+    }
+
+    if (btnNext && stockBajoPaginaActual < totalPaginas) {
+      btnNext.addEventListener('click', () => {
+        stockBajoPaginaActual++;
+        renderStockBajoPaginado(stockEl, stockBajo);
+      });
+    }
+  }
+}
+
 export async function init(container, user) {
   // Skeleton mientras carga
   container.innerHTML = `
@@ -64,6 +131,7 @@ export async function init(container, user) {
       .empty-state { text-align: center; padding: 2rem; color: #64748B; }
       .empty-state i { font-size: 2rem; margin-bottom: 0.75rem; display: block; opacity: 0.4; }
       .metodo-badge { background: #EFF6FF; color: #2563EB; padding: 0.15rem 0.5rem; border-radius: 6px; font-size: 0.75rem; font-weight: 500; text-transform: capitalize; }
+      button:not(:disabled):hover { background: #F1F5F9 !important; }
     </style>
 
     <!-- Stat cards -->
@@ -105,25 +173,12 @@ export async function init(container, user) {
     </div>
   `;
 
-  // Renderizar stock bajo
+  // Renderizar stock bajo con paginación
   const stockEl = container.querySelector('#stockBajoList');
   if (stockBajo.length === 0) {
     stockEl.innerHTML = `<div class="empty-state"><i class="fas fa-check-circle" style="color:#16A34A;"></i><p>Sin alertas de stock</p></div>`;
   } else {
-    stockEl.innerHTML = stockBajo.map(p => {
-      const agotado = p.stock_actual === 0;
-      return `
-        <div class="panel-row">
-          <div>
-            <div style="font-weight:500;">${p.nombre}</div>
-            <div style="font-size:0.75rem;color:#64748B;">${p.categoria || p.categoria_id?.nombre || '—'}</div>
-          </div>
-          <span class="badge ${agotado ? 'badge-danger' : 'badge-warning'}">
-            ${agotado ? '<i class="fas fa-times-circle"></i> Agotado' : `<i class="fas fa-exclamation-triangle"></i> Stock: ${p.stock_actual}`}
-          </span>
-        </div>
-      `;
-    }).join('');
+    renderStockBajoPaginado(stockEl, stockBajo);
   }
 
   // Renderizar últimas ventas
@@ -161,4 +216,10 @@ export async function refresh(container) {
   if (statValues[0]) statValues[0].textContent = ventasHoy;
   if (statValues[1]) statValues[1].textContent = `S/ ${Number(ingresosHoy).toLocaleString('es-PE', { minimumFractionDigits: 2 })}`;
   if (statValues[2]) statValues[2].textContent = stockBajo.length;
+
+  // Actualizar lista de stock bajo con paginación
+  const stockEl = container.querySelector('#stockBajoList');
+  if (stockEl && stockBajo.length > 0) {
+    renderStockBajoPaginado(stockEl, stockBajo);
+  }
 }

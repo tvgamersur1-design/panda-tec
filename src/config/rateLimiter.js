@@ -18,12 +18,13 @@ const loginRateLimiter = rateLimit({
 
 /**
  * Rate limiter para recuperación de contraseña.
- * Más estricto: máximo 3 solicitudes por IP en 15 minutos.
- * Previene abuso del sistema de emails y enumeración de usuarios.
+ * Para redes locales con múltiples usuarios, se aumenta el límite por IP
+ * ya que todos comparten la misma IP pública.
+ * El rate limiting por correo (en el controlador) previene abuso individual.
  */
 const recoveryRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 3, // Solo 3 intentos
+  max: 10, // 10 intentos por IP (suficiente para varios empleados)
   standardHeaders: true,
   legacyHeaders: false,
   handler: (req, res) => {
@@ -33,4 +34,21 @@ const recoveryRateLimiter = rateLimit({
   },
 });
 
-module.exports = { loginRateLimiter, recoveryRateLimiter };
+/**
+ * Rate limiter para verificación de código.
+ * Máximo 5 intentos por IP en 15 minutos.
+ * Previene ataques de fuerza bruta contra códigos de recuperación.
+ */
+const verifyCodeRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 5, // Solo 5 intentos
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    return res.status(429).json({
+      error: 'Demasiados intentos de verificación. Intenta de nuevo en 15 minutos',
+    });
+  },
+});
+
+module.exports = { loginRateLimiter, recoveryRateLimiter, verifyCodeRateLimiter };

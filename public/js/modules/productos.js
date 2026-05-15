@@ -305,6 +305,11 @@ function abrirModal(container, producto = null) {
 
   modalContainer.innerHTML = `
     <div class="modal-overlay" id="prodModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <!-- Panda mascota al lado izquierdo del modal -->
+      <div class="panda-mascota-container">
+        <img src="/img/panda-lado-izquierdo.svg" alt="Panda mascota" class="panda-mascota-img" />
+      </div>
+      
       <div class="modal">
         <div class="modal-header">
           <h2 id="modalTitle">${esEdicion ? 'Editar Producto' : 'Nuevo Producto'}</h2>
@@ -378,6 +383,7 @@ function abrirModal(container, producto = null) {
             </button>
           </div>
         </form>
+        </div>
       </div>
     </div>
   `;

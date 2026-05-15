@@ -28,6 +28,12 @@
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       min-height: 100vh;
       display: flex;
+      animation: fadeIn 0.3s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
 
     /* ── Panel izquierdo (negro / marca) ── */
@@ -215,6 +221,180 @@
       font-size: 0.8125rem; color: var(--gray-400);
     }
 
+    /* ── Modal de cookies de terceros ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      animation: fadeIn 0.2s ease;
+    }
+    .modal-overlay.visible { display: flex; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-content {
+      background: var(--white);
+      border-radius: 12px;
+      max-width: 500px;
+      width: 100%;
+      padding: 2rem;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+      animation: slideUp 0.3s ease;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .modal-icon {
+      width: 48px; height: 48px;
+      background: #fef2f2;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--danger);
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+
+    .modal-header h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--black);
+      margin: 0;
+    }
+
+    .modal-body {
+      color: var(--gray-600);
+      font-size: 0.9375rem;
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-body p {
+      margin-bottom: 1rem;
+    }
+
+    .modal-body strong {
+      color: var(--black);
+      font-weight: 600;
+    }
+
+    .modal-steps {
+      background: var(--gray-50);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+    }
+
+    .modal-steps ol {
+      margin: 0;
+      padding-left: 1.25rem;
+    }
+
+    .modal-steps li {
+      margin-bottom: 0.5rem;
+      color: var(--gray-600);
+      font-size: 0.875rem;
+    }
+
+    .modal-steps li:last-child {
+      margin-bottom: 0;
+    }
+
+    .modal-browser-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .modal-browser-tab {
+      padding: 0.5rem 1rem;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-400);
+      transition: all 0.15s;
+    }
+
+    .modal-browser-tab:hover {
+      color: var(--black);
+    }
+
+    .modal-browser-tab.active {
+      color: var(--black);
+      border-bottom-color: var(--black);
+    }
+
+    .modal-browser-content {
+      display: none;
+    }
+
+    .modal-browser-content.active {
+      display: block;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+
+    .modal-btn {
+      flex: 1;
+      padding: 0.75rem;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      border: none;
+    }
+
+    .modal-btn-primary {
+      background: var(--black);
+      color: var(--white);
+    }
+
+    .modal-btn-primary:hover {
+      background: var(--black-2);
+    }
+
+    .modal-btn-secondary {
+      background: var(--gray-50);
+      color: var(--black);
+      border: 1.5px solid var(--gray-200);
+    }
+
+    .modal-btn-secondary:hover {
+      background: var(--gray-200);
+    }
+
     /* ── Responsive: una columna en móvil ── */
     @media (max-width: 768px) {
       body { flex-direction: column; }
@@ -304,6 +484,96 @@
     </div>
   </div>
 
+  <!-- Modal de confirmación de terceros -->
+  <div class="modal-overlay" id="confirmThirdPartyModal">
+    <div class="modal-content" style="max-width: 420px;">
+      <div class="modal-header">
+        <div class="modal-icon" style="background: #eff6ff; color: #2563eb;">
+          <i class="fas fa-shield-alt"></i>
+        </div>
+        <h3>Iniciar con proveedor externo</h3>
+      </div>
+      <div class="modal-body">
+        <p>Estás a punto de iniciar sesión usando <strong>Google</strong>, un proveedor de autenticación externo.</p>
+        <p style="font-size:0.875rem;color:var(--gray-400);margin-top:0.75rem;">
+          <i class="fas fa-info-circle"></i> Esto requiere que tu navegador permita <strong>cookies de terceros</strong> para verificar tu identidad de forma segura.
+        </p>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn modal-btn-secondary" id="cancelThirdParty">Cancelar</button>
+        <button class="modal-btn modal-btn-primary" id="allowThirdParty">
+          <i class="fas fa-check"></i> Permitir y continuar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de cookies de terceros -->
+  <div class="modal-overlay" id="cookieModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-icon">
+          <i class="fas fa-cookie-bite"></i>
+        </div>
+        <h3>Cookies de terceros bloqueadas</h3>
+      </div>
+      <div class="modal-body">
+        <p>Para iniciar sesión con Google, necesitas <strong>habilitar las cookies de terceros</strong> en tu navegador.</p>
+        
+        <div class="modal-browser-tabs">
+          <button class="modal-browser-tab active" data-browser="chrome">Chrome</button>
+          <button class="modal-browser-tab" data-browser="firefox">Firefox</button>
+          <button class="modal-browser-tab" data-browser="edge">Edge</button>
+        </div>
+
+        <div class="modal-browser-content active" data-browser-content="chrome">
+          <div class="modal-steps">
+            <ol>
+              <li>Haz clic en el <strong>icono de candado</strong> o información en la barra de direcciones</li>
+              <li>Selecciona <strong>"Configuración del sitio"</strong> o <strong>"Cookies"</strong></li>
+              <li>Busca <strong>"Inicio de sesión de terceros"</strong> o <strong>"Cookies de terceros"</strong></li>
+              <li>Activa el interruptor para <strong>permitir cookies</strong></li>
+              <li>Recarga la página y vuelve a intentar</li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="modal-browser-content" data-browser-content="firefox">
+          <div class="modal-steps">
+            <ol>
+              <li>Haz clic en el <strong>icono de escudo</strong> en la barra de direcciones</li>
+              <li>Selecciona <strong>"Desactivar protección en este sitio"</strong></li>
+              <li>O ve a <strong>Configuración → Privacidad y seguridad</strong></li>
+              <li>En "Cookies y datos del sitio", selecciona <strong>"Estándar"</strong></li>
+              <li>Recarga la página y vuelve a intentar</li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="modal-browser-content" data-browser-content="edge">
+          <div class="modal-steps">
+            <ol>
+              <li>Haz clic en el <strong>icono de candado</strong> en la barra de direcciones</li>
+              <li>Selecciona <strong>"Permisos para este sitio"</strong></li>
+              <li>Busca <strong>"Cookies"</strong> y cámbialo a <strong>"Permitir"</strong></li>
+              <li>O ve a <strong>Configuración → Cookies y permisos del sitio</strong></li>
+              <li>Recarga la página y vuelve a intentar</li>
+            </ol>
+          </div>
+        </div>
+
+        <p style="margin-top:1rem;font-size:0.875rem;color:var(--gray-400);">
+          <i class="fas fa-info-circle"></i> Esto es necesario para que Google pueda verificar tu identidad de forma segura.
+        </p>
+      </div>
+
+      <div class="modal-actions">
+        <button class="modal-btn modal-btn-secondary" id="closeModal">Entendido</button>
+        <button class="modal-btn modal-btn-primary" id="retryGoogle">Reintentar</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     document.getElementById('togglePassword').addEventListener('click', function() {
       const input = document.getElementById('clave');
@@ -312,6 +582,33 @@
       input.type     = show ? 'text' : 'password';
       icon.className = show ? 'fas fa-eye-slash' : 'fas fa-eye';
       this.setAttribute('aria-label', show ? 'Ocultar contraseña' : 'Mostrar contraseña');
+    });
+
+    // Modal de cookies - Tabs de navegadores
+    document.querySelectorAll('.modal-browser-tab').forEach(tab => {
+      tab.addEventListener('click', function() {
+        const browser = this.dataset.browser;
+        
+        // Actualizar tabs activos
+        document.querySelectorAll('.modal-browser-tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        
+        // Mostrar contenido correspondiente
+        document.querySelectorAll('.modal-browser-content').forEach(c => c.classList.remove('active'));
+        document.querySelector(`[data-browser-content="${browser}"]`).classList.add('active');
+      });
+    });
+
+    // Cerrar modal
+    document.getElementById('closeModal').addEventListener('click', () => {
+      document.getElementById('cookieModal').classList.remove('visible');
+    });
+
+    // Cerrar modal al hacer clic fuera
+    document.getElementById('cookieModal').addEventListener('click', (e) => {
+      if (e.target.id === 'cookieModal') {
+        document.getElementById('cookieModal').classList.remove('visible');
+      }
     });
   </script>
 
@@ -366,6 +663,16 @@
 
     // Google Sign-In
     document.getElementById('btnGoogle').addEventListener('click', async () => {
+      await handleGoogleSignIn();
+    });
+
+    // Reintentar Google Sign-In desde el modal
+    document.getElementById('retryGoogle').addEventListener('click', async () => {
+      document.getElementById('cookieModal').classList.remove('visible');
+      await handleGoogleSignIn();
+    });
+
+    async function handleGoogleSignIn() {
       try {
         // Load Google Identity Services library dynamically
         if (!window.google?.accounts) {
@@ -373,7 +680,7 @@
             const script = document.createElement('script');
             script.src = 'https://accounts.google.com/gsi/client';
             script.onload = resolve;
-            script.onerror = reject;
+            script.onerror = () => reject(new Error('Failed to load Google SDK'));
             document.head.appendChild(script);
           });
         }
@@ -409,12 +716,38 @@
           },
         });
 
-        google.accounts.id.prompt();
+        // Intentar mostrar el prompt de Google
+        google.accounts.id.prompt((notification) => {
+          // Si el prompt fue suprimido o bloqueado, mostrar modal de cookies
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            const reason = notification.getNotDisplayedReason() || notification.getSkippedReason();
+            
+            // Razones comunes cuando las cookies están bloqueadas:
+            // - 'suppressed_by_user' (usuario bloqueó)
+            // - 'opt_out_or_no_session' (sin sesión/cookies bloqueadas)
+            // - 'secure_http_required' (menos común)
+            if (reason === 'suppressed_by_user' || 
+                reason === 'opt_out_or_no_session' ||
+                reason === 'unregistered_origin') {
+              document.getElementById('cookieModal').classList.add('visible');
+            } else {
+              showError('No se pudo mostrar el inicio de sesión de Google. Verifica la configuración de tu navegador.');
+            }
+          }
+        });
       } catch (err) {
         console.error('Error Google Sign-In:', err);
-        showError('No se pudo conectar con Google. Intenta de nuevo.');
+        
+        // Si el error es por carga del SDK o cookies bloqueadas, mostrar modal
+        if (err.message?.includes('Failed to load') || 
+            err.message?.includes('cookies') ||
+            err.message?.includes('third-party')) {
+          document.getElementById('cookieModal').classList.add('visible');
+        } else {
+          showError('No se pudo conectar con Google. Intenta de nuevo.');
+        }
       }
-    });
+    }
   </script>
 </body>
 </html>

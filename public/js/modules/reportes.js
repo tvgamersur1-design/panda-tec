@@ -31,6 +31,12 @@ export async function init(container, user) {
       .metodo-badge { background:#EFF6FF; color:#2563EB; padding:0.15rem 0.5rem; border-radius:6px; font-size:0.75rem; font-weight:500; text-transform:capitalize; display:inline-block; }
       .empty-state { text-align:center; padding:2.5rem; color:#64748B; }
       .empty-state i { font-size:2rem; margin-bottom:0.75rem; display:block; opacity:0.35; }
+      .pagination { display:flex; align-items:center; justify-content:center; gap:0.5rem; margin-top:1.25rem; flex-wrap:wrap; }
+      .pagination button { padding:0.5rem 0.75rem; border:1px solid #E2E8F0; background:#fff; border-radius:6px; font-size:0.875rem; cursor:pointer; min-width:40px; }
+      .pagination button:hover:not(:disabled) { background:#F8FAFC; border-color:#2563EB; }
+      .pagination button:disabled { opacity:0.4; cursor:not-allowed; }
+      .pagination button.active { background:#2563EB; color:#fff; border-color:#2563EB; font-weight:600; }
+      .pagination-info { font-size:0.8125rem; color:#64748B; padding:0 0.5rem; }
     </style>
 
     <div class="tabs">
@@ -93,7 +99,10 @@ async function cargarVentasDia(content, fecha) {
   resultEl.innerHTML = `
     <div class="stat-row">
       <div class="stat-box"><div class="stat-box-label">Total ventas</div><div class="stat-box-value">${d.total_ventas ?? 0}</div></div>
-      <div class="stat-box"><div class="stat-box-label">Monto total</div><div class="stat-box-value" style="font-size:1.25rem;">S/ ${Number(d.monto_total ?? 0).toLocaleString('es-PE',{minimumFractionDigits:2})}</div></div>
+      <div class="stat-box"><div class="stat-box-label">Monto total</div><div class="stat-box-value" style="font-size:1.25rem;color:#2563EB;">S/ ${Number(d.monto_total ?? 0).toLocaleString('es-PE',{minimumFractionDigits:2})}</div></div>
+      <div class="stat-box"><div class="stat-box-label">Ganancia del día</div><div class="stat-box-value" style="font-size:1.25rem;color:#16A34A;">S/ ${Number(d.ganancia_dia ?? 0).toLocaleString('es-PE',{minimumFractionDigits:2})}</div></div>
+      <div class="stat-box"><div class="stat-box-label">Ticket promedio</div><div class="stat-box-value" style="font-size:1.25rem;color:#EA580C;">S/ ${Number(d.ticket_promedio ?? 0).toLocaleString('es-PE',{minimumFractionDigits:2})}</div></div>
+      <div class="stat-box"><div class="stat-box-label">Productos vendidos</div><div class="stat-box-value">${d.productos_vendidos ?? 0}</div></div>
     </div>
     <div style="font-weight:600;margin-bottom:0.75rem;font-size:0.9375rem;">Desglose por método de pago</div>
     ${Object.keys(metodos).length === 0 ? '<p style="color:#94A3B8;font-size:0.875rem;">Sin datos</p>' : `
@@ -147,7 +156,10 @@ async function cargarVentasMes(content, mes, anio) {
   resultEl.innerHTML = `
     <div class="stat-row">
       <div class="stat-box"><div class="stat-box-label">Total ventas</div><div class="stat-box-value">${d.total_ventas ?? 0}</div></div>
-      <div class="stat-box"><div class="stat-box-label">Monto total</div><div class="stat-box-value" style="font-size:1.25rem;">S/ ${Number(d.monto_total ?? 0).toLocaleString('es-PE',{minimumFractionDigits:2})}</div></div>
+      <div class="stat-box"><div class="stat-box-label">Monto total</div><div class="stat-box-value" style="font-size:1.25rem;color:#2563EB;">S/ ${Number(d.monto_total ?? 0).toLocaleString('es-PE',{minimumFractionDigits:2})}</div></div>
+      <div class="stat-box"><div class="stat-box-label">Ganancia del mes</div><div class="stat-box-value" style="font-size:1.25rem;color:#16A34A;">S/ ${Number(d.ganancia_mes ?? 0).toLocaleString('es-PE',{minimumFractionDigits:2})}</div></div>
+      <div class="stat-box"><div class="stat-box-label">Ticket promedio</div><div class="stat-box-value" style="font-size:1.25rem;color:#EA580C;">S/ ${Number(d.ticket_promedio ?? 0).toLocaleString('es-PE',{minimumFractionDigits:2})}</div></div>
+      <div class="stat-box"><div class="stat-box-label">Productos vendidos</div><div class="stat-box-value">${d.productos_vendidos ?? 0}</div></div>
     </div>
     ${desglose.length === 0 ? '<p style="color:#94A3B8;font-size:0.875rem;">Sin datos para este período</p>' : `
       <div style="font-weight:600;margin-bottom:0.75rem;font-size:0.9375rem;">Desglose diario</div>
@@ -178,6 +190,8 @@ function renderMasVendidos(content) {
       <div class="rep-filters">
         <label>Desde <input type="date" id="mvDesde" value="${desde30}" /></label>
         <label>Hasta <input type="date" id="mvHasta" value="${hasta}" /></label>
+        <label>Ordenar por <select id="mvOrderBy"><option value="cantidad">Cantidad vendida</option><option value="ingresos">Ingresos generados</option></select></label>
+        <label>Por página <select id="mvLimit"><option value="10">10</option><option value="20">20</option><option value="50">50</option></select></label>
         <button class="btn-primary" id="btnBuscarMV"><i class="fas fa-search"></i> Buscar</button>
       </div>
       <div id="resultMV"></div>
@@ -186,61 +200,97 @@ function renderMasVendidos(content) {
   content.querySelector('#btnBuscarMV').addEventListener('click', () => {
     const d = content.querySelector('#mvDesde').value;
     const h = content.querySelector('#mvHasta').value;
-    cargarMasVendidos(content, d, h);
+    const limit = content.querySelector('#mvLimit').value;
+    const orderBy = content.querySelector('#mvOrderBy').value;
+    cargarMasVendidos(content, d, h, 1, limit, orderBy);
   });
-  cargarMasVendidos(content, desde30, hasta);
+  cargarMasVendidos(content, desde30, hasta, 1, 10, 'cantidad');
 }
 
-async function cargarMasVendidos(content, desde, hasta) {
+async function cargarMasVendidos(content, desde, hasta, page = 1, limit = 10, orderBy = 'cantidad') {
   const resultEl = content.querySelector('#resultMV');
   resultEl.innerHTML = `<div style="text-align:center;padding:2rem;color:#94A3B8;"><i class="fas fa-spinner fa-spin"></i></div>`;
-  const res = await api.get(`/reportes/productos-mas-vendidos?desde=${desde}&hasta=${hasta}`);
+  const res = await api.get(`/reportes/productos-mas-vendidos?desde=${desde}&hasta=${hasta}&page=${page}&limit=${limit}&orderBy=${orderBy}`);
   if (!res.ok) { resultEl.innerHTML = `<p style="color:#DC2626;">Error al cargar el reporte.</p>`; return; }
-  const productos = res.data.productos || res.data || [];
+  const productos = res.data.productos || [];
+  const resumen = res.data.resumen || {};
+  const pagination = res.data.pagination || {};
+  
   if (productos.length === 0) {
     resultEl.innerHTML = `<div class="empty-state"><i class="fas fa-chart-bar"></i><p>Sin datos en el período seleccionado</p></div>`;
     return;
   }
+
+  const startNum = (page - 1) * limit;
+  const ordenLabel = orderBy === 'ingresos' ? 'ingresos' : 'cantidad';
+  
   resultEl.innerHTML = `
+    <div class="stat-row" style="margin-bottom:1.25rem;">
+      <div class="stat-box"><div class="stat-box-label">Total ingresos</div><div class="stat-box-value" style="font-size:1.25rem;color:#2563EB;">S/ ${Number(resumen.total_ingresos ?? 0).toLocaleString('es-PE',{minimumFractionDigits:2})}</div></div>
+      <div class="stat-box"><div class="stat-box-label">Ganancia total</div><div class="stat-box-value" style="font-size:1.25rem;color:#16A34A;">S/ ${Number(resumen.ganancia_total ?? 0).toLocaleString('es-PE',{minimumFractionDigits:2})}</div></div>
+      <div class="stat-box"><div class="stat-box-label">Unidades vendidas</div><div class="stat-box-value">${resumen.total_unidades ?? 0}</div></div>
+      <div class="stat-box"><div class="stat-box-label">Productos únicos</div><div class="stat-box-value">${resumen.productos_unicos ?? 0}</div></div>
+    </div>
+    <div style="font-weight:600;margin-bottom:0.75rem;font-size:0.9375rem;">Ordenado por: ${ordenLabel === 'ingresos' ? 'Ingresos generados' : 'Cantidad vendida'}</div>
     <div class="table-wrap">
-      <table>
-        <thead><tr><th>#</th><th>Producto</th><th>Unidades vendidas</th><th>Ingresos</th></tr></thead>
+      <table class="data-table">
+        <thead><tr><th>#</th><th>Producto</th><th>Unidades vendidas</th><th>Ingresos</th><th>Ganancia</th></tr></thead>
         <tbody>
-          ${productos.slice(0, 10).map((p, i) => `
-            <tr>
-              <td style="font-weight:700;color:#2563EB;">${i + 1}</td>
-              <td style="font-weight:500;">${p.nombre || p.producto || '—'}</td>
-              <td>${p.total_vendido ?? p.cantidad ?? 0}</td>
-              <td style="font-weight:600;">S/ ${Number(p.ingresos ?? p.total ?? 0).toLocaleString('es-PE',{minimumFractionDigits:2})}</td>
-            </tr>
-          `).join('')}
+          ${productos.map((p, i) => {
+            const ganancia = (p.ingresos ?? 0) - (p.costo_total ?? 0);
+            return `
+              <tr>
+                <td data-label="#" style="font-weight:700;color:#2563EB;">${startNum + i + 1}</td>
+                <td data-label="Producto" style="font-weight:500;">${p.nombre || p.producto || '—'}</td>
+                <td data-label="Unidades vendidas">${p.total_vendido ?? p.cantidad ?? 0}</td>
+                <td data-label="Ingresos" style="font-weight:600;">S/ ${Number(p.ingresos ?? p.total ?? 0).toLocaleString('es-PE',{minimumFractionDigits:2})}</td>
+                <td data-label="Ganancia" style="font-weight:600;color:#16A34A;">S/ ${Number(ganancia).toLocaleString('es-PE',{minimumFractionDigits:2})}</td>
+              </tr>
+            `;
+          }).join('')}
         </tbody>
       </table>
     </div>
+    ${renderPagination(pagination, (newPage) => cargarMasVendidos(content, desde, hasta, newPage, limit, orderBy))}
   `;
 }
 
 async function renderStockValorizado(content) {
   content.innerHTML = `
     <div class="rep-card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:0.75rem;">
         <h3 style="font-size:1rem;font-weight:600;">Stock Valorizado</h3>
-        <button class="btn-primary" id="btnRefreshStock"><i class="fas fa-sync"></i> Actualizar</button>
+        <div style="display:flex;gap:0.75rem;align-items:center;">
+          <label style="font-size:0.8125rem;font-weight:600;color:#374151;display:flex;align-items:center;gap:0.5rem;">
+            Por página <select id="stockLimit" style="padding:0.5rem 0.75rem;border:1px solid #E2E8F0;border-radius:8px;font-size:0.875rem;"><option value="20">20</option><option value="50">50</option><option value="100">100</option></select>
+          </label>
+          <button class="btn-primary" id="btnRefreshStock"><i class="fas fa-sync"></i> Actualizar</button>
+        </div>
       </div>
       <div id="resultStock"><div style="text-align:center;padding:2rem;color:#94A3B8;"><i class="fas fa-spinner fa-spin"></i></div></div>
     </div>
   `;
-  content.querySelector('#btnRefreshStock').addEventListener('click', () => cargarStockValorizado(content));
-  await cargarStockValorizado(content);
+  content.querySelector('#btnRefreshStock').addEventListener('click', () => {
+    const limit = content.querySelector('#stockLimit').value;
+    cargarStockValorizado(content, 1, limit);
+  });
+  content.querySelector('#stockLimit').addEventListener('change', () => {
+    const limit = content.querySelector('#stockLimit').value;
+    cargarStockValorizado(content, 1, limit);
+  });
+  await cargarStockValorizado(content, 1, 20);
 }
 
-async function cargarStockValorizado(content) {
+async function cargarStockValorizado(content, page = 1, limit = 20) {
   const resultEl = content.querySelector('#resultStock');
   resultEl.innerHTML = `<div style="text-align:center;padding:2rem;color:#94A3B8;"><i class="fas fa-spinner fa-spin"></i></div>`;
-  const res = await api.get('/reportes/stock-valorizado');
+  const res = await api.get(`/reportes/stock-valorizado?page=${page}&limit=${limit}`);
   if (!res.ok) { resultEl.innerHTML = `<p style="color:#DC2626;">Error al cargar el reporte.</p>`; return; }
-  const productos = res.data.productos || res.data || [];
-  const total = res.data.total_valorizado ?? productos.reduce((s, p) => s + (p.valor_total ?? 0), 0);
+  const productos = res.data.productos || [];
+  const totalGeneral = res.data.total_inventario_general ?? res.data.total_inventario ?? 0;
+  const totalPotencial = res.data.total_potencial_general ?? 0;
+  const gananciaPotencial = res.data.ganancia_potencial ?? 0;
+  const pagination = res.data.pagination || {};
 
   if (productos.length === 0) {
     resultEl.innerHTML = `<div class="empty-state"><i class="fas fa-boxes"></i><p>Sin productos en inventario</p></div>`;
@@ -249,29 +299,75 @@ async function cargarStockValorizado(content) {
 
   resultEl.innerHTML = `
     <div class="stat-row" style="margin-bottom:1.25rem;">
-      <div class="stat-box"><div class="stat-box-label">Total valorizado</div><div class="stat-box-value" style="font-size:1.25rem;color:#16A34A;">S/ ${Number(total).toLocaleString('es-PE',{minimumFractionDigits:2})}</div></div>
-      <div class="stat-box"><div class="stat-box-label">Productos</div><div class="stat-box-value">${productos.length}</div></div>
+      <div class="stat-box"><div class="stat-box-label">Total valorizado (Compra)</div><div class="stat-box-value" style="font-size:1.25rem;color:#16A34A;">S/ ${Number(totalGeneral).toLocaleString('es-PE',{minimumFractionDigits:2})}</div></div>
+      <div class="stat-box"><div class="stat-box-label">Valor potencial (Venta)</div><div class="stat-box-value" style="font-size:1.25rem;color:#2563EB;">S/ ${Number(totalPotencial).toLocaleString('es-PE',{minimumFractionDigits:2})}</div></div>
+      <div class="stat-box"><div class="stat-box-label">Ganancia potencial</div><div class="stat-box-value" style="font-size:1.25rem;color:#EA580C;">S/ ${Number(gananciaPotencial).toLocaleString('es-PE',{minimumFractionDigits:2})}</div></div>
+      <div class="stat-box"><div class="stat-box-label">Total productos</div><div class="stat-box-value">${pagination.total ?? productos.length}</div></div>
     </div>
     <div class="table-wrap">
-      <table>
-        <thead><tr><th>Producto</th><th>Stock</th><th>Precio compra</th><th>Valor total</th></tr></thead>
+      <table class="data-table">
+        <thead><tr><th>Producto</th><th>Stock</th><th>Precio compra</th><th>Precio venta</th><th>Valor total</th><th>Valor potencial</th></tr></thead>
         <tbody>
           ${productos.map(p => `
             <tr>
-              <td style="font-weight:500;">${p.nombre}</td>
-              <td>${p.stock_actual ?? 0}</td>
-              <td>S/ ${Number(p.precio_compra ?? 0).toLocaleString('es-PE',{minimumFractionDigits:2})}</td>
-              <td style="font-weight:600;">S/ ${Number(p.valor_total ?? (p.stock_actual * p.precio_compra) ?? 0).toLocaleString('es-PE',{minimumFractionDigits:2})}</td>
+              <td data-label="Producto" style="font-weight:500;">${p.nombre}</td>
+              <td data-label="Stock">${p.stock_actual ?? 0}</td>
+              <td data-label="Precio compra">S/ ${Number(p.precio_compra ?? 0).toLocaleString('es-PE',{minimumFractionDigits:2})}</td>
+              <td data-label="Precio venta">S/ ${Number(p.precio_venta ?? 0).toLocaleString('es-PE',{minimumFractionDigits:2})}</td>
+              <td data-label="Valor total" style="font-weight:600;color:#16A34A;">S/ ${Number(p.valor_total ?? (p.stock_actual * p.precio_compra) ?? 0).toLocaleString('es-PE',{minimumFractionDigits:2})}</td>
+              <td data-label="Valor potencial" style="font-weight:600;color:#2563EB;">S/ ${Number(p.valor_potencial ?? (p.stock_actual * p.precio_venta) ?? 0).toLocaleString('es-PE',{minimumFractionDigits:2})}</td>
             </tr>
           `).join('')}
         </tbody>
-        <tfoot>
-          <tr style="background:#F8FAFC;">
-            <td colspan="3" style="font-weight:700;padding:0.75rem 0.875rem;">TOTAL GENERAL</td>
-            <td style="font-weight:700;color:#16A34A;padding:0.75rem 0.875rem;">S/ ${Number(total).toLocaleString('es-PE',{minimumFractionDigits:2})}</td>
-          </tr>
-        </tfoot>
       </table>
     </div>
+    ${renderPagination(pagination, (newPage) => cargarStockValorizado(content, newPage, limit))}
   `;
+}
+
+function renderPagination(pagination, onPageChange) {
+  if (!pagination || !pagination.totalPages || pagination.totalPages <= 1) return '';
+  
+  const { page, totalPages, total } = pagination;
+  const pages = [];
+  
+  // Lógica para mostrar páginas: primera, última, actual y vecinas
+  if (totalPages <= 7) {
+    for (let i = 1; i <= totalPages; i++) pages.push(i);
+  } else {
+    pages.push(1);
+    if (page > 3) pages.push('...');
+    for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) {
+      pages.push(i);
+    }
+    if (page < totalPages - 2) pages.push('...');
+    pages.push(totalPages);
+  }
+
+  const html = `
+    <div class="pagination">
+      <button ${page === 1 ? 'disabled' : ''} data-page="${page - 1}">
+        <i class="fas fa-chevron-left"></i>
+      </button>
+      ${pages.map(p => {
+        if (p === '...') return `<span class="pagination-info">...</span>`;
+        return `<button class="${p === page ? 'active' : ''}" data-page="${p}">${p}</button>`;
+      }).join('')}
+      <button ${page === totalPages ? 'disabled' : ''} data-page="${page + 1}">
+        <i class="fas fa-chevron-right"></i>
+      </button>
+      <span class="pagination-info">${total} registros</span>
+    </div>
+  `;
+
+  setTimeout(() => {
+    document.querySelectorAll('.pagination button[data-page]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const newPage = parseInt(btn.dataset.page);
+        if (newPage && newPage !== page) onPageChange(newPage);
+      });
+    });
+  }, 0);
+
+  return html;
 }

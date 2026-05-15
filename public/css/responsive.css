@@ -108,6 +108,7 @@ canvas {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: var(--sidebar-bg, #0a0a0a);
 }
 
 /* Sidebar abierto (clase añadida por JS) */
@@ -121,6 +122,11 @@ canvas {
   overflow-y: auto;
   min-height: 0;
 }
+
+/* 
+ * NOTA: Los estilos de .nav-item están definidos inline en dashboard.html
+ * Los estilos aquí son solo de respaldo para otros contextos si es necesario
+ */
 
 /* Footer siempre al fondo */
 .sidebar-footer {
@@ -593,3 +599,45 @@ textarea {
     width: 100%;
   }
 }
+}
+
+/* ── Panda mascota en modal ─────────────────────────────────────────────── */
+.panda-mascota-container {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(calc(-50% - 350px), -50%);
+  width: 140px;
+  height: 280px;
+  z-index: 1001;
+  pointer-events: none;
+}
+
+.panda-mascota-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  animation: pandaWave 2s ease-in-out infinite;
+}
+
+@keyframes pandaWave {
+  0%, 100% {
+    transform: translateX(0) rotate(0deg);
+  }
+  50% {
+    transform: translateX(-8px) rotate(-2deg);
+  }
+}
+
+/* Mostrar panda solo en pantallas grandes */
+@media (min-width: 1024px) {
+  .panda-mascota-container {
+    display: block;
+  }
+}
+
+/* Ocultar panda en tablets y móviles */
+@media (max-width: 1023px) {
+  .panda-mascota-container {
+    display: none;
+  }

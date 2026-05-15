@@ -18,7 +18,17 @@
       --focus: rgba(10,10,10,0.15);
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; min-height: 100vh; display: flex; }
+    body { 
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+      min-height: 100vh; 
+      display: flex;
+      animation: fadeIn 0.3s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
 
     .brand-panel {
       flex: 1; background: var(--black); display: flex; flex-direction: column;
@@ -45,6 +55,7 @@
     .form-header { margin-bottom: 2rem; }
     .form-header h2 { font-size: 1.625rem; font-weight: 700; color: var(--black); letter-spacing: -0.02em; }
     .form-header p { font-size: 0.875rem; color: var(--gray-400); margin-top: 0.375rem; }
+    .form-header p strong { color: var(--black); font-weight: 600; }
 
     .form-group { margin-bottom: 1.125rem; }
     .form-group label { display: block; font-size: 0.8125rem; font-weight: 600; color: var(--gray-600); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.04em; }
@@ -74,10 +85,11 @@
     .btn-main:hover:not(:disabled) { background: var(--black-2); transform: translateY(-1px); }
     .btn-main:disabled { opacity: 0.6; cursor: not-allowed; }
 
-    .msg { display: none; align-items: center; gap: 0.5rem; border-radius: 8px; padding: 0.625rem 0.875rem; font-size: 0.875rem; margin-top: 1rem; }
+    .msg { display: none; align-items: center; gap: 0.5rem; border-radius: 8px; padding: 0.625rem 0.875rem; font-size: 0.875rem; margin-top: 1rem; flex-direction: column; }
     .msg.error { background: #fef2f2; border: 1px solid #fecaca; color: var(--danger); }
     .msg.success { background: #f0fdf4; border: 1px solid #bbf7d0; color: var(--success); }
     .msg.visible { display: flex; }
+    .msg > div:first-child { display: flex; align-items: center; gap: 0.5rem; width: 100%; }
 
     .step { display: none; }
     .step.active { display: block; }
@@ -133,7 +145,9 @@
           <button type="submit" class="btn-main" id="btnEnviar">
             <i class="fas fa-paper-plane"></i> Enviar código
           </button>
-          <div class="msg" id="msg1" role="alert"><i class="fas fa-info-circle"></i><span id="msgText1"></span></div>
+          <div class="msg" id="msg1" role="alert">
+            <div><i class="fas fa-info-circle"></i><span id="msgText1"></span></div>
+          </div>
         </form>
         <a href="/index.html" class="back-link"><i class="fas fa-arrow-left"></i> Volver al login</a>
       </div>
@@ -142,7 +156,7 @@
       <div class="step" id="step2">
         <div class="form-header">
           <h2><i class="fas fa-shield-halved" style="font-size:1.25rem;opacity:0.6;"></i> Verificar código</h2>
-          <p>Ingresa el código de 6 dígitos enviado a tu correo</p>
+          <p>Ingresa el código de 6 dígitos enviado a <strong id="correoMostrado"></strong></p>
         </div>
         <form id="formCodigo">
           <div class="form-group">
@@ -155,7 +169,9 @@
             <i class="fas fa-check-circle"></i> Verificar código
           </button>
           <button type="button" class="resend-link" id="btnReenviar">¿No recibiste el código? Reenviar</button>
-          <div class="msg" id="msg2" role="alert"><i class="fas fa-info-circle"></i><span id="msgText2"></span></div>
+          <div class="msg" id="msg2" role="alert">
+            <div><i class="fas fa-info-circle"></i><span id="msgText2"></span></div>
+          </div>
         </form>
         <a href="/index.html" class="back-link"><i class="fas fa-arrow-left"></i> Volver al login</a>
       </div>
@@ -171,17 +187,20 @@
             <label for="nuevaClave">Nueva contraseña</label>
             <div class="input-wrapper">
               <i class="fas fa-lock" aria-hidden="true"></i>
-              <input type="password" id="nuevaClave" placeholder="Mínimo 6 caracteres" minlength="6" required />
+              <input type="password" id="nuevaClave" placeholder="Mínimo 8 caracteres" minlength="8" required />
               <button type="button" class="toggle-password" id="toggleNueva" aria-label="Mostrar contraseña">
                 <i class="fas fa-eye" id="eyeNueva"></i>
               </button>
             </div>
+            <p style="font-size:0.75rem;color:var(--gray-400);margin-top:0.375rem;">
+              <i class="fas fa-info-circle"></i> Debe contener mayúsculas, minúsculas y números
+            </p>
           </div>
           <div class="form-group">
             <label for="confirmarClave">Confirmar contraseña</label>
             <div class="input-wrapper">
               <i class="fas fa-lock" aria-hidden="true"></i>
-              <input type="password" id="confirmarClave" placeholder="Repite la contraseña" minlength="6" required />
+              <input type="password" id="confirmarClave" placeholder="Repite la contraseña" minlength="8" required />
               <button type="button" class="toggle-password" id="toggleConfirmar" aria-label="Mostrar contraseña">
                 <i class="fas fa-eye" id="eyeConfirmar"></i>
               </button>
@@ -190,7 +209,9 @@
           <button type="submit" class="btn-main" id="btnRestablecer">
             <i class="fas fa-key"></i> Restablecer contraseña
           </button>
-          <div class="msg" id="msg3" role="alert"><i class="fas fa-info-circle"></i><span id="msgText3"></span></div>
+          <div class="msg" id="msg3" role="alert">
+            <div><i class="fas fa-info-circle"></i><span id="msgText3"></span></div>
+          </div>
         </form>
       </div>
 
@@ -212,12 +233,23 @@
     const showMsg = (id, text, type) => {
       const el = document.getElementById(id);
       el.className = `msg ${type} visible`;
-      el.querySelector('span').textContent = text;
+      const span = el.querySelector('span');
+      if (span) span.textContent = text;
     };
-    const hideMsg = (id) => { document.getElementById(id).classList.remove('visible'); };
+    const hideMsg = (id) => { 
+      const el = document.getElementById(id);
+      el.classList.remove('visible');
+      // Limpiar botón de continuar si existe
+      const btnContinuar = document.getElementById('btnContinuar');
+      if (btnContinuar) btnContinuar.remove();
+    };
     const goStep = (n) => {
       document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
       document.getElementById(`step${n}`).classList.add('active');
+      // Actualizar correo mostrado en paso 2
+      if (n === 2 && _correo) {
+        document.getElementById('correoMostrado').textContent = _correo;
+      }
     };
     const setLoading = (btn, loading) => {
       btn.disabled = loading;
@@ -247,14 +279,25 @@
       hideMsg('msg1');
       _correo = document.getElementById('correo').value.trim();
       if (!_correo) return;
+      
+      // Validar formato de correo
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(_correo)) {
+        showMsg('msg1', 'Formato de correo inválido', 'error');
+        return;
+      }
+      
       const btn = document.getElementById('btnEnviar');
       setLoading(btn, true);
       const res = await api.post('/auth/recuperar', { correo: _correo });
       setLoading(btn, false);
-      if (res.ok) {
-        showMsg('msg1', 'Si el correo está registrado, recibirás un código.', 'success');
+      
+      if (res.ok && res.data.success) {
+        // ✅ Correo existe y código enviado - avanzar automáticamente
+        showMsg('msg1', res.data.mensaje || 'Código enviado. Revisa tu correo.', 'success');
         setTimeout(() => goStep(2), 1500);
       } else {
+        // ❌ Error (correo no existe, cuenta inactiva, rate limit, etc.)
         showMsg('msg1', res.data?.error || 'Error al enviar código', 'error');
       }
     });
@@ -300,8 +343,27 @@
       hideMsg('msg3');
       const nueva = document.getElementById('nuevaClave').value;
       const confirmar = document.getElementById('confirmarClave').value;
-      if (nueva !== confirmar) { showMsg('msg3', 'Las contraseñas no coinciden', 'error'); return; }
-      if (nueva.length < 6) { showMsg('msg3', 'La contraseña debe tener al menos 6 caracteres', 'error'); return; }
+      
+      // Validaciones del frontend
+      if (nueva !== confirmar) { 
+        showMsg('msg3', 'Las contraseñas no coinciden', 'error'); 
+        return; 
+      }
+      if (nueva.length < 8) { 
+        showMsg('msg3', 'La contraseña debe tener al menos 8 caracteres', 'error'); 
+        return; 
+      }
+      
+      // Validar complejidad
+      const tieneMinuscula = /[a-z]/.test(nueva);
+      const tieneMayuscula = /[A-Z]/.test(nueva);
+      const tieneNumero = /[0-9]/.test(nueva);
+      
+      if (!tieneMinuscula || !tieneMayuscula || !tieneNumero) {
+        showMsg('msg3', 'La contraseña debe contener mayúsculas, minúsculas y números', 'error');
+        return;
+      }
+      
       const btn = document.getElementById('btnRestablecer');
       setLoading(btn, true);
       const res = await api.post('/auth/restablecer', { correo: _correo, codigo: _codigo, nueva_clave: nueva });

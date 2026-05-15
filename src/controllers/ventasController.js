@@ -199,6 +199,7 @@ exports.crear = async (req, res) => {
     const detalles = [];
     for (const { producto, cantidad, descuento_item } of productosData) {
       const precio_unitario = producto.precio_venta;
+      const precio_compra = producto.precio_compra; // Guardar precio_compra histórico
       const subtotalItem = parseFloat((precio_unitario * cantidad - descuento_item).toFixed(2));
 
       const [detalle] = await DetalleVenta.create(
@@ -208,6 +209,7 @@ exports.crear = async (req, res) => {
             producto_id: producto._id,
             cantidad,
             precio_unitario,
+            precio_compra, // Agregar precio_compra al detalle
             descuento_item,
             subtotal: subtotalItem,
           },

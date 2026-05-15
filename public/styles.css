@@ -89,6 +89,12 @@ body {
     letter-spacing: 0.5px;
 }
 
+/* 
+ * NOTA: Los estilos de .nav-item están definidos inline en dashboard.html
+ * para evitar conflictos de especificidad. No descomentar estos estilos.
+ */
+
+/*
 .nav-item {
     display: flex;
     align-items: center;
@@ -107,9 +113,10 @@ body {
     cursor: pointer;
     font-family: 'Inter', sans-serif;
     font-size: 14px;
+    position: relative;
 }
 
-.nav-item:hover {
+.nav-item:not(.active):hover {
     background: rgba(255,255,255,0.05);
     color: white;
 }
@@ -120,10 +127,16 @@ body {
     border-left-color: var(--primary);
 }
 
+.nav-item.active:hover {
+    background: rgba(37, 99, 235, 0.1);
+    color: white;
+}
+
 .nav-item i {
     font-size: 20px;
     width: 25px;
 }
+*/
 
 .sidebar-footer {
     padding: 20px;

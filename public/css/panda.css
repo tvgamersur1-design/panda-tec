@@ -1,0 +1,36 @@
+/* ── Panda mascota en modal ─────────────────────────────────────────────── */
+.panda-mascota-container {
+  position: absolute;
+  left: 50%;
+  top: 35%; /* Más arriba */
+  transform: translate(calc(-50% - 320px), -50%);
+  width: 120px;
+  height: 240px;
+  z-index: 1001;
+  pointer-events: none;
+  display: block;
+}
+
+.panda-mascota-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(2px 4px 6px rgba(0, 0, 0, 0.1));
+  animation: pandaSubeBaja 2.5s ease-in-out infinite;
+}
+
+@keyframes pandaSubeBaja {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-15px); /* Sube 15px */
+  }
+}
+
+/* Ocultar panda en tablets y móviles */
+@media (max-width: 900px) {
+  .panda-mascota-container {
+    display: none !important;
+  }
+}

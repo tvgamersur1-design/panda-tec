@@ -72,6 +72,26 @@ export async function init(container, user) {
       .empty-cart { text-align:center; padding:2rem; color:#94A3B8; }
       .empty-cart i { font-size:2rem; display:block; margin-bottom:0.5rem; }
       .tabs { display:flex; border-bottom:1px solid #E2E8F0; margin-bottom:1rem; }
+      
+      /* Panda en la línea superior del modal del carrito */
+      .pos-right { position: relative; }
+      .panda-viajero {
+        position: absolute;
+        top: -75px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 165px;
+        height: 100px;
+        z-index: 10;
+      }
+      .panda-viajero img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        filter: drop-shadow(2px 4px 6px rgba(0, 0, 0, 0.1));
+      }
+      @media(max-width:900px){ .panda-viajero { display:none; } }
+      
       .tab-btn { padding:0.625rem 1.25rem; border:none; background:none; font-size:0.875rem; font-weight:500; cursor:pointer; color:#64748B; border-bottom:2px solid transparent; margin-bottom:-1px; }
       .tab-btn.active { color:#2563EB; border-bottom-color:#2563EB; }
       .hist-table-wrap { overflow-x:auto; }
@@ -130,6 +150,11 @@ export async function init(container, user) {
           </div>
         </div>
         <div class="pos-right">
+          <!-- Panda viajero en la línea del carrito -->
+          <div class="panda-viajero">
+            <img src="/img/panda-para-top.svg" alt="Panda viajero" />
+          </div>
+          
           <div class="pos-card" style="flex:1;">
             <div class="pos-card-header"><i class="fas fa-shopping-cart" style="color:#2563EB;"></i> Carrito</div>
             <div class="pos-card-body" style="display:flex;flex-direction:column;gap:0.875rem;">
@@ -815,13 +840,27 @@ function renderHistorial(container, puedeAnular) {
       <td data-label="Fecha">${new Date(v.fecha_venta).toLocaleDateString('es-PE')}</td>
       ${puedeAnular ? `<td data-label="Vendedor" style="font-size:0.8125rem;">${v.vendedor_id?.nombre_completo || v.vendedor_id?.usuario || '—'}</td>
       <td data-label="Acciones">
-        <div style="display:flex;gap:0.375rem;">
+        <div style="display:flex;gap:0.375rem;flex-wrap:wrap;">
+          <button class="btn-ver-detalle" data-id="${v._id}" style="display:inline-flex;align-items:center;gap:0.25rem;padding:0.3rem 0.6rem;background:#EFF6FF;color:#2563EB;border:1px solid #BFDBFE;border-radius:6px;font-size:0.75rem;font-weight:600;cursor:pointer;"><i class="fas fa-eye"></i> Detalles</button>
           <button class="btn-ticket" data-id="${v._id}" style="display:inline-flex;align-items:center;gap:0.25rem;padding:0.3rem 0.6rem;background:#F0FDF4;color:#16A34A;border:none;border-radius:6px;font-size:0.75rem;font-weight:600;cursor:pointer;"><i class="fas fa-receipt"></i> Ticket</button>
-          ${v.estado==='completada'?`<button class="btn-danger" data-id="${v._id}" data-action="anular" style="padding:0.3rem 0.6rem;font-size:0.75rem;"><i class="fas fa-ban"></i> Anular</button>`:'—'}
+          ${v.estado==='completada'?`<button class="btn-danger" data-id="${v._id}" data-action="anular" style="padding:0.3rem 0.6rem;font-size:0.75rem;"><i class="fas fa-ban"></i> Anular</button>`:''}
         </div>
-      </td>` : `<td><button class="btn-ticket" data-id="${v._id}" style="display:inline-flex;align-items:center;gap:0.25rem;padding:0.3rem 0.6rem;background:#F0FDF4;color:#16A34A;border:none;border-radius:6px;font-size:0.75rem;font-weight:600;cursor:pointer;"><i class="fas fa-receipt"></i> Ticket</button></td>`}
+      </td>` : `<td><div style="display:flex;gap:0.375rem;flex-wrap:wrap;"><button class="btn-ver-detalle" data-id="${v._id}" style="display:inline-flex;align-items:center;gap:0.25rem;padding:0.3rem 0.6rem;background:#EFF6FF;color:#2563EB;border:1px solid #BFDBFE;border-radius:6px;font-size:0.75rem;font-weight:600;cursor:pointer;"><i class="fas fa-eye"></i> Detalles</button><button class="btn-ticket" data-id="${v._id}" style="display:inline-flex;align-items:center;gap:0.25rem;padding:0.3rem 0.6rem;background:#F0FDF4;color:#16A34A;border:none;border-radius:6px;font-size:0.75rem;font-weight:600;cursor:pointer;"><i class="fas fa-receipt"></i> Ticket</button></div></td>`}
     </tr>
   `).join('');
+
+  // Botones ver detalle
+  tbody.querySelectorAll('.btn-ver-detalle').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const venta = _historialVentas.find(v => v._id === btn.dataset.id);
+      if (!venta) return;
+      // Obtener detalles completos de la venta
+      const detRes = await api.get(`/ventas/${venta._id}`);
+      const ventaCompleta = detRes.ok ? (detRes.data.venta || detRes.data) : venta;
+      ventaCompleta.detalles = detRes.ok ? (detRes.data.detalles || []) : [];
+      mostrarModalDetalleVenta(container, ventaCompleta);
+    });
+  });
 
   // Botones ticket del historial
   tbody.querySelectorAll('.btn-ticket').forEach(btn => {
@@ -842,6 +881,250 @@ function renderHistorial(container, puedeAnular) {
       btn.addEventListener('click', () => confirmarAnulacion(container, btn.dataset.id, puedeAnular));
     });
   }
+}
+
+function mostrarModalDetalleVenta(container, venta) {
+  const modalContainer = container.querySelector('#modalContainer');
+  
+  // Calcular totales
+  const subtotal = venta.subtotal || 0;
+  const descuento = venta.descuento_total || 0;
+  const total = venta.total || 0;
+  
+  // Formatear fecha
+  const fechaVenta = new Date(venta.fecha_venta);
+  const fechaFormateada = fechaVenta.toLocaleDateString('es-PE', { 
+    year: 'numeric', month: 'long', day: 'numeric' 
+  });
+  const horaFormateada = fechaVenta.toLocaleTimeString('es-PE', { 
+    hour: '2-digit', minute: '2-digit' 
+  });
+  
+  // Cliente
+  const cliente = venta.cliente_id;
+  const nombreCliente = cliente 
+    ? `${cliente.nombre} ${cliente.apellido_paterno || ''} ${cliente.apellido_paterno || ''}`.trim()
+    : 'Público general';
+  
+  // Vendedor
+  const vendedor = venta.vendedor_id?.nombre_completo || venta.vendedor_id?.usuario || 'No especificado';
+  
+  // Detalles de productos
+  const detalles = venta.detalles || [];
+  
+  modalContainer.innerHTML = `
+    <div class="modal-overlay" id="detalleVentaModal" role="dialog" aria-modal="true">
+      <div class="modal" style="max-width:700px;">
+        <div class="modal-header">
+          <div>
+            <h2 style="display:flex;align-items:center;gap:0.5rem;">
+              <i class="fas fa-file-invoice" style="color:#2563EB;"></i>
+              Detalle de Venta
+            </h2>
+            <p style="font-size:0.8125rem;color:#64748B;margin-top:0.25rem;font-weight:400;">
+              ${venta.numero_venta || 'Sin número'}
+            </p>
+          </div>
+          <button class="btn-close" id="btnCerrarDetalle"><i class="fas fa-times"></i></button>
+        </div>
+        
+        <div class="modal-body" style="max-height:70vh;overflow-y:auto;">
+          
+          <!-- Información General -->
+          <div style="background:#F8FAFC;border-radius:10px;padding:1rem;margin-bottom:1.25rem;">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;">
+              <div>
+                <div style="font-size:0.75rem;color:#64748B;text-transform:uppercase;font-weight:600;margin-bottom:0.25rem;">
+                  <i class="fas fa-calendar"></i> Fecha
+                </div>
+                <div style="font-size:0.875rem;font-weight:500;">${fechaFormateada}</div>
+                <div style="font-size:0.75rem;color:#64748B;">${horaFormateada}</div>
+              </div>
+              
+              <div>
+                <div style="font-size:0.75rem;color:#64748B;text-transform:uppercase;font-weight:600;margin-bottom:0.25rem;">
+                  <i class="fas fa-user-tie"></i> Vendedor
+                </div>
+                <div style="font-size:0.875rem;font-weight:500;">${vendedor}</div>
+              </div>
+              
+              <div>
+                <div style="font-size:0.75rem;color:#64748B;text-transform:uppercase;font-weight:600;margin-bottom:0.25rem;">
+                  <i class="fas fa-info-circle"></i> Estado
+                </div>
+                <span class="badge ${venta.estado==='completada'?'badge-ok':'badge-danger'}" style="font-size:0.8125rem;">
+                  ${venta.estado === 'completada' ? 'Completada' : 'Anulada'}
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Cliente -->
+          <div style="margin-bottom:1.25rem;">
+            <h3 style="font-size:0.875rem;font-weight:700;color:#0a0a0a;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;">
+              <i class="fas fa-user" style="color:#2563EB;"></i> Cliente
+            </h3>
+            <div style="background:#fff;border:1px solid #E2E8F0;border-radius:8px;padding:0.875rem;">
+              <div style="font-weight:600;font-size:0.9375rem;margin-bottom:0.375rem;">${nombreCliente}</div>
+              ${cliente ? `
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0.5rem;font-size:0.8125rem;color:#64748B;">
+                  ${cliente.dni ? `<div><i class="fas fa-id-card" style="width:16px;"></i> ${cliente.dni}</div>` : ''}
+                  ${cliente.telefono ? `<div><i class="fas fa-phone" style="width:16px;"></i> ${cliente.telefono}</div>` : ''}
+                  ${cliente.email ? `<div><i class="fas fa-envelope" style="width:16px;"></i> ${cliente.email}</div>` : ''}
+                </div>
+              ` : '<div style="font-size:0.8125rem;color:#94A3B8;">Sin información adicional</div>'}
+            </div>
+          </div>
+          
+          <!-- Productos -->
+          <div style="margin-bottom:1.25rem;">
+            <h3 style="font-size:0.875rem;font-weight:700;color:#0a0a0a;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;">
+              <i class="fas fa-box" style="color:#2563EB;"></i> Productos (${detalles.length})
+            </h3>
+            <div style="border:1px solid #E2E8F0;border-radius:8px;overflow:hidden;">
+              ${detalles.length > 0 ? detalles.map((det, idx) => `
+                <div style="display:flex;align-items:center;gap:0.875rem;padding:0.875rem;${idx < detalles.length - 1 ? 'border-bottom:1px solid #F1F5F9;' : ''}background:${idx % 2 === 0 ? '#fff' : '#F8FAFC'};">
+                  ${det.producto_id?.imagen ? `
+                    <img src="${det.producto_id.imagen}" alt="${det.producto_id.nombre}" 
+                         style="width:50px;height:50px;object-fit:cover;border-radius:8px;background:#F1F5F9;flex-shrink:0;" />
+                  ` : `
+                    <div style="width:50px;height:50px;border-radius:8px;background:#F1F5F9;display:flex;align-items:center;justify-content:center;color:#94A3B8;flex-shrink:0;">
+                      <i class="fas fa-mobile-alt" style="font-size:1.25rem;"></i>
+                    </div>
+                  `}
+                  
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-weight:600;font-size:0.875rem;margin-bottom:0.125rem;">${det.producto_id?.nombre || 'Producto eliminado'}</div>
+                    <div style="font-size:0.75rem;color:#64748B;">
+                      ${det.cantidad} × S/ ${Number(det.precio_unitario).toLocaleString('es-PE',{minimumFractionDigits:2})}
+                    </div>
+                  </div>
+                  
+                  <div style="text-align:right;font-weight:700;font-size:0.9375rem;">
+                    S/ ${Number(det.subtotal).toLocaleString('es-PE',{minimumFractionDigits:2})}
+                  </div>
+                </div>
+              `).join('') : `
+                <div style="padding:2rem;text-align:center;color:#94A3B8;font-size:0.875rem;">
+                  <i class="fas fa-box-open" style="font-size:2rem;display:block;margin-bottom:0.5rem;opacity:0.3;"></i>
+                  Sin productos registrados
+                </div>
+              `}
+            </div>
+          </div>
+          
+          <!-- Resumen Financiero -->
+          <div style="background:#F8FAFC;border-radius:10px;padding:1rem;margin-bottom:1.25rem;">
+            <h3 style="font-size:0.875rem;font-weight:700;color:#0a0a0a;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;">
+              <i class="fas fa-calculator" style="color:#2563EB;"></i> Resumen Financiero
+            </h3>
+            
+            <div style="display:flex;flex-direction:column;gap:0.5rem;font-size:0.875rem;">
+              <div style="display:flex;justify-content:space-between;">
+                <span style="color:#64748B;">Subtotal</span>
+                <span style="font-weight:500;">S/ ${subtotal.toLocaleString('es-PE',{minimumFractionDigits:2})}</span>
+              </div>
+              
+              ${descuento > 0 ? `
+                <div style="display:flex;justify-content:space-between;">
+                  <span style="color:#64748B;">
+                    Descuento 
+                    ${venta.descuento_tipo === 'porcentaje' ? `(${venta.descuento_valor}%)` : ''}
+                  </span>
+                  <span style="font-weight:500;color:#DC2626;">- S/ ${descuento.toLocaleString('es-PE',{minimumFractionDigits:2})}</span>
+                </div>
+              ` : ''}
+              
+              <div style="height:1px;background:#E2E8F0;margin:0.25rem 0;"></div>
+              
+              <div style="display:flex;justify-content:space-between;font-size:1.125rem;font-weight:700;">
+                <span>TOTAL</span>
+                <span style="color:#16A34A;">S/ ${total.toLocaleString('es-PE',{minimumFractionDigits:2})}</span>
+              </div>
+              
+              <div style="height:1px;background:#E2E8F0;margin:0.25rem 0;"></div>
+              
+              <div style="display:flex;justify-content:space-between;">
+                <span style="color:#64748B;">Método de pago</span>
+                <span style="font-weight:600;text-transform:capitalize;">${venta.metodo_pago}</span>
+              </div>
+              
+              ${venta.metodo_pago === 'efectivo' && venta.monto_recibido ? `
+                <div style="display:flex;justify-content:space-between;">
+                  <span style="color:#64748B;">Monto recibido</span>
+                  <span style="font-weight:500;">S/ ${Number(venta.monto_recibido).toLocaleString('es-PE',{minimumFractionDigits:2})}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;">
+                  <span style="color:#64748B;">Vuelto</span>
+                  <span style="font-weight:600;color:#16A34A;">S/ ${Number(venta.vuelto || 0).toLocaleString('es-PE',{minimumFractionDigits:2})}</span>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+          
+          <!-- Información Adicional -->
+          ${venta.notas || venta.estado === 'anulada' ? `
+            <div style="margin-bottom:1rem;">
+              <h3 style="font-size:0.875rem;font-weight:700;color:#0a0a0a;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;">
+                <i class="fas fa-info-circle" style="color:#2563EB;"></i> Información Adicional
+              </h3>
+              
+              ${venta.notas ? `
+                <div style="background:#FEF3C7;border:1px solid #FDE047;border-radius:8px;padding:0.875rem;margin-bottom:0.75rem;">
+                  <div style="font-size:0.75rem;color:#92400E;font-weight:600;margin-bottom:0.375rem;">
+                    <i class="fas fa-sticky-note"></i> NOTAS
+                  </div>
+                  <div style="font-size:0.875rem;color:#78350F;">${venta.notas}</div>
+                </div>
+              ` : ''}
+              
+              ${venta.estado === 'anulada' ? `
+                <div style="background:#FEE2E2;border:1px solid #FECACA;border-radius:8px;padding:0.875rem;">
+                  <div style="font-size:0.75rem;color:#991B1B;font-weight:600;margin-bottom:0.375rem;">
+                    <i class="fas fa-ban"></i> VENTA ANULADA
+                  </div>
+                  ${venta.motivo_anulacion ? `
+                    <div style="font-size:0.875rem;color:#7F1D1D;margin-bottom:0.375rem;">
+                      <strong>Motivo:</strong> ${venta.motivo_anulacion}
+                    </div>
+                  ` : ''}
+                  ${venta.fecha_anulacion ? `
+                    <div style="font-size:0.75rem;color:#991B1B;">
+                      <strong>Fecha:</strong> ${new Date(venta.fecha_anulacion).toLocaleString('es-PE')}
+                    </div>
+                  ` : ''}
+                </div>
+              ` : ''}
+            </div>
+          ` : ''}
+          
+        </div>
+        
+        <div class="modal-footer">
+          <button class="btn-secondary" id="btnCerrarDetalle2">
+            <i class="fas fa-times"></i> Cerrar
+          </button>
+          <button class="btn-primary" id="btnImprimirTicket">
+            <i class="fas fa-receipt"></i> Ver Ticket
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  const cerrar = () => { modalContainer.innerHTML = ''; };
+  modalContainer.querySelector('#btnCerrarDetalle').addEventListener('click', cerrar);
+  modalContainer.querySelector('#btnCerrarDetalle2').addEventListener('click', cerrar);
+  modalContainer.querySelector('#detalleVentaModal').addEventListener('click', e => {
+    if (e.target.id === 'detalleVentaModal') cerrar();
+  });
+  
+  // Botón imprimir ticket
+  modalContainer.querySelector('#btnImprimirTicket').addEventListener('click', () => {
+    const svgTicket = generarTicketSVG(venta, _configTienda);
+    mostrarModalTicket(svgTicket, venta.numero_venta);
+    cerrar();
+  });
 }
 
 function confirmarAnulacion(container, ventaId, puedeAnular) {

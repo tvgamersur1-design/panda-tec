@@ -18,6 +18,9 @@ const usuarioSchema = new mongoose.Schema(
     email_verificado: { type: Boolean, default: false },
     codigo_recuperacion: { type: String, default: null },
     codigo_expiracion: { type: Date, default: null },
+    intentos_codigo: { type: Number, default: 0 }, // Contador de intentos fallidos
+    codigo_bloqueado_hasta: { type: Date, default: null }, // Bloqueo temporal
+    ultima_solicitud_codigo: { type: Date, default: null }, // Última vez que pidió código
     fecha_creacion: { type: Date, default: Date.now },
     fecha_actualizacion: { type: Date, default: Date.now },
   },
