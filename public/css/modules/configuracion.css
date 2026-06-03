@@ -1,0 +1,30 @@
+/* ── configuracion.css ────────────────────────── */
+.conf-card { background:#fff; border-radius:12px; border:1px solid #E2E8F0; padding:1.5rem; max-width:700px; margin:0 auto; }
+.conf-card h2 { font-size:1.125rem; font-weight:700; margin-bottom:1.5rem; display:flex; align-items:center; gap:0.5rem; }
+.conf-form-group { display:flex; flex-direction:column; gap:0.375rem; margin-bottom:1rem; }
+.conf-form-group label { font-size:0.8125rem; font-weight:600; color:#374151; }
+.conf-form-group input, .conf-form-group textarea { padding:0.5rem 0.75rem; border:1px solid #E2E8F0; border-radius:8px; font-size:0.875rem; color:#1E293B; outline:none; width:100%; box-sizing:border-box; }
+.conf-form-group input:focus, .conf-form-group textarea:focus { border-color:#2563EB; }
+.conf-form-group textarea { resize:vertical; font-family:inherit; min-height:80px; }
+.conf-form-group .hint { font-size:0.75rem; color:#64748B; margin-top:0.25rem; }
+.conf-form-group .error-hint { font-size:0.75rem; color:#DC2626; margin-top:0.25rem; display:none; }
+.conf-form-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem; }
+.conf-icon-cog { color:#2563EB; }
+.conf-spinner { text-align:center; padding:2rem; color:#94A3B8; }
+.conf-spinner i { font-size:1.5rem; }
+.conf-error { color:#DC2626; }
+.conf-restricted { text-align:center; padding:3rem; color:#64748B; }
+.conf-restricted i { font-size:2.5rem; margin-bottom:1rem; display:block; opacity:0.35; }
+@media (max-width: 768px) {
+  .conf-card { padding:1rem; border-radius:8px; }
+  .conf-card h2 { font-size:1rem; margin-bottom:1rem; }
+  .conf-form-row { grid-template-columns:1fr; gap:0; }
+  .conf-form-group { margin-bottom:0.875rem; }
+  .conf-form-group label { font-size:0.8125rem; }
+  .conf-form-group input, .conf-form-group textarea { font-size:0.875rem; padding:0.625rem 0.75rem; }
+}
+@media (max-width: 480px) {
+  .conf-card { padding:0.875rem; margin:0; border-radius:0; border-left:none; border-right:none; }
+  .conf-card h2 { font-size:0.9375rem; }
+  .conf-form-group input, .conf-form-group textarea { font-size:16px; }
+}

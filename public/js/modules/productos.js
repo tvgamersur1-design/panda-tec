@@ -18,51 +18,11 @@ export async function init(container, user) {
   const puedeEditar = user && (user.rol === 'admin' || user.rol === 'almacen');
 
   container.innerHTML = `
-    <style>
-      .prod-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem; flex-wrap:wrap; gap:0.75rem; }
-      .prod-filters { display:flex; gap:0.75rem; flex-wrap:wrap; }
-      .prod-filters input, .prod-filters select { padding:0.5rem 0.75rem; border:1px solid #E2E8F0; border-radius:8px; font-size:0.875rem; background:#fff; color:#1E293B; outline:none; }
-      .prod-filters input:focus, .prod-filters select:focus { border-color:#2563EB; }
-      .btn-primary { display:inline-flex; align-items:center; gap:0.5rem; padding:0.5rem 1rem; background:#2563EB; color:#fff; border:none; border-radius:8px; font-size:0.875rem; font-weight:600; cursor:pointer; transition:background 0.15s; }
-      .btn-primary:hover { background:#1D4ED8; }
-      .btn-secondary { display:inline-flex; align-items:center; gap:0.5rem; padding:0.5rem 1rem; background:#F1F5F9; color:#1E293B; border:1px solid #E2E8F0; border-radius:8px; font-size:0.875rem; font-weight:500; cursor:pointer; }
-      .btn-danger { display:inline-flex; align-items:center; gap:0.5rem; padding:0.4rem 0.75rem; background:#FEE2E2; color:#DC2626; border:none; border-radius:6px; font-size:0.8125rem; font-weight:500; cursor:pointer; }
-      .btn-edit { display:inline-flex; align-items:center; gap:0.5rem; padding:0.4rem 0.75rem; background:#EFF6FF; color:#2563EB; border:none; border-radius:6px; font-size:0.8125rem; font-weight:500; cursor:pointer; }
-      .prod-table-wrap { background:#fff; border-radius:12px; border:1px solid #E2E8F0; overflow:auto; }
-      table { width:100%; border-collapse:collapse; font-size:0.875rem; }
-      th { padding:0.75rem 1rem; text-align:left; font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; color:#64748B; border-bottom:1px solid #E2E8F0; white-space:nowrap; }
-      td { padding:0.75rem 1rem; border-bottom:1px solid #F1F5F9; vertical-align:middle; }
-      tr:last-child td { border-bottom:none; }
-      tr:hover td { background:#F8FAFC; }
-      .prod-img { width:44px; height:44px; object-fit:cover; border-radius:8px; background:#F1F5F9; }
-      .prod-img-placeholder { width:44px; height:44px; border-radius:8px; background:#F1F5F9; display:flex; align-items:center; justify-content:center; color:#94A3B8; font-size:1.25rem; }
-      .badge { display:inline-flex; align-items:center; gap:0.25rem; padding:0.2rem 0.6rem; border-radius:999px; font-size:0.75rem; font-weight:600; }
-      .badge-ok      { background:#DCFCE7; color:#16A34A; }
-      .badge-warning { background:#FEF3C7; color:#D97706; }
-      .badge-danger  { background:#FEE2E2; color:#DC2626; }
-      .empty-state { text-align:center; padding:3rem; color:#64748B; }
-      .empty-state i { font-size:2.5rem; margin-bottom:1rem; display:block; opacity:0.35; }
-      /* Modal */
-      .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:1000; display:flex; align-items:center; justify-content:center; padding:1rem; }
-      .modal { background:#fff; border-radius:14px; width:100%; max-width:540px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.2); animation:slideUp 0.2s ease; }
-      @keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
-      .modal-header { display:flex; align-items:center; justify-content:space-between; padding:1.25rem 1.5rem; border-bottom:1px solid #E2E8F0; }
-      .modal-header h2 { font-size:1.125rem; font-weight:700; }
-      .modal-body { padding:1.5rem; display:flex; flex-direction:column; gap:1rem; }
-      .modal-footer { display:flex; justify-content:flex-end; gap:0.75rem; padding:1rem 1.5rem; border-top:1px solid #E2E8F0; }
-      .form-group { display:flex; flex-direction:column; gap:0.375rem; }
-      .form-group label { font-size:0.8125rem; font-weight:600; color:#374151; }
-      .form-group input, .form-group select, .form-group textarea { padding:0.5rem 0.75rem; border:1px solid #E2E8F0; border-radius:8px; font-size:0.875rem; color:#1E293B; outline:none; font-family:inherit; }
-      .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color:#2563EB; }
-      .form-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
-      .btn-close { background:none; border:none; font-size:1.25rem; cursor:pointer; color:#64748B; padding:0.25rem; }
-    </style>
-
     <div class="prod-header">
       <div class="prod-filters">
-        <div style="position:relative;min-width:200px;">
-          <i class="fas fa-search" style="position:absolute;left:0.75rem;top:50%;transform:translateY(-50%);color:#94A3B8;font-size:0.875rem;pointer-events:none;"></i>
-          <input type="text" id="searchInput" placeholder="Buscar producto..." style="min-width:200px;padding-left:2.25rem;" />
+        <div class="prod-search-wrap">
+          <i class="fas fa-search prod-search-icon"></i>
+          <input type="text" id="searchInput" placeholder="Buscar producto..." class="prod-search-input" />
         </div>
         <select id="catFilter"><option value="">Todas las categorías</option></select>
       </div>
@@ -83,7 +43,7 @@ export async function init(container, user) {
         <tbody id="prodTbody"></tbody>
       </table>
     </div>
-    <div id="prodPaginador" style="display:flex;align-items:center;justify-content:space-between;margin-top:1rem;flex-wrap:wrap;gap:0.5rem;"></div>
+    <div id="prodPaginador" class="prod-paginador"></div>
     <div id="modalContainer"></div>
   `;
 
@@ -125,7 +85,7 @@ export async function init(container, user) {
 
 async function cargarProductos(container, puedeEditar) {
   const tbody = container.querySelector('#prodTbody');
-  tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:#94A3B8;"><i class="fas fa-spinner fa-spin"></i></td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="6" class="prod-spinner-inline"><i class="fas fa-spinner fa-spin"></i></td></tr>`;
 
   let url = `/productos?page=${_paginaActual}&limit=${_LIMIT}`;
   if (_filtroSearch)    url += `&search=${encodeURIComponent(_filtroSearch)}`;
@@ -155,12 +115,7 @@ function renderPaginador(container, puedeEditar) {
   const hasta  = Math.min(_paginaActual * _LIMIT, _totalProductos);
 
   // Generar botones de página (máx 5 visibles)
-  const btnStyle = (activo) => `
-    padding:0.375rem 0.625rem;border-radius:7px;border:1px solid #E2E8F0;
-    background:${activo ? '#0a0a0a' : '#fff'};color:${activo ? '#fff' : '#374151'};
-    font-size:0.8125rem;font-weight:${activo ? '700' : '500'};cursor:${activo ? 'default' : 'pointer'};
-    min-width:34px;text-align:center;
-  `;
+  const btnCls = (activo) => activo ? 'prod-pag-btn--active' : 'prod-pag-btn';
 
   let pagBtns = '';
   const rango = 2;
@@ -169,25 +124,25 @@ function renderPaginador(container, puedeEditar) {
       p === 1 || p === _totalPaginas ||
       (p >= _paginaActual - rango && p <= _paginaActual + rango)
     ) {
-      pagBtns += `<button data-pag="${p}" style="${btnStyle(p === _paginaActual)}" ${p === _paginaActual ? 'disabled' : ''}>${p}</button>`;
+      pagBtns += `<button data-pag="${p}" class="${btnCls(p === _paginaActual)}" ${p === _paginaActual ? 'disabled' : ''}>${p}</button>`;
     } else if (
       p === _paginaActual - rango - 1 ||
       p === _paginaActual + rango + 1
     ) {
-      pagBtns += `<span style="padding:0 0.25rem;color:#94A3B8;">…</span>`;
+      pagBtns += `<span class="prod-pag-ellipsis">…</span>`;
     }
   }
 
   el.innerHTML = `
-    <span style="font-size:0.8125rem;color:#64748B;">
+    <span class="prod-pag-info">
       Mostrando <strong>${desde}–${hasta}</strong> de <strong>${_totalProductos}</strong> productos
     </span>
-    <div style="display:flex;align-items:center;gap:0.375rem;">
-      <button data-pag="${_paginaActual - 1}" ${_paginaActual === 1 ? 'disabled' : ''} style="${btnStyle(false)}opacity:${_paginaActual === 1 ? '0.4' : '1'};">
+    <div class="prod-pag-btns">
+      <button data-pag="${_paginaActual - 1}" ${_paginaActual === 1 ? 'disabled' : ''} class="prod-pag-btn">
         <i class="fas fa-chevron-left"></i>
       </button>
       ${pagBtns}
-      <button data-pag="${_paginaActual + 1}" ${_paginaActual === _totalPaginas ? 'disabled' : ''} style="${btnStyle(false)}opacity:${_paginaActual === _totalPaginas ? '0.4' : '1'};">
+      <button data-pag="${_paginaActual + 1}" ${_paginaActual === _totalPaginas ? 'disabled' : ''} class="prod-pag-btn">
         <i class="fas fa-chevron-right"></i>
       </button>
     </div>
@@ -223,19 +178,19 @@ function renderTabla(container, puedeEditar) {
         : `<span class="badge badge-ok"><i class="fas fa-check-circle"></i> ${p.stock_actual}</span>`;
 
     const imgHtml = p.imagen
-      ? `<img src="${p.imagen}" alt="${p.nombre}" class="prod-img prod-img-zoom" loading="lazy" data-src="${p.imagen}" data-nombre="${p.nombre}" style="cursor:zoom-in;" />`
+      ? `<img src="${p.imagen}" alt="${p.nombre}" class="prod-img prod-img-zoom" loading="lazy" data-src="${p.imagen}" data-nombre="${p.nombre}" />`
       : `<div class="prod-img-placeholder"><i class="fas fa-mobile-alt"></i></div>`;
 
     return `
       <tr>
         <td data-label="Foto">${imgHtml}</td>
-        <td data-label="Nombre"><div style="font-weight:500;">${p.nombre}</div><div style="font-size:0.75rem;color:#64748B;">${p.descripcion ? p.descripcion.substring(0,50) + (p.descripcion.length > 50 ? '…' : '') : ''}</div></td>
+        <td data-label="Nombre"><div class="prod-name">${p.nombre}</div><div class="prod-desc">${p.descripcion ? p.descripcion.substring(0,50) + (p.descripcion.length > 50 ? '…' : '') : ''}</div></td>
         <td data-label="Categoría">${catNombre}</td>
-        <td data-label="Precio" style="font-weight:600;">S/ ${Number(p.precio_venta).toLocaleString('es-PE', { minimumFractionDigits: 2 })}</td>
+        <td data-label="Precio" class="prod-price">S/ ${Number(p.precio_venta).toLocaleString('es-PE', { minimumFractionDigits: 2 })}</td>
         <td data-label="Stock">${stockBadge}</td>
         ${puedeEditar ? `
           <td data-label="Acciones">
-            <div style="display:flex;gap:0.5rem;">
+            <div class="prod-actions">
               <button class="btn-edit" data-id="${p._id}" data-action="editar"><i class="fas fa-pen"></i> Editar</button>
               <button class="btn-danger" data-id="${p._id}" data-action="eliminar"><i class="fas fa-trash"></i></button>
             </div>
@@ -354,25 +309,25 @@ function abrirModal(container, producto = null) {
             </div>
             <div class="form-group">
               <label>Imagen del producto</label>
-              <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem;">
-                <button type="button" id="btnDesdeArchivo" style="flex:1;padding:0.5rem;border:1px solid #E2E8F0;border-radius:8px;background:#F8FAFC;cursor:pointer;font-size:0.8125rem;font-weight:600;color:#374151;display:flex;align-items:center;justify-content:center;gap:0.4rem;">
+              <div class="prod-actions">
+                <button type="button" id="btnDesdeArchivo" class="prod-btn-file">
                   <i class="fas fa-folder-open"></i> Cargar archivo
                 </button>
-                <button type="button" id="btnDesdeCamara" style="flex:1;padding:0.5rem;border:1px solid #E2E8F0;border-radius:8px;background:#F8FAFC;cursor:pointer;font-size:0.8125rem;font-weight:600;color:#374151;display:flex;align-items:center;justify-content:center;gap:0.4rem;">
+                <button type="button" id="btnDesdeCamara" class="prod-btn-camara">
                   <i class="fas fa-camera"></i> Usar cámara
                 </button>
               </div>
-              <input id="fImagen" name="imagen" type="file" accept="image/jpeg,image/png,image/webp" style="display:none;" />
-              <div id="camaraContainer" style="display:none;flex-direction:column;align-items:center;gap:0.5rem;">
-                <video id="camaraVideo" autoplay playsinline style="width:100%;max-height:220px;border-radius:8px;background:#000;"></video>
-                <div style="display:flex;gap:0.5rem;">
-                  <button type="button" id="btnCapturar" style="padding:0.4rem 1rem;background:#2563EB;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:0.8125rem;font-weight:600;"><i class="fas fa-circle"></i> Capturar</button>
-                  <button type="button" id="btnCerrarCamara" style="padding:0.4rem 1rem;background:#F1F5F9;color:#374151;border:none;border-radius:8px;cursor:pointer;font-size:0.8125rem;">Cancelar</button>
+              <input id="fImagen" name="imagen" type="file" accept="image/jpeg,image/png,image/webp" class="prod-input-hidden" />
+              <div id="camaraContainer" class="prod-camara-container">
+                <video id="camaraVideo" autoplay playsinline class="prod-camara-video"></video>
+                <div class="prod-camara-actions">
+                  <button type="button" id="btnCapturar" class="prod-camara-capture"><i class="fas fa-circle"></i> Capturar</button>
+                  <button type="button" id="btnCerrarCamara" class="prod-camara-cancel">Cancelar</button>
                 </div>
-                <canvas id="camaraCanvas" style="display:none;"></canvas>
+                <canvas id="camaraCanvas" class="prod-camara-canvas"></canvas>
               </div>
-              <div id="imagenPreview" style="margin-top:0.5rem;">
-                ${producto?.imagen ? `<img src="${producto.imagen}" alt="Imagen actual" style="width:80px;height:80px;object-fit:cover;border-radius:8px;" />` : ''}
+              <div id="imagenPreview" class="prod-img-preview">
+                ${producto?.imagen ? `<img src="${producto.imagen}" alt="Imagen actual" />` : ''}
               </div>
             </div>
           </div>
@@ -414,7 +369,7 @@ function abrirModal(container, producto = null) {
     const file = inputFile.files[0];
     if (!file) return;
     const url = URL.createObjectURL(file);
-    preview.innerHTML = `<img src="${url}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;" />`;
+    preview.innerHTML = `<img src="${url}" />`;
   });
 
   btnCamara.addEventListener('click', async () => {
@@ -447,7 +402,7 @@ function abrirModal(container, producto = null) {
       dt.items.add(file);
       inputFile.files = dt.files;
       const url = URL.createObjectURL(blob);
-      preview.innerHTML = `<img src="${url}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;" />`;
+      preview.innerHTML = `<img src="${url}" />`;
       if (streamActivo) { streamActivo.getTracks().forEach(t => t.stop()); streamActivo = null; }
       camaraContainer.style.display = 'none';
       btnCamara.style.background = '';
@@ -500,7 +455,7 @@ async function confirmarEliminar(container, id) {
   const modalContainer = container.querySelector('#modalContainer');
   modalContainer.innerHTML = `
     <div class="modal-overlay" id="delModal" role="dialog" aria-modal="true">
-      <div class="modal" style="max-width:400px;">
+      <div class="modal prod-del-modal">
         <div class="modal-header">
           <h2>Eliminar producto</h2>
           <button class="btn-close" id="btnCerrarDel"><i class="fas fa-times"></i></button>
@@ -510,7 +465,7 @@ async function confirmarEliminar(container, id) {
         </div>
         <div class="modal-footer">
           <button class="btn-secondary" id="btnCancelarDel">Cancelar</button>
-          <button class="btn-danger" id="btnConfirmarDel" style="padding:0.5rem 1rem;"><i class="fas fa-trash"></i> Eliminar</button>
+          <button class="btn-danger prod-del-btn" id="btnConfirmarDel"><i class="fas fa-trash"></i> Eliminar</button>
         </div>
       </div>
     </div>

@@ -29,100 +29,9 @@ export async function init(container, user) {
   if (cfgRes.ok) _configTienda = cfgRes.data || {};
 
   container.innerHTML = `
-    <style>
-      .pos-layout { display:grid; grid-template-columns:1fr 380px; gap:1rem; min-height:calc(100vh - 120px); }
-      @media(max-width:900px){ .pos-layout { grid-template-columns:1fr; } }
-      .pos-left, .pos-right { display:flex; flex-direction:column; gap:1rem; }
-      .pos-card { background:#fff; border-radius:12px; border:1px solid #E2E8F0; }
-      .pos-card-header { padding:0.875rem 1.25rem; border-bottom:1px solid #E2E8F0; font-weight:600; font-size:0.9375rem; display:flex; align-items:center; gap:0.5rem; border-radius:12px 12px 0 0; }
-      .pos-card-body { padding:1rem; }
-      .search-input { width:100%; padding:0.625rem 0.875rem; border:1px solid #E2E8F0; border-radius:8px; font-size:0.875rem; outline:none; }
-      .search-input:focus { border-color:#2563EB; }
-      .cat-opt { padding:0.5rem 0.75rem; font-size:0.875rem; cursor:pointer; color:#1E293B; }
-      .cat-opt:hover { background:#F1F5F9; }
-      .cat-opt-active { background:#EFF6FF; color:#2563EB; font-weight:600; }
-      #catSelectDisplay:hover { border-color:#BFDBFE; }
-      #catSelectDisplay:focus-within { border-color:#2563EB; }
-      #catSearch:focus { border-color:#2563EB; }
-      .prod-results { display:flex; flex-direction:column; gap:0.5rem; margin-top:0.75rem; max-height:320px; overflow-y:auto; }
-      .prod-result-item { display:flex; align-items:center; justify-content:space-between; padding:0.625rem 0.875rem; border:1px solid #E2E8F0; border-radius:8px; cursor:pointer; transition:all 0.15s; gap:0.75rem; }
-      .prod-result-item:hover { background:#F8FAFC; border-color:#BFDBFE; }
-      .prod-result-item.sin-stock { opacity:0.5; cursor:not-allowed; background:#FAFAFA; }
-      .prod-result-item.sin-stock:hover { background:#FAFAFA; border-color:#E2E8F0; }
-      .prod-thumb { width:40px; height:40px; object-fit:cover; border-radius:8px; background:#F1F5F9; flex-shrink:0; }
-      .prod-thumb-placeholder { width:40px; height:40px; border-radius:8px; background:#F1F5F9; display:flex; align-items:center; justify-content:center; color:#94A3B8; font-size:1.125rem; flex-shrink:0; }
-      .btn-agregar { padding:0.35rem 0.75rem; background:#2563EB; color:#fff; border:none; border-radius:6px; font-size:0.8125rem; font-weight:600; cursor:pointer; }
-      .btn-agregar:disabled { background:#94A3B8; cursor:not-allowed; }
-      .carrito-items { display:flex; flex-direction:column; gap:0.5rem; max-height:280px; overflow-y:auto; }
-      .carrito-item { display:flex; align-items:center; gap:0.75rem; padding:0.625rem; border:1px solid #F1F5F9; border-radius:8px; }
-      .carrito-item-info { flex:1; min-width:0; }
-      .carrito-item-name { font-size:0.875rem; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-      .carrito-item-price { font-size:0.75rem; color:#64748B; }
-      .qty-ctrl { display:flex; align-items:center; gap:0.375rem; }
-      .qty-btn { width:26px; height:26px; border:1px solid #E2E8F0; background:#fff; border-radius:6px; cursor:pointer; font-size:0.875rem; display:flex; align-items:center; justify-content:center; }
-      .qty-val { min-width:28px; text-align:center; font-size:0.875rem; font-weight:600; }
-      .btn-rm { background:none; border:none; color:#DC2626; cursor:pointer; font-size:0.875rem; padding:0.25rem; }
-      .resumen { border-top:1px solid #E2E8F0; padding-top:0.875rem; display:flex; flex-direction:column; gap:0.375rem; }
-      .resumen-row { display:flex; justify-content:space-between; font-size:0.875rem; }
-      .resumen-total { font-size:1.125rem; font-weight:700; }
-      .metodos-pago { display:grid; grid-template-columns:repeat(3,1fr); gap:0.5rem; }
-      .metodo-btn { padding:0.5rem; border:1px solid #E2E8F0; border-radius:8px; background:#fff; font-size:0.8125rem; font-weight:500; cursor:pointer; text-align:center; transition:all 0.15s; }
-      .metodo-btn.active { border-color:#2563EB; background:#EFF6FF; color:#2563EB; }
-      .btn-cobrar { width:100%; padding:0.875rem; background:#16A34A; color:#fff; border:none; border-radius:10px; font-size:1rem; font-weight:700; cursor:pointer; transition:background 0.15s; display:flex; align-items:center; justify-content:center; gap:0.5rem; }
-      .btn-cobrar:hover { background:#15803D; }
-      .btn-cobrar:disabled { background:#94A3B8; cursor:not-allowed; }
-      .descuento-row { display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; }
-      .descuento-row input[type=number] { width:90px; padding:0.375rem 0.5rem; border:1px solid #E2E8F0; border-radius:6px; font-size:0.875rem; }
-      .descuento-row select { padding:0.375rem 0.5rem; border:1px solid #E2E8F0; border-radius:6px; font-size:0.875rem; }
-      .toggle-desc { display:flex; align-items:center; gap:0.5rem; font-size:0.875rem; cursor:pointer; }
-      .empty-cart { text-align:center; padding:2rem; color:#94A3B8; }
-      .empty-cart i { font-size:2rem; display:block; margin-bottom:0.5rem; }
-      .tabs { display:flex; border-bottom:1px solid #E2E8F0; margin-bottom:1rem; }
-      
-      /* Panda en la línea superior del modal del carrito */
-      .pos-right { position: relative; }
-      .panda-viajero {
-        position: absolute;
-        top: -75px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 165px;
-        height: 100px;
-        z-index: 10;
-      }
-      .panda-viajero img {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-        filter: drop-shadow(2px 4px 6px rgba(0, 0, 0, 0.1));
-      }
-      @media(max-width:900px){ .panda-viajero { display:none; } }
-      
-      .tab-btn { padding:0.625rem 1.25rem; border:none; background:none; font-size:0.875rem; font-weight:500; cursor:pointer; color:#64748B; border-bottom:2px solid transparent; margin-bottom:-1px; }
-      .tab-btn.active { color:#2563EB; border-bottom-color:#2563EB; }
-      .hist-table-wrap { overflow-x:auto; }
-      table { width:100%; border-collapse:collapse; font-size:0.875rem; }
-      th { padding:0.625rem 0.875rem; text-align:left; font-size:0.75rem; font-weight:600; text-transform:uppercase; color:#64748B; border-bottom:1px solid #E2E8F0; }
-      td { padding:0.625rem 0.875rem; border-bottom:1px solid #F1F5F9; }
-      .badge { display:inline-flex; align-items:center; gap:0.25rem; padding:0.2rem 0.6rem; border-radius:999px; font-size:0.75rem; font-weight:600; }
-      .badge-ok { background:#DCFCE7; color:#16A34A; }
-      .badge-danger { background:#FEE2E2; color:#DC2626; }
-      .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:1000; display:flex; align-items:center; justify-content:center; padding:1rem; }
-      .modal { background:#fff; border-radius:14px; width:100%; max-width:480px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.2); animation:slideUp 0.2s ease; }
-      @keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
-      .modal-header { display:flex; align-items:center; justify-content:space-between; padding:1.25rem 1.5rem; border-bottom:1px solid #E2E8F0; }
-      .modal-header h2 { font-size:1.125rem; font-weight:700; }
-      .modal-body { padding:1.5rem; }
-      .modal-footer { display:flex; justify-content:flex-end; gap:0.75rem; padding:1rem 1.5rem; border-top:1px solid #E2E8F0; }
-      .btn-primary { display:inline-flex; align-items:center; gap:0.5rem; padding:0.5rem 1rem; background:#2563EB; color:#fff; border:none; border-radius:8px; font-size:0.875rem; font-weight:600; cursor:pointer; }
-      .btn-secondary { display:inline-flex; align-items:center; gap:0.5rem; padding:0.5rem 1rem; background:#F1F5F9; color:#1E293B; border:1px solid #E2E8F0; border-radius:8px; font-size:0.875rem; font-weight:500; cursor:pointer; }
-      .btn-close { background:none; border:none; font-size:1.25rem; cursor:pointer; color:#64748B; }
-      .cliente-result { padding:0.5rem 0.75rem; border:1px solid #E2E8F0; border-radius:8px; cursor:pointer; font-size:0.875rem; margin-top:0.375rem; }
-      .cliente-result:hover { background:#F8FAFC; }
-      .cliente-selected { display:flex; align-items:center; justify-content:space-between; padding:0.5rem 0.75rem; background:#EFF6FF; border-radius:8px; font-size:0.875rem; margin-top:0.5rem; }
-    </style>
 
-    <div style="display:flex;gap:0.75rem;margin-bottom:1rem;">
+
+    <div class="ven-flex-row">
       <button class="tab-btn active" id="tabPOS" data-tab="pos">Punto de Venta</button>
       <button class="tab-btn" id="tabHistorial" data-tab="historial">Historial de Ventas</button>
     </div>
@@ -131,37 +40,37 @@ export async function init(container, user) {
       <div class="pos-layout">
         <div class="pos-left">
           <div class="pos-card">
-            <div class="pos-card-header"><i class="fas fa-search" style="color:#2563EB;"></i> Buscar Producto</div>
+            <div class="pos-card-header"><i class="fas fa-search ven-search-icon"></i> Buscar Producto</div>
             <div class="pos-card-body">
-              <div style="display:flex;gap:0.5rem;">
-                <div style="position:relative;flex:1;">
-                  <i class="fas fa-search" style="position:absolute;left:0.75rem;top:50%;transform:translateY(-50%);color:#94A3B8;font-size:0.875rem;pointer-events:none;"></i>
-                  <input class="search-input" id="prodSearch" type="text" placeholder="Buscar por nombre o código de barras..." autocomplete="off" style="padding-left:2.25rem;" />
+              <div class="ven-flex-gap-sm">
+                <div class="ven-search-wrap">
+                  <i class="fas fa-search ven-search-icon-abs"></i>
+                  <input class="search-input ven-search-input-pl" id="prodSearch" type="text" placeholder="Buscar por nombre o código de barras..." autocomplete="off" />
                 </div>
-                <div style="position:relative;flex-shrink:0;" id="catSelectWrapper">
-                  <div id="catSelectDisplay" style="display:flex;align-items:center;gap:0.375rem;padding:0.625rem 0.75rem;border:1px solid #E2E8F0;border-radius:8px;font-size:0.875rem;cursor:pointer;background:#fff;user-select:none;white-space:nowrap;height:100%;box-sizing:border-box;">
-                    <i class="fas fa-tag" style="color:#94A3B8;font-size:0.75rem;"></i>
-                    <span id="catSelectedText" style="color:#64748B;max-width:130px;overflow:hidden;text-overflow:ellipsis;">Todas</span>
-                    <i class="fas fa-chevron-down" id="catArrow" style="color:#94A3B8;font-size:0.7rem;transition:transform 0.2s;"></i>
+                <div class="ven-cat-wrap" id="catSelectWrapper">
+                  <div id="catSelectDisplay" class="ven-cat-display">
+                    <i class="fas fa-tag ven-cat-icon"></i>
+                    <span id="catSelectedText" class="ven-cat-text">Todas</span>
+                    <i class="fas fa-chevron-down ven-cat-arrow" id="catArrow"></i>
                   </div>
-                  <div id="catDropdown" style="display:none;position:absolute;top:calc(100% + 4px);right:0;width:240px;background:#fff;border:1px solid #E2E8F0;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:1050;max-height:280px;overflow:hidden;">
-                    <div style="padding:0.5rem;">
-                      <input type="text" id="catSearch" placeholder="Buscar categoría…" style="width:100%;padding:0.5rem 0.625rem;border:1px solid #E2E8F0;border-radius:6px;font-size:0.8125rem;outline:none;box-sizing:border-box;" /></div>
-                    <div id="catOptions" style="max-height:210px;overflow-y:auto;"></div>
+                  <div id="catDropdown" class="ven-cat-dropdown">
+                    <div class="ven-cat-search-wrap">
+                      <input type="text" id="catSearch" class="ven-cat-search" placeholder="Buscar categoría…" /></div>
+                    <div id="catOptions" class="ven-cat-options"></div>
                   </div>
                 </div>
               </div>
               <div class="prod-results" id="prodResults">
-                <p style="color:#94A3B8;font-size:0.875rem;text-align:center;padding:1rem;">Escribe para buscar productos</p>
+                <p class="ven-empty-msg">Escribe para buscar productos</p>
               </div>
             </div>
           </div>
           <div class="pos-card">
-            <div class="pos-card-header"><i class="fas fa-user" style="color:#64748B;"></i> Cliente (opcional)</div>
+            <div class="pos-card-header"><i class="fas fa-user ven-icon-muted"></i> Cliente (opcional)</div>
             <div class="pos-card-body">
-              <div style="position:relative;">
-                <i class="fas fa-search" style="position:absolute;left:0.75rem;top:50%;transform:translateY(-50%);color:#94A3B8;font-size:0.875rem;pointer-events:none;"></i>
-                <input class="search-input" id="clienteSearch" type="text" placeholder="Buscar por DNI o nombre..." autocomplete="off" style="padding-left:2.25rem;" />
+              <div class="ven-cliente-search-wrap">
+                <i class="fas fa-search ven-cliente-icon"></i>
+                <input class="search-input ven-cliente-input" id="clienteSearch" type="text" placeholder="Buscar por DNI o nombre..." autocomplete="off" />
               </div>
               <div id="clienteResults"></div>
               <div id="clienteSeleccionado"></div>
@@ -174,19 +83,19 @@ export async function init(container, user) {
             <img src="/img/panda-para-top.svg" alt="Panda viajero" />
           </div>
           
-          <div class="pos-card" style="flex:1;">
-            <div class="pos-card-header"><i class="fas fa-shopping-cart" style="color:#2563EB;"></i> Carrito</div>
-            <div class="pos-card-body" style="display:flex;flex-direction:column;gap:0.875rem;">
+          <div class="pos-card ven-card-flex">
+            <div class="pos-card-header"><i class="fas fa-shopping-cart ven-search-icon"></i> Carrito</div>
+            <div class="pos-card-body ven-card-body-col">
               <div class="carrito-items" id="carritoItems">
                 <div class="empty-cart"><i class="fas fa-shopping-cart"></i><p>El carrito está vacío</p></div>
               </div>
-              <div class="resumen" id="resumenCarrito" style="display:none;">
+              <div class="resumen ven-resumen-hidden" id="resumenCarrito">
                 <div class="resumen-row"><span>Subtotal</span><span id="rSubtotal">S/ 0.00</span></div>
                 <div>
                   <label class="toggle-desc">
                     <input type="checkbox" id="chkDescuento" /> Aplicar descuento
                   </label>
-                  <div id="descuentoPanel" style="display:none;margin-top:0.5rem;" class="descuento-row">
+                  <div id="descuentoPanel" class="descuento-row">
                     <select id="descTipo">
                       <option value="porcentaje">%</option>
                       <option value="monto_fijo">S/</option>
@@ -194,19 +103,19 @@ export async function init(container, user) {
                     <input type="number" id="descValor" min="0" step="0.01" placeholder="0" value="0" />
                   </div>
                 </div>
-                <div class="resumen-row"><span>Descuento</span><span id="rDescuento" style="color:#DC2626;">- S/ 0.00</span></div>
+                <div class="resumen-row"><span>Descuento</span><span id="rDescuento" class="ven-desc-text">- S/ 0.00</span></div>
                 <div class="resumen-row resumen-total"><span>TOTAL</span><span id="rTotal">S/ 0.00</span></div>
               </div>
-              <div id="metodoPagoSection" style="display:none;">
-                <div style="font-size:0.8125rem;font-weight:600;color:#374151;margin-bottom:0.5rem;">Método de pago</div>
+              <div id="metodoPagoSection" class="ven-metodo-section">
+                <div class="ven-metodo-label">Método de pago</div>
                 <div class="metodos-pago">
                   ${['efectivo','tarjeta','yape','plin','transferencia'].map(m => `<button class="metodo-btn${m==='efectivo'?' active':''}" data-metodo="${m}">${m.charAt(0).toUpperCase()+m.slice(1)}</button>`).join('')}
                 </div>
-                <div id="efectivoPanel" style="margin-top:0.75rem;">
-                  <label style="font-size:0.8125rem;font-weight:600;color:#374151;">Monto recibido (S/)</label>
-                  <input class="search-input" id="montoRecibido" type="number" min="0" step="0.01" placeholder="0.00" style="margin-top:0.375rem;" />
-                  <div style="display:flex;justify-content:space-between;margin-top:0.5rem;font-size:0.875rem;">
-                    <span>Vuelto:</span><span id="vueltoDisplay" style="font-weight:700;color:#16A34A;">S/ 0.00</span>
+                <div id="efectivoPanel" class="ven-efectivo-panel">
+                  <label class="ven-efectivo-label">Monto recibido (S/)</label>
+                  <input class="search-input ven-efectivo-input" id="montoRecibido" type="number" min="0" step="0.01" placeholder="0.00" />
+                  <div class="ven-vuelto-row">
+                    <span>Vuelto:</span><span id="vueltoDisplay" class="ven-vuelto-value">S/ 0.00</span>
                   </div>
                 </div>
               </div>
@@ -217,16 +126,16 @@ export async function init(container, user) {
       </div>
     </div>
 
-    <div id="viewHistorial" style="display:none;">
-      <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:1rem;">
-        <input type="date" id="histDesde" style="padding:0.5rem 0.75rem;border:1px solid #E2E8F0;border-radius:8px;font-size:0.875rem;" />
-        <input type="date" id="histHasta" style="padding:0.5rem 0.75rem;border:1px solid #E2E8F0;border-radius:8px;font-size:0.875rem;" />
-        <select id="histEstado" style="padding:0.5rem 0.75rem;border:1px solid #E2E8F0;border-radius:8px;font-size:0.875rem;">
+    <div id="viewHistorial" class="ven-hist-hidden">
+      <div class="ven-hist-filters">
+        <input type="date" id="histDesde" class="ven-hist-input" />
+        <input type="date" id="histHasta" class="ven-hist-input" />
+        <select id="histEstado" class="ven-hist-select">
           <option value="">Todos los estados</option>
           <option value="completada">Completada</option>
           <option value="anulada">Anulada</option>
         </select>
-        <select id="histMetodo" style="padding:0.5rem 0.75rem;border:1px solid #E2E8F0;border-radius:8px;font-size:0.875rem;">
+        <select id="histMetodo" class="ven-hist-select">
           <option value="">Todos los métodos</option>
           ${['efectivo','tarjeta','yape','plin','transferencia'].map(m=>`<option value="${m}">${m.charAt(0).toUpperCase()+m.slice(1)}</option>`).join('')}
         </select>
@@ -236,10 +145,10 @@ export async function init(container, user) {
         <div class="hist-table-wrap">
           <table class="data-table">
             <thead><tr><th>N° Venta</th><th>Cliente</th><th>Total</th><th>Método</th><th>Estado</th><th>Fecha</th>${puedeAnular?'<th>Vendedor</th><th>Acciones</th>':''}</tr></thead>
-            <tbody id="histTbody"><tr><td colspan="${puedeAnular?8:6}" style="text-align:center;padding:2rem;color:#94A3B8;">Cargando historial…</td></tr></tbody>
+            <tbody id="histTbody"><tr><td colspan="${puedeAnular?8:6}" class="ven-td-loading">Cargando historial…</td></tr></tbody>
           </table>
         </div>
-        <div id="histPaginacion" style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;border-top:1px solid #E2E8F0;font-size:0.8125rem;color:#64748B;"></div>
+        <div id="histPaginacion" class="ven-hist-pag"></div>
       </div>
     </div>
 
@@ -248,14 +157,14 @@ export async function init(container, user) {
 
   // Tabs
   container.querySelector('#tabPOS').addEventListener('click', () => {
-    container.querySelector('#viewPOS').style.display = '';
-    container.querySelector('#viewHistorial').style.display = 'none';
+    container.querySelector('#viewPOS').classList.remove('ven-hist-hidden');
+    container.querySelector('#viewHistorial').classList.add('ven-hist-hidden');
     container.querySelector('#tabPOS').classList.add('active');
     container.querySelector('#tabHistorial').classList.remove('active');
   });
   container.querySelector('#tabHistorial').addEventListener('click', () => {
-    container.querySelector('#viewPOS').style.display = 'none';
-    container.querySelector('#viewHistorial').style.display = '';
+    container.querySelector('#viewPOS').classList.add('ven-hist-hidden');
+    container.querySelector('#viewHistorial').classList.remove('ven-hist-hidden');
     container.querySelector('#tabPOS').classList.remove('active');
     container.querySelector('#tabHistorial').classList.add('active');
     cargarHistorial(container, puedeAnular);
@@ -326,7 +235,7 @@ export async function init(container, user) {
     // Mostrar indicador de búsqueda inmediatamente
     if (valor.trim() || catActiva) {
       const resultsEl = container.querySelector('#prodResults');
-      resultsEl.innerHTML = `<p style="color:#2563EB;font-size:0.875rem;text-align:center;padding:0.5rem;"><i class="fas fa-spinner fa-spin"></i> Buscando…</p>`;
+      resultsEl.innerHTML = `<p class="ven-loading-msg"><i class="fas fa-spinner fa-spin"></i> Buscando…</p>`;
     }
     
     _searchTimer = setTimeout(() => buscarProductos(container, valor, catActiva), 250);
@@ -413,7 +322,7 @@ async function buscarProductos(container, q, catId) {
   const searchTerm = q?.trim() || '';
   const isDefaultView = !searchTerm && !catId;
 
-  resultsEl.innerHTML = `<p style="color:#2563EB;font-size:0.875rem;text-align:center;padding:0.5rem;"><i class="fas fa-spinner fa-spin"></i> ${isDefaultView ? 'Cargando sugerencias…' : 'Buscando…'}</p>`;
+  resultsEl.innerHTML = `<p class="ven-loading-msg"><i class="fas fa-spinner fa-spin"></i> ${isDefaultView ? 'Cargando sugerencias…' : 'Buscando…'}</p>`;
 
   let url = `/productos?limit=30&estado=activo`;
   if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`;
@@ -429,9 +338,9 @@ async function buscarProductos(container, q, catId) {
   if (prods.length === 0) {
     resultsEl.innerHTML = `
       <div style="text-align:center;padding:1.5rem;color:#64748B;">
-        <i class="fas fa-search" style="font-size:2rem;opacity:0.3;display:block;margin-bottom:0.5rem;"></i>
-        <p style="font-size:0.875rem;">${isDefaultView ? 'No hay productos disponibles' : 'No se encontraron productos'}</p>
-        ${searchTerm ? `<p style="font-size:0.75rem;color:#94A3B8;margin-top:0.25rem;">Intenta con otro término de búsqueda</p>` : ''}
+        <i class="fas fa-search ven-empty-icon"></i>
+        <p class="ven-empty-text">${isDefaultView ? 'No hay productos disponibles' : 'No se encontraron productos'}</p>
+        ${searchTerm ? `<p class="ven-empty-hint">Intenta con otro término de búsqueda</p>` : ''}
       </div>
     `;
     return;
@@ -442,18 +351,18 @@ async function buscarProductos(container, q, catId) {
     const stockBajo = p.stock_actual > 0 && p.stock_actual <= (p.stock_minimo || 5);
 
     const imgHtml = p.imagen
-      ? `<img src="${p.imagen}" alt="${p.nombre}" class="prod-thumb" loading="lazy" data-src="${p.imagen}" data-nombre="${p.nombre}" style="cursor:zoom-in;" />`
+          ? `<img src="${p.imagen}" alt="${p.nombre}" class="prod-thumb ven-img-zoom" loading="lazy" data-src="${p.imagen}" data-nombre="${p.nombre}" />`
       : `<div class="prod-thumb-placeholder"><i class="fas fa-mobile-alt"></i></div>`;
 
     return `
       <div class="prod-result-item${sinStock ? ' sin-stock' : ''}" data-id="${p._id}">
         ${imgHtml}
-        <div style="flex:1;min-width:0;">
-          <div style="font-weight:500;font-size:0.875rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.nombre}</div>
-          <div style="font-size:0.75rem;color:#64748B;display:flex;align-items:center;gap:0.5rem;margin-top:0.125rem;">
-            <span style="font-weight:600;">S/ ${Number(p.precio_venta).toLocaleString('es-PE',{minimumFractionDigits:2})}</span>
-            <span style="color:${sinStock ? '#DC2626' : stockBajo ? '#D97706' : '#16A34A'};">
-              <i class="fas fa-box" style="font-size:0.7rem;"></i> ${p.stock_actual}
+        <div class="ven-prod-item">
+          <div class="ven-prod-name">${p.nombre}</div>
+          <div class="ven-prod-meta">
+            <span class="ven-prod-price">S/ ${Number(p.precio_venta).toLocaleString('es-PE',{minimumFractionDigits:2})}</span>
+            <span class="ven-prod-stock" style="color:${sinStock ? '#DC2626' : stockBajo ? '#D97706' : '#16A34A'};">
+              <i class="fas fa-box ven-stock-icon"></i> ${p.stock_actual}
             </span>
           </div>
         </div>
@@ -495,7 +404,7 @@ async function buscarYAgregarPorCodigo(container, codigo, catId) {
   const searchInput = container.querySelector('#prodSearch');
   const resultsEl = container.querySelector('#prodResults');
   
-  resultsEl.innerHTML = `<p style="color:#2563EB;font-size:0.875rem;text-align:center;padding:0.5rem;"><i class="fas fa-barcode"></i> Buscando código…</p>`;
+  resultsEl.innerHTML = `<p class="ven-loading-msg"><i class="fas fa-barcode"></i> Buscando código…</p>`;
   
   let url = `/productos?limit=5&estado=activo&search=${encodeURIComponent(codigo)}`;
   if (catId) url += `&categoria=${catId}`;
@@ -509,15 +418,15 @@ async function buscarYAgregarPorCodigo(container, codigo, catId) {
     searchInput.value = '';
     searchInput.focus();
     resultsEl.innerHTML = `
-      <div style="text-align:center;padding:1rem;color:#16A34A;">
-        <i class="fas fa-check-circle" style="font-size:1.5rem;display:block;margin-bottom:0.5rem;"></i>
-        <p style="font-size:0.875rem;font-weight:600;">${prods[0].nombre}</p>
-        <p style="font-size:0.75rem;margin-top:0.25rem;">Agregado al carrito</p>
+      <div class="ven-code-result">
+        <i class="fas fa-check-circle ven-code-icon"></i>
+        <p class="ven-code-name">${prods[0].nombre}</p>
+        <p class="ven-code-hint">Agregado al carrito</p>
       </div>
     `;
     setTimeout(() => {
       if (resultsEl.innerHTML.includes('Agregado al carrito')) {
-        resultsEl.innerHTML = `<p style="color:#94A3B8;font-size:0.875rem;text-align:center;padding:1rem;">Escribe para buscar productos</p>`;
+        resultsEl.innerHTML = `<p class="ven-empty-msg">Escribe para buscar productos</p>`;
       }
     }, 2000);
   } else {
@@ -548,8 +457,8 @@ function renderCarrito(container) {
 
   if (_carrito.length === 0) {
     carritoEl.innerHTML = `<div class="empty-cart"><i class="fas fa-shopping-cart"></i><p>El carrito está vacío</p></div>`;
-    resumenEl.style.display = 'none';
-    metodoPagoEl.style.display = 'none';
+    resumenEl.classList.add('ven-resumen-hidden');
+    metodoPagoEl.classList.add('ven-metodo-section');
     btnCobrar.disabled = true;
     return;
   }
@@ -565,7 +474,7 @@ function renderCarrito(container) {
         <span class="qty-val">${item.cantidad}</span>
         <button class="qty-btn" data-idx="${idx}" data-action="inc">+</button>
       </div>
-      <div style="min-width:70px;text-align:right;font-weight:600;font-size:0.875rem;">
+      <div class="ven-cart-subtotal">
         S/ ${(item.precio_venta * item.cantidad).toLocaleString('es-PE',{minimumFractionDigits:2})}
       </div>
       <button class="btn-rm" data-idx="${idx}" data-action="rm" aria-label="Eliminar"><i class="fas fa-times"></i></button>
@@ -588,8 +497,8 @@ function renderCarrito(container) {
     });
   });
 
-  resumenEl.style.display = '';
-  metodoPagoEl.style.display = '';
+  resumenEl.classList.remove('ven-resumen-hidden');
+  metodoPagoEl.classList.remove('ven-metodo-section');
   btnCobrar.disabled = false;
   recalcular(container);
 }
@@ -644,8 +553,8 @@ async function buscarCliente(container, q) {
   if (clientes.length > 0) {
     // Encontrado en BD — mostrar lista normal
     resultsEl.innerHTML = clientes.slice(0, 5).map(c => `
-      <div class="cliente-result" data-id="${c._id}" style="padding:0.5rem 0.75rem;border:1px solid #E2E8F0;border-radius:8px;cursor:pointer;font-size:0.875rem;margin-top:0.375rem;transition:background 0.15s;">
-        <i class="fas fa-user" style="color:#64748B;margin-right:0.375rem;"></i>
+      <div class="cliente-result" data-id="${c._id}">
+        <i class="fas fa-user ven-cli-selected-icon"></i>
         ${c.nombre || ''} ${c.apellido_paterno || ''} — <strong>DNI: ${c.dni}</strong>
       </div>
     `).join('');
@@ -667,16 +576,16 @@ async function buscarCliente(container, q) {
   if (esDNI) {
     // Mostrar botón para consultar RENIEC
     resultsEl.innerHTML = `
-      <div style="margin-top:0.5rem;padding:0.75rem;background:#FFF7ED;border:1px solid #FED7AA;border-radius:8px;font-size:0.8125rem;">
-        <div style="color:#92400E;margin-bottom:0.5rem;"><i class="fas fa-exclamation-circle" style="margin-right:0.375rem;"></i>DNI <strong>${q}</strong> no está registrado.</div>
-        <button id="btnBuscarReniec" style="display:inline-flex;align-items:center;gap:0.375rem;padding:0.4rem 0.875rem;background:#0a0a0a;color:#fff;border:none;border-radius:6px;font-size:0.8125rem;font-weight:600;cursor:pointer;">
+      <div class="ven-cli-reniec-box">
+        <div class="ven-cli-reniec-msg"><i class="fas fa-exclamation-circle"></i>DNI <strong>${q}</strong> no está registrado.</div>
+        <button id="btnBuscarReniec" class="ven-cli-reniec-btn">
           <i class="fas fa-search"></i> Buscar en RENIEC
         </button>
       </div>
     `;
     resultsEl.querySelector('#btnBuscarReniec').addEventListener('click', () => consultarReniecEnVenta(container, q));
   } else {
-    resultsEl.innerHTML = `<p style="font-size:0.8125rem;color:#94A3B8;margin-top:0.375rem;">Sin resultados</p>`;
+    resultsEl.innerHTML = `<p class="ven-cli-sinres">Sin resultados</p>`;
   }
 }
 
@@ -685,8 +594,8 @@ async function consultarReniecEnVenta(container, dni) {
   const selEl     = container.querySelector('#clienteSeleccionado');
 
   resultsEl.innerHTML = `
-    <div style="margin-top:0.5rem;padding:0.75rem;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;font-size:0.8125rem;color:#1D4ED8;">
-      <i class="fas fa-spinner fa-spin" style="margin-right:0.375rem;"></i> Consultando RENIEC…
+    <div class="ven-cli-loading">
+      <i class="fas fa-spinner fa-spin ven-cli-loading-icon"></i> Consultando RENIEC…
     </div>
   `;
 
@@ -694,8 +603,8 @@ async function consultarReniecEnVenta(container, dni) {
 
   if (!res.ok || res.data.encontrado === false) {
     resultsEl.innerHTML = `
-      <div style="margin-top:0.5rem;padding:0.75rem;background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;font-size:0.8125rem;color:#DC2626;">
-        <i class="fas fa-times-circle" style="margin-right:0.375rem;"></i> No se encontró información en RENIEC para el DNI <strong>${dni}</strong>.
+      <div class="ven-cli-error-box">
+        <i class="fas fa-times-circle ven-cli-error-icon"></i> No se encontró información en RENIEC para el DNI <strong>${dni}</strong>.
       </div>
     `;
     return;
@@ -706,15 +615,15 @@ async function consultarReniecEnVenta(container, dni) {
 
   // Mostrar card de confirmación con los datos obtenidos
   resultsEl.innerHTML = `
-    <div style="margin-top:0.5rem;padding:0.875rem;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;font-size:0.875rem;">
-      <div style="font-weight:600;color:#15803D;margin-bottom:0.5rem;"><i class="fas fa-check-circle" style="margin-right:0.375rem;"></i>Encontrado en RENIEC</div>
-      <div style="color:#1E293B;margin-bottom:0.125rem;"><span style="color:#64748B;font-size:0.8125rem;">Nombre:</span> <strong>${nombreCompleto}</strong></div>
-      <div style="color:#1E293B;margin-bottom:0.75rem;"><span style="color:#64748B;font-size:0.8125rem;">DNI:</span> <strong>${dni}</strong></div>
-      <div style="display:flex;gap:0.5rem;">
-        <button id="btnUsarReniec" style="flex:1;padding:0.4rem 0.75rem;background:#0a0a0a;color:#fff;border:none;border-radius:6px;font-size:0.8125rem;font-weight:600;cursor:pointer;">
+    <div class="ven-cli-found-box">
+      <div class="ven-cli-found-header"><i class="fas fa-check-circle ven-cli-found-check"></i>Encontrado en RENIEC</div>
+      <div class="ven-cli-found-row"><span class="ven-cli-found-label">Nombre:</span> <strong>${nombreCompleto}</strong></div>
+      <div style="color:#1E293B;margin-bottom:0.75rem;"><span class="ven-cli-found-label">DNI:</span> <strong>${dni}</strong></div>
+      <div class="ven-cli-found-actions">
+        <button id="btnUsarReniec" class="ven-cli-found-use">
           <i class="fas fa-user-plus"></i> Usar este cliente
         </button>
-        <button id="btnCancelarReniec" style="padding:0.4rem 0.75rem;background:#F1F5F9;color:#64748B;border:1px solid #E2E8F0;border-radius:6px;font-size:0.8125rem;cursor:pointer;">
+        <button id="btnCancelarReniec" class="ven-cli-found-cancel">
           Cancelar
         </button>
       </div>
@@ -745,14 +654,14 @@ async function consultarReniecEnVenta(container, dni) {
 function mostrarClienteSeleccionado(selEl, cliente) {
   const esNuevo = cliente.esNuevo;
   selEl.innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.75rem;background:${esNuevo ? '#F0FDF4' : '#EFF6FF'};border:1px solid ${esNuevo ? '#BBF7D0' : '#BFDBFE'};border-radius:8px;margin-top:0.375rem;font-size:0.875rem;">
-      <span>
-        <i class="fas fa-user${esNuevo ? '-plus' : ''}" style="color:${esNuevo ? '#16A34A' : '#2563EB'};margin-right:0.375rem;"></i>
+    <div class="ven-cli-selected-box" style="background:${esNuevo ? '#F0FDF4' : '#EFF6FF'};border-color:${esNuevo ? '#BBF7D0' : '#BFDBFE'};">
+      <span class="ven-cli-selected-info">
+        <i class="fas fa-user${esNuevo ? '-plus' : ''} ven-cli-selected-icon" style="color:${esNuevo ? '#16A34A' : '#2563EB'};"></i>
         <strong>${cliente.nombre || ''} ${cliente.apellido_paterno || ''}</strong>
-        <span style="color:#64748B;font-size:0.8125rem;"> — ${cliente.dni}</span>
-        ${esNuevo ? '<span style="margin-left:0.375rem;font-size:0.75rem;background:#DCFCE7;color:#15803D;padding:0.1rem 0.4rem;border-radius:999px;font-weight:600;">Nuevo</span>' : ''}
+        <span class="ven-cli-selected-dni"> — ${cliente.dni}</span>
+        ${esNuevo ? '<span class="ven-cli-selected-badge">Nuevo</span>' : ''}
       </span>
-      <button id="btnQuitarCliente" style="background:none;border:none;color:#DC2626;cursor:pointer;font-size:0.875rem;" aria-label="Quitar cliente"><i class="fas fa-times"></i></button>
+      <button id="btnQuitarCliente" class="ven-cli-selected-rm" aria-label="Quitar cliente"><i class="fas fa-times"></i></button>
     </div>
   `;
   selEl.querySelector('#btnQuitarCliente').addEventListener('click', () => {
@@ -780,25 +689,25 @@ function mostrarConfirmacion(container, user) {
   const modalContainer = container.querySelector('#modalContainer');
   modalContainer.innerHTML = `
     <div class="modal-overlay" id="confirmModal" role="dialog" aria-modal="true">
-      <div class="modal">
+      <div class="modal ven-confirm-modal">
         <div class="modal-header">
-          <h2><i class="fas fa-cash-register" style="color:#16A34A;margin-right:0.5rem;"></i>Confirmar Venta</h2>
+          <h2 class="ven-confirm-title"><i class="fas fa-cash-register ven-confirm-icon"></i>Confirmar Venta</h2>
           <button class="btn-close" id="btnCerrarConf"><i class="fas fa-times"></i></button>
         </div>
         <div class="modal-body">
-          <div style="display:flex;flex-direction:column;gap:0.5rem;font-size:0.875rem;">
-            <div style="display:flex;justify-content:space-between;"><span>Productos:</span><span>${_carrito.length} ítem(s)</span></div>
-            <div style="display:flex;justify-content:space-between;"><span>Subtotal:</span><span>S/ ${subtotal.toLocaleString('es-PE',{minimumFractionDigits:2})}</span></div>
-            ${descuento > 0 ? `<div style="display:flex;justify-content:space-between;color:#DC2626;"><span>Descuento:</span><span>- S/ ${descuento.toLocaleString('es-PE',{minimumFractionDigits:2})}</span></div>` : ''}
-            <div style="display:flex;justify-content:space-between;font-weight:700;font-size:1rem;border-top:1px solid #E2E8F0;padding-top:0.5rem;"><span>TOTAL:</span><span>S/ ${total.toLocaleString('es-PE',{minimumFractionDigits:2})}</span></div>
-            <div style="display:flex;justify-content:space-between;"><span>Método de pago:</span><span style="text-transform:capitalize;">${_metodoPago}</span></div>
-            ${_metodoPago === 'efectivo' ? `<div style="display:flex;justify-content:space-between;"><span>Vuelto:</span><span style="color:#16A34A;font-weight:600;">S/ ${Math.max(0, montoRecibido - total).toLocaleString('es-PE',{minimumFractionDigits:2})}</span></div>` : ''}
-            ${_clienteSeleccionado ? `<div style="display:flex;justify-content:space-between;"><span>Cliente:</span><span>${_clienteSeleccionado.nombre || ''} ${_clienteSeleccionado.apellido_paterno || ''} ${_clienteSeleccionado.esNuevo ? '<em style="font-size:0.75rem;color:#16A34A;">(nuevo)</em>' : ''}</span></div>` : ''}
+          <div class="ven-confirm-body">
+            <div class="ven-confirm-row"><span>Productos:</span><span>${_carrito.length} ítem(s)</span></div>
+            <div class="ven-confirm-row"><span>Subtotal:</span><span>S/ ${subtotal.toLocaleString('es-PE',{minimumFractionDigits:2})}</span></div>
+            ${descuento > 0 ? `<div class="ven-confirm-row ven-confirm-desc"><span>Descuento:</span><span>- S/ ${descuento.toLocaleString('es-PE',{minimumFractionDigits:2})}</span></div>` : ''}
+            <div class="ven-confirm-total"><span>TOTAL:</span><span>S/ ${total.toLocaleString('es-PE',{minimumFractionDigits:2})}</span></div>
+            <div class="ven-confirm-row"><span>Método de pago:</span><span class="ven-confirm-method">${_metodoPago}</span></div>
+            ${_metodoPago === 'efectivo' ? `<div class="ven-confirm-row"><span>Vuelto:</span><span class="ven-confirm-vuelto">S/ ${Math.max(0, montoRecibido - total).toLocaleString('es-PE',{minimumFractionDigits:2})}</span></div>` : ''}
+            ${_clienteSeleccionado ? `<div class="ven-confirm-row"><span>Cliente:</span><span>${_clienteSeleccionado.nombre || ''} ${_clienteSeleccionado.apellido_paterno || ''} ${_clienteSeleccionado.esNuevo ? '<em class="ven-confirm-cliente-new">(nuevo)</em>' : ''}</span></div>` : ''}
           </div>
         </div>
         <div class="modal-footer">
           <button class="btn-secondary" id="btnCancelarConf">Cancelar</button>
-          <button class="btn-primary" id="btnProcesar" style="background:#16A34A;"><i class="fas fa-check"></i> Confirmar y Cobrar</button>
+          <button class="btn-primary ven-btn-cobrar-green" id="btnProcesar"><i class="fas fa-check"></i> Confirmar y Cobrar</button>
         </div>
       </div>
     </div>
@@ -851,7 +760,7 @@ function mostrarConfirmacion(container, user) {
       mostrarModalTicket(svgTicket, ventaData.numero_venta);
 
       window.showToast(
-        `Venta ${ventaData.numero_venta || ''} registrada — <a href="#" id="toastVerTicket" style="color:#fff;text-decoration:underline;font-weight:600;">Ver ticket</a>`,
+        `Venta ${ventaData.numero_venta || ''} registrada — <a href="#" id="toastVerTicket" class="ven-toast-link">Ver ticket</a>`,
         'success', 6000
       );
 
@@ -881,7 +790,7 @@ function mostrarConfirmacion(container, user) {
 
 async function cargarHistorial(container, puedeAnular, pagina = 1) {
   const tbody = container.querySelector('#histTbody');
-  tbody.innerHTML = `<tr><td colspan="${puedeAnular?8:6}" style="text-align:center;padding:2rem;color:#94A3B8;"><i class="fas fa-spinner fa-spin"></i> Cargando…</td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="${puedeAnular?8:6}" class="ven-td-loading"><i class="fas fa-spinner fa-spin"></i> Cargando…</td></tr>`;
 
   let url = '/ventas?';
   const desde = container.querySelector('#histDesde').value;
@@ -914,26 +823,26 @@ function renderHistorial(container, puedeAnular) {
   const tbody = container.querySelector('#histTbody');
 
   if (_historialVentas.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="${puedeAnular?8:6}" style="text-align:center;padding:2rem;color:#94A3B8;">Sin ventas en el período seleccionado</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="${puedeAnular?8:6}" class="ven-td-loading">Sin ventas en el período seleccionado</td></tr>`;
     return;
   }
 
   tbody.innerHTML = _historialVentas.map(v => `
     <tr>
-      <td data-label="N° Venta" style="font-weight:500;">${v.numero_venta || '—'}</td>
+      <td data-label="N° Venta" class="ven-hist-num">${v.numero_venta || '—'}</td>
       <td data-label="Cliente">${v.cliente_id?.nombre ? `${v.cliente_id.nombre} ${v.cliente_id.apellido_paterno||''}`.trim() : 'Público general'}</td>
-      <td data-label="Total" style="font-weight:600;">S/ ${Number(v.total).toLocaleString('es-PE',{minimumFractionDigits:2})}</td>
-      <td data-label="Método" style="text-transform:capitalize;">${v.metodo_pago}</td>
+      <td data-label="Total" class="ven-hist-total">S/ ${Number(v.total).toLocaleString('es-PE',{minimumFractionDigits:2})}</td>
+      <td data-label="Método" class="ven-hist-metodo">${v.metodo_pago}</td>
       <td data-label="Estado"><span class="badge ${v.estado==='completada'?'badge-ok':'badge-danger'}">${v.estado}</span></td>
       <td data-label="Fecha">${new Date(v.fecha_venta).toLocaleDateString('es-PE')}</td>
-      ${puedeAnular ? `<td data-label="Vendedor" style="font-size:0.8125rem;">${v.vendedor_id?.nombre_completo || v.vendedor_id?.usuario || '—'}</td>
+      ${puedeAnular ? `<td data-label="Vendedor" class="ven-hist-vendedor">${v.vendedor_id?.nombre_completo || v.vendedor_id?.usuario || '—'}</td>
       <td data-label="Acciones">
-        <div style="display:flex;gap:0.375rem;flex-wrap:wrap;">
-          <button class="btn-ver-detalle" data-id="${v._id}" style="display:inline-flex;align-items:center;gap:0.25rem;padding:0.3rem 0.6rem;background:#EFF6FF;color:#2563EB;border:1px solid #BFDBFE;border-radius:6px;font-size:0.75rem;font-weight:600;cursor:pointer;"><i class="fas fa-eye"></i> Detalles</button>
-          <button class="btn-ticket" data-id="${v._id}" style="display:inline-flex;align-items:center;gap:0.25rem;padding:0.3rem 0.6rem;background:#F0FDF4;color:#16A34A;border:none;border-radius:6px;font-size:0.75rem;font-weight:600;cursor:pointer;"><i class="fas fa-receipt"></i> Ticket</button>
-          ${v.estado==='completada'?`<button class="btn-danger" data-id="${v._id}" data-action="anular" style="padding:0.3rem 0.6rem;font-size:0.75rem;"><i class="fas fa-ban"></i> Anular</button>`:''}
+        <div class="ven-hist-actions">
+          <button class="btn-ver-detalle ven-hist-btn ven-hist-btn-detail" data-id="${v._id}"><i class="fas fa-eye"></i> Detalles</button>
+          <button class="btn-ticket ven-hist-btn ven-hist-btn-ticket" data-id="${v._id}"><i class="fas fa-receipt"></i> Ticket</button>
+          ${v.estado==='completada'?`<button class="btn-danger ven-hist-btn-anular" data-id="${v._id}" data-action="anular"><i class="fas fa-ban"></i> Anular</button>`:''}
         </div>
-      </td>` : `<td><div style="display:flex;gap:0.375rem;flex-wrap:wrap;"><button class="btn-ver-detalle" data-id="${v._id}" style="display:inline-flex;align-items:center;gap:0.25rem;padding:0.3rem 0.6rem;background:#EFF6FF;color:#2563EB;border:1px solid #BFDBFE;border-radius:6px;font-size:0.75rem;font-weight:600;cursor:pointer;"><i class="fas fa-eye"></i> Detalles</button><button class="btn-ticket" data-id="${v._id}" style="display:inline-flex;align-items:center;gap:0.25rem;padding:0.3rem 0.6rem;background:#F0FDF4;color:#16A34A;border:none;border-radius:6px;font-size:0.75rem;font-weight:600;cursor:pointer;"><i class="fas fa-receipt"></i> Ticket</button></div></td>`}
+      </td>` : `<td><div class="ven-hist-actions"><button class="btn-ver-detalle ven-hist-btn ven-hist-btn-detail" data-id="${v._id}"><i class="fas fa-eye"></i> Detalles</button><button class="btn-ticket ven-hist-btn ven-hist-btn-ticket" data-id="${v._id}"><i class="fas fa-receipt"></i> Ticket</button></div></td>`}
     </tr>
   `).join('');
 
@@ -979,16 +888,16 @@ function renderHistorial(container, puedeAnular) {
       const desde = (_histPagina - 1) * 15 + 1;
       const hasta = Math.min(_histPagina * 15, _histTotal);
       let botones = '';
-      botones += `<button class="btn-sm" data-page="${_histPagina - 1}" ${_histPagina <= 1 ? 'disabled' : ''} style="padding:0.25rem 0.5rem;border:1px solid #E2E8F0;border-radius:4px;background:#fff;cursor:pointer;font-size:0.75rem;">← Ant</button>`;
+      botones += `<button class="btn-sm ven-hist-pag-btn" data-page="${_histPagina - 1}" ${_histPagina <= 1 ? 'disabled' : ''}>← Ant</button>`;
       for (let i = 1; i <= _histTotalPaginas; i++) {
         if (i === 1 || i === _histTotalPaginas || Math.abs(i - _histPagina) <= 1) {
-          botones += `<button class="btn-sm" data-page="${i}" style="padding:0.25rem 0.5rem;border:1px solid ${i === _histPagina ? '#2563EB' : '#E2E8F0'};border-radius:4px;background:${i === _histPagina ? '#2563EB' : '#fff'};color:${i === _histPagina ? '#fff' : '#374151'};cursor:pointer;font-size:0.75rem;font-weight:${i === _histPagina ? '600' : '400'};">${i}</button>`;
+          botones += `<button class="btn-sm ven-hist-pag-num" data-page="${i}" style="border-color:${i === _histPagina ? '#2563EB' : '#E2E8F0'};background:${i === _histPagina ? '#2563EB' : '#fff'};color:${i === _histPagina ? '#fff' : '#374151'};font-weight:${i === _histPagina ? '600' : '400'};">${i}</button>`;
         } else if (Math.abs(i - _histPagina) === 2) {
-          botones += `<span style="padding:0.25rem 0.25rem;font-size:0.75rem;color:#94A3B8;">…</span>`;
+          botones += `<span class="ven-hist-pag-ellipsis">…</span>`;
         }
       }
-      botones += `<button class="btn-sm" data-page="${_histPagina + 1}" ${_histPagina >= _histTotalPaginas ? 'disabled' : ''} style="padding:0.25rem 0.5rem;border:1px solid #E2E8F0;border-radius:4px;background:#fff;cursor:pointer;font-size:0.75rem;">Sig →</button>`;
-      pagDiv.innerHTML = `<span>Mostrando ${desde}-${hasta} de ${_histTotal}</span><div style="display:flex;gap:0.25rem;align-items:center;">${botones}</div>`;
+      botones += `<button class="btn-sm ven-hist-pag-btn" data-page="${_histPagina + 1}" ${_histPagina >= _histTotalPaginas ? 'disabled' : ''}>Sig →</button>`;
+      pagDiv.innerHTML = `<span>Mostrando ${desde}-${hasta} de ${_histTotal}</span><div class="ven-hist-pag-wrap">${botones}</div>`;
       pagDiv.querySelectorAll('[data-page]').forEach(btn => {
         btn.addEventListener('click', () => {
           const p = parseInt(btn.dataset.page);
@@ -1030,45 +939,45 @@ function mostrarModalDetalleVenta(container, venta) {
   
   modalContainer.innerHTML = `
     <div class="modal-overlay" id="detalleVentaModal" role="dialog" aria-modal="true">
-      <div class="modal" style="max-width:700px;">
+      <div class="modal ven-det-modal">
         <div class="modal-header">
           <div>
-            <h2 style="display:flex;align-items:center;gap:0.5rem;">
-              <i class="fas fa-file-invoice" style="color:#2563EB;"></i>
+            <h2 class="ven-det-header">
+              <i class="fas fa-file-invoice ven-det-icon"></i>
               Detalle de Venta
             </h2>
-            <p style="font-size:0.8125rem;color:#64748B;margin-top:0.25rem;font-weight:400;">
+            <p class="ven-det-subtitle">
               ${venta.numero_venta || 'Sin número'}
             </p>
           </div>
           <button class="btn-close" id="btnCerrarDetalle"><i class="fas fa-times"></i></button>
         </div>
         
-        <div class="modal-body" style="max-height:70vh;overflow-y:auto;">
+        <div class="modal-body ven-det-body-scroll">
           
           <!-- Información General -->
-          <div style="background:#F8FAFC;border-radius:10px;padding:1rem;margin-bottom:1.25rem;">
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;">
+          <div class="ven-det-summary">
+            <div class="ven-det-grid">
               <div>
-                <div style="font-size:0.75rem;color:#64748B;text-transform:uppercase;font-weight:600;margin-bottom:0.25rem;">
+                <div class="ven-det-label">
                   <i class="fas fa-calendar"></i> Fecha
                 </div>
-                <div style="font-size:0.875rem;font-weight:500;">${fechaFormateada}</div>
-                <div style="font-size:0.75rem;color:#64748B;">${horaFormateada}</div>
+                <div class="ven-det-value">${fechaFormateada}</div>
+                <div class="ven-det-time">${horaFormateada}</div>
               </div>
               
               <div>
-                <div style="font-size:0.75rem;color:#64748B;text-transform:uppercase;font-weight:600;margin-bottom:0.25rem;">
+                <div class="ven-det-label">
                   <i class="fas fa-user-tie"></i> Vendedor
                 </div>
-                <div style="font-size:0.875rem;font-weight:500;">${vendedor}</div>
+                <div class="ven-det-vendedor">${vendedor}</div>
               </div>
               
               <div>
-                <div style="font-size:0.75rem;color:#64748B;text-transform:uppercase;font-weight:600;margin-bottom:0.25rem;">
+                <div class="ven-det-label">
                   <i class="fas fa-info-circle"></i> Estado
                 </div>
-                <span class="badge ${venta.estado==='completada'?'badge-ok':'badge-danger'}" style="font-size:0.8125rem;">
+                <span class="badge ${venta.estado==='completada'?'badge-ok':'badge-danger'} ven-det-badge-lg">
                   ${venta.estado === 'completada' ? 'Completada' : 'Anulada'}
                 </span>
               </div>
@@ -1076,52 +985,52 @@ function mostrarModalDetalleVenta(container, venta) {
           </div>
           
           <!-- Cliente -->
-          <div style="margin-bottom:1.25rem;">
-            <h3 style="font-size:0.875rem;font-weight:700;color:#0a0a0a;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;">
-              <i class="fas fa-user" style="color:#2563EB;"></i> Cliente
+          <div class="ven-det-section">
+            <h3 class="ven-det-section-title">
+              <i class="fas fa-user ven-det-section-icon"></i> Cliente
             </h3>
-            <div style="background:#fff;border:1px solid #E2E8F0;border-radius:8px;padding:0.875rem;">
-              <div style="font-weight:600;font-size:0.9375rem;margin-bottom:0.375rem;">${nombreCliente}</div>
+            <div class="ven-det-cliente-card">
+              <div class="ven-det-cliente-name">${nombreCliente}</div>
               ${cliente ? `
-                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0.5rem;font-size:0.8125rem;color:#64748B;">
-                  ${cliente.dni ? `<div><i class="fas fa-id-card" style="width:16px;"></i> ${cliente.dni}</div>` : ''}
-                  ${cliente.telefono ? `<div><i class="fas fa-phone" style="width:16px;"></i> ${cliente.telefono}</div>` : ''}
-                  ${cliente.email ? `<div><i class="fas fa-envelope" style="width:16px;"></i> ${cliente.email}</div>` : ''}
+                <div class="ven-det-cliente-detail">
+                  ${cliente.dni ? `<div><i class="fas fa-id-card ven-det-cliente-icon"></i> ${cliente.dni}</div>` : ''}
+                  ${cliente.telefono ? `<div><i class="fas fa-phone ven-det-cliente-icon"></i> ${cliente.telefono}</div>` : ''}
+                  ${cliente.email ? `<div><i class="fas fa-envelope ven-det-cliente-icon"></i> ${cliente.email}</div>` : ''}
                 </div>
-              ` : '<div style="font-size:0.8125rem;color:#94A3B8;">Sin información adicional</div>'}
+              ` : '<div class="ven-det-cliente-empty">Sin información adicional</div>'}
             </div>
           </div>
           
           <!-- Productos -->
-          <div style="margin-bottom:1.25rem;">
-            <h3 style="font-size:0.875rem;font-weight:700;color:#0a0a0a;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;">
-              <i class="fas fa-box" style="color:#2563EB;"></i> Productos (${detalles.length})
+          <div class="ven-det-section">
+            <h3 class="ven-det-section-title">
+              <i class="fas fa-box ven-det-section-icon"></i> Productos (${detalles.length})
             </h3>
-            <div style="border:1px solid #E2E8F0;border-radius:8px;overflow:hidden;">
+            <div class="ven-det-table">
               ${detalles.length > 0 ? detalles.map((det, idx) => `
-                <div style="display:flex;align-items:center;gap:0.875rem;padding:0.875rem;${idx < detalles.length - 1 ? 'border-bottom:1px solid #F1F5F9;' : ''}background:${idx % 2 === 0 ? '#fff' : '#F8FAFC'};">
+                <div class="ven-det-row" style="${idx < detalles.length - 1 ? 'border-bottom:1px solid #F1F5F9;' : ''}background:${idx % 2 === 0 ? '#fff' : '#F8FAFC'};">
                   ${det.producto_id?.imagen ? `
                     <img src="${det.producto_id.imagen}" alt="${det.producto_id.nombre}" 
-                         style="width:50px;height:50px;object-fit:cover;border-radius:8px;background:#F1F5F9;flex-shrink:0;" />
+                         class="ven-det-prod-img" />
                   ` : `
-                    <div style="width:50px;height:50px;border-radius:8px;background:#F1F5F9;display:flex;align-items:center;justify-content:center;color:#94A3B8;flex-shrink:0;">
-                      <i class="fas fa-mobile-alt" style="font-size:1.25rem;"></i>
+                    <div class="ven-det-prod-placeholder">
+                      <i class="fas fa-mobile-alt ven-det-prod-placeholder-icon"></i>
                     </div>
                   `}
                   
-                  <div style="flex:1;min-width:0;">
-                    <div style="font-weight:600;font-size:0.875rem;margin-bottom:0.125rem;">${det.producto_id?.nombre || 'Producto eliminado'}</div>
-                    <div style="font-size:0.75rem;color:#64748B;">
+                  <div class="ven-det-prod-info">
+                    <div class="ven-det-prod-name">${det.producto_id?.nombre || 'Producto eliminado'}</div>
+                    <div class="ven-det-prod-meta">
                       ${det.cantidad} × S/ ${Number(det.precio_unitario).toLocaleString('es-PE',{minimumFractionDigits:2})}
                     </div>
                   </div>
                   
-                  <div style="text-align:right;font-weight:700;font-size:0.9375rem;">
+                  <div class="ven-det-prod-total">
                     S/ ${Number(det.subtotal).toLocaleString('es-PE',{minimumFractionDigits:2})}
                   </div>
                 </div>
               `).join('') : `
-                <div style="padding:2rem;text-align:center;color:#94A3B8;font-size:0.875rem;">
+                <div class="ven-det-empty">
                   <i class="fas fa-box-open" style="font-size:2rem;display:block;margin-bottom:0.5rem;opacity:0.3;"></i>
                   Sin productos registrados
                 </div>
@@ -1130,9 +1039,9 @@ function mostrarModalDetalleVenta(container, venta) {
           </div>
           
           <!-- Resumen Financiero -->
-          <div style="background:#F8FAFC;border-radius:10px;padding:1rem;margin-bottom:1.25rem;">
-            <h3 style="font-size:0.875rem;font-weight:700;color:#0a0a0a;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;">
-              <i class="fas fa-calculator" style="color:#2563EB;"></i> Resumen Financiero
+          <div class="ven-det-summary">
+            <h3 class="ven-det-section-title">
+              <i class="fas fa-calculator ven-det-section-icon"></i> Resumen Financiero
             </h3>
             
             <div style="display:flex;flex-direction:column;gap:0.5rem;font-size:0.875rem;">
@@ -1247,7 +1156,7 @@ function confirmarAnulacion(container, ventaId, puedeAnular) {
   const modalContainer = container.querySelector('#modalContainer');
   modalContainer.innerHTML = `
     <div class="modal-overlay" id="anulModal" role="dialog" aria-modal="true">
-      <div class="modal" style="max-width:420px;">
+      <div class="modal ven-modal-pago">
         <div class="modal-header">
           <h2>Anular Venta</h2>
           <button class="btn-close" id="btnCerrarAnul"><i class="fas fa-times"></i></button>

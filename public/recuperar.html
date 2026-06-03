@@ -116,6 +116,8 @@
       .brand-tagline { display: none; }
       .form-panel { width: 100%; min-width: unset; padding: 2rem 1.5rem; }
     }
+    .rec-header-icon { font-size:1.25rem; opacity:0.6; }
+    .rec-hint { font-size:0.75rem; color:var(--gray-400); margin-top:0.375rem; }
   </style>
 </head>
 <body>
@@ -131,7 +133,7 @@
       <!-- PASO 1: Ingresar correo -->
       <div class="step active" id="step1">
         <div class="form-header">
-          <h2><i class="fas fa-envelope" style="font-size:1.25rem;opacity:0.6;"></i> Recuperar contraseña</h2>
+          <h2><i class="fas fa-envelope rec-header-icon"></i> Recuperar contraseña</h2>
           <p>Ingresa el correo asociado a tu cuenta</p>
         </div>
         <form id="formCorreo">
@@ -155,7 +157,7 @@
       <!-- PASO 2: Ingresar código -->
       <div class="step" id="step2">
         <div class="form-header">
-          <h2><i class="fas fa-shield-halved" style="font-size:1.25rem;opacity:0.6;"></i> Verificar código</h2>
+          <h2><i class="fas fa-shield-halved rec-header-icon"></i> Verificar código</h2>
           <p>Ingresa el código de 6 dígitos enviado a <strong id="correoMostrado"></strong></p>
         </div>
         <form id="formCodigo">
@@ -179,7 +181,7 @@
       <!-- PASO 3: Nueva contraseña -->
       <div class="step" id="step3">
         <div class="form-header">
-          <h2><i class="fas fa-lock" style="font-size:1.25rem;opacity:0.6;"></i> Nueva contraseña</h2>
+          <h2><i class="fas fa-lock rec-header-icon"></i> Nueva contraseña</h2>
           <p>Crea tu nueva contraseña</p>
         </div>
         <form id="formClave">
@@ -192,7 +194,7 @@
                 <i class="fas fa-eye" id="eyeNueva"></i>
               </button>
             </div>
-            <p style="font-size:0.75rem;color:var(--gray-400);margin-top:0.375rem;">
+            <p class="rec-hint">
               <i class="fas fa-info-circle"></i> Debe contener mayúsculas, minúsculas y números
             </p>
           </div>

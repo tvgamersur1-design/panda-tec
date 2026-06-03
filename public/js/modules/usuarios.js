@@ -12,53 +12,13 @@ let _usrTotal = 0;
 
 export async function init(container, user) {
   if (!user || user.rol !== 'admin') {
-    container.innerHTML = `<div style="text-align:center;padding:3rem;color:#64748B;"><i class="fas fa-lock" style="font-size:2.5rem;margin-bottom:1rem;display:block;opacity:0.35;"></i><p>Acceso restringido a administradores.</p></div>`;
+    container.innerHTML = `<div class="usr-restricted"><i class="fas fa-lock"></i><p>Acceso restringido a administradores.</p></div>`;
     return;
   }
 
   container.innerHTML = `
-    <style>
-      .usr-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem; flex-wrap:wrap; gap:0.75rem; }
-      .btn-primary { display:inline-flex; align-items:center; gap:0.5rem; padding:0.5rem 1rem; background:#2563EB; color:#fff; border:none; border-radius:8px; font-size:0.875rem; font-weight:600; cursor:pointer; }
-      .btn-primary:hover { background:#1D4ED8; }
-      .btn-secondary { display:inline-flex; align-items:center; gap:0.5rem; padding:0.5rem 1rem; background:#F1F5F9; color:#1E293B; border:1px solid #E2E8F0; border-radius:8px; font-size:0.875rem; font-weight:500; cursor:pointer; }
-      .btn-danger { display:inline-flex; align-items:center; gap:0.5rem; padding:0.4rem 0.75rem; background:#FEE2E2; color:#DC2626; border:none; border-radius:6px; font-size:0.8125rem; font-weight:500; cursor:pointer; }
-      .btn-edit { display:inline-flex; align-items:center; gap:0.5rem; padding:0.4rem 0.75rem; background:#EFF6FF; color:#2563EB; border:none; border-radius:6px; font-size:0.8125rem; font-weight:500; cursor:pointer; }
-      .table-wrap { background:#fff; border-radius:12px; border:1px solid #E2E8F0; overflow:auto; }
-      table { width:100%; border-collapse:collapse; font-size:0.875rem; }
-      th { padding:0.75rem 1rem; text-align:left; font-size:0.75rem; font-weight:600; text-transform:uppercase; color:#64748B; border-bottom:1px solid #E2E8F0; }
-      td { padding:0.75rem 1rem; border-bottom:1px solid #F1F5F9; vertical-align:middle; }
-      tr:last-child td { border-bottom:none; }
-      tr:hover td { background:#F8FAFC; }
-      .badge { display:inline-flex; align-items:center; gap:0.25rem; padding:0.2rem 0.6rem; border-radius:999px; font-size:0.75rem; font-weight:600; }
-      .badge-ok { background:#DCFCE7; color:#16A34A; }
-      .badge-muted { background:#F1F5F9; color:#64748B; }
-      .rol-badge { padding:0.2rem 0.6rem; border-radius:6px; font-size:0.75rem; font-weight:600; text-transform:capitalize; }
-      .rol-admin { background:#EFF6FF; color:#2563EB; }
-      .rol-vendedor { background:#F0FDF4; color:#16A34A; }
-      .rol-almacen { background:#FEF3C7; color:#D97706; }
-      .empty-state { text-align:center; padding:3rem; color:#64748B; }
-      .empty-state i { font-size:2.5rem; margin-bottom:1rem; display:block; opacity:0.35; }
-      .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:1000; display:flex; align-items:center; justify-content:center; padding:1rem; }
-      .modal { background:#fff; border-radius:14px; width:100%; max-width:480px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.2); animation:slideUp 0.2s ease; }
-      @keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
-      .modal-header { display:flex; align-items:center; justify-content:space-between; padding:1.25rem 1.5rem; border-bottom:1px solid #E2E8F0; }
-      .modal-header h2 { font-size:1.125rem; font-weight:700; }
-      .modal-body { padding:1.5rem; display:flex; flex-direction:column; gap:1rem; }
-      .modal-footer { display:flex; justify-content:flex-end; gap:0.75rem; padding:1rem 1.5rem; border-top:1px solid #E2E8F0; }
-      .form-group { display:flex; flex-direction:column; gap:0.375rem; }
-      .form-group label { font-size:0.8125rem; font-weight:600; color:#374151; }
-      .form-group input, .form-group select { padding:0.5rem 0.75rem; border:1px solid #E2E8F0; border-radius:8px; font-size:0.875rem; color:#1E293B; outline:none; }
-      .form-group input:focus, .form-group select:focus { border-color:#2563EB; }
-      .form-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
-      .btn-close { background:none; border:none; font-size:1.25rem; cursor:pointer; color:#64748B; }
-      .toggle-btn { display:inline-flex; align-items:center; gap:0.375rem; padding:0.35rem 0.75rem; border-radius:6px; font-size:0.8125rem; font-weight:500; cursor:pointer; border:none; }
-      .toggle-on { background:#DCFCE7; color:#16A34A; }
-      .toggle-off { background:#FEF3C7; color:#D97706; }
-    </style>
-
     <div class="usr-header">
-      <h2 style="font-size:1rem;font-weight:600;">Gestión de Usuarios</h2>
+      <h2 class="usr-title">Gestión de Usuarios</h2>
       <button class="btn-primary" id="btnNuevoUsr"><i class="fas fa-plus"></i> Nuevo Usuario</button>
     </div>
     <div class="table-wrap">
@@ -77,7 +37,7 @@ export async function init(container, user) {
         <tbody id="usrTbody"></tbody>
       </table>
     </div>
-    <div id="usrPaginacion" style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;border-top:1px solid #E2E8F0;font-size:0.8125rem;color:#64748B;"></div>
+    <div id="usrPaginacion" class="usr-pag"></div>
     <div id="modalContainer"></div>
   `;
 
@@ -87,7 +47,7 @@ export async function init(container, user) {
 
 async function cargarUsuarios(container, user, pagina = 1) {
   const tbody = container.querySelector('#usrTbody');
-  tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:#94A3B8;"><i class="fas fa-spinner fa-spin"></i></td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="7" class="empty-state"><i class="fas fa-spinner fa-spin"></i></td></tr>`;
   const res = await api.get(`/usuarios?page=${pagina}&limit=20`);
   if (res.ok && res.data.usuarios) {
     _usuarios = res.data.usuarios;
@@ -117,7 +77,7 @@ function renderUsuarios(container, user) {
     const googleVinculado = u.google_id ? true : false;
     return `
       <tr>
-        <td data-label="Nombre" style="font-weight:500;">${u.nombre_completo}</td>
+        <td data-label="Nombre" class="usr-name">${u.nombre_completo}</td>
         <td data-label="Usuario">${u.usuario}</td>
         <td data-label="Correo">${u.correo}</td>
         <td data-label="Rol"><span class="rol-badge ${rolClass}">${u.rol}</span></td>
@@ -132,7 +92,7 @@ function renderUsuarios(container, user) {
           </span>
         </td>
         <td data-label="Acciones">
-          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+          <div class="usr-actions">
             <button class="btn-edit" data-id="${u._id}" data-action="editar"><i class="fas fa-pen"></i></button>
             <button class="toggle-btn ${u.activo ? 'toggle-on' : 'toggle-off'}" data-id="${u._id}" data-action="toggle" title="${u.activo ? 'Desactivar' : 'Activar'}">
               <i class="fas fa-${u.activo ? 'toggle-on' : 'toggle-off'}"></i>
@@ -166,16 +126,17 @@ function renderUsuarios(container, user) {
       const desde = (_usrPagina - 1) * 20 + 1;
       const hasta = Math.min(_usrPagina * 20, _usrTotal);
       let botones = '';
-      botones += `<button data-page="${_usrPagina - 1}" ${_usrPagina <= 1 ? 'disabled' : ''} style="padding:0.25rem 0.5rem;border:1px solid #E2E8F0;border-radius:4px;background:#fff;cursor:pointer;font-size:0.75rem;">← Ant</button>`;
+      botones += `<button data-page="${_usrPagina - 1}" class="pag-btn-sm" ${_usrPagina <= 1 ? 'disabled' : ''}>← Ant</button>`;
       for (let i = 1; i <= _usrTotalPaginas; i++) {
         if (i === 1 || i === _usrTotalPaginas || Math.abs(i - _usrPagina) <= 1) {
-          botones += `<button data-page="${i}" style="padding:0.25rem 0.5rem;border:1px solid ${i === _usrPagina ? '#2563EB' : '#E2E8F0'};border-radius:4px;background:${i === _usrPagina ? '#2563EB' : '#fff'};color:${i === _usrPagina ? '#fff' : '#374151'};cursor:pointer;font-size:0.75rem;font-weight:${i === _usrPagina ? '600' : '400'};">${i}</button>`;
+          const active = i === _usrPagina;
+          botones += `<button data-page="${i}" class="pag-btn-sm ${active ? 'pag-btn-sm--active' : ''}" ${active ? '' : ''}>${i}</button>`;
         } else if (Math.abs(i - _usrPagina) === 2) {
-          botones += `<span style="padding:0.25rem 0.25rem;font-size:0.75rem;color:#94A3B8;">…</span>`;
+          botones += `<span class="pag-ellipsis">…</span>`;
         }
       }
-      botones += `<button data-page="${_usrPagina + 1}" ${_usrPagina >= _usrTotalPaginas ? 'disabled' : ''} style="padding:0.25rem 0.5rem;border:1px solid #E2E8F0;border-radius:4px;background:#fff;cursor:pointer;font-size:0.75rem;">Sig →</button>`;
-      pagDiv.innerHTML = `<span>Mostrando ${desde}-${hasta} de ${_usrTotal}</span><div style="display:flex;gap:0.25rem;align-items:center;">${botones}</div>`;
+      botones += `<button data-page="${_usrPagina + 1}" class="pag-btn-sm" ${_usrPagina >= _usrTotalPaginas ? 'disabled' : ''}>Sig →</button>`;
+      pagDiv.innerHTML = `<span>Mostrando ${desde}-${hasta} de ${_usrTotal}</span><div class="usr-pag-btns">${botones}</div>`;
       pagDiv.querySelectorAll('[data-page]').forEach(btn => {
         btn.addEventListener('click', () => {
           const p = parseInt(btn.dataset.page);
@@ -213,8 +174,8 @@ function abrirModal(container, usuario = null, user) {
               </div>
             </div>
             ${!esEdicion ? `
-              <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:0.75rem;font-size:0.8125rem;color:#1E40AF;">
-                <i class="fas fa-info-circle" style="margin-right:0.375rem;"></i>
+              <div class="usr-info-badge">
+                <i class="fas fa-info-circle usr-info-icon"></i>
                 Se generará una contraseña temporal y se enviará al correo del usuario.
               </div>
             ` : ''}
@@ -306,7 +267,7 @@ async function confirmarEliminar(container, id, user) {
   const modalContainer = container.querySelector('#modalContainer');
   modalContainer.innerHTML = `
     <div class="modal-overlay" id="delModal" role="dialog" aria-modal="true">
-      <div class="modal" style="max-width:400px;">
+      <div class="modal usr-modal-max">
         <div class="modal-header">
           <h2>Eliminar Usuario</h2>
           <button class="btn-close" id="btnCerrarDel"><i class="fas fa-times"></i></button>
@@ -316,7 +277,7 @@ async function confirmarEliminar(container, id, user) {
         </div>
         <div class="modal-footer">
           <button class="btn-secondary" id="btnCancelarDel">Cancelar</button>
-          <button class="btn-danger" id="btnConfirmarDel" style="padding:0.5rem 1rem;"><i class="fas fa-trash"></i> Eliminar</button>
+          <button class="btn-danger usr-btn-pad" id="btnConfirmarDel"><i class="fas fa-trash"></i> Eliminar</button>
         </div>
       </div>
     </div>
@@ -342,43 +303,43 @@ function mostrarCredencialesManuales(container, usuarioData, user) {
   const modalContainer = container.querySelector('#modalContainer');
   modalContainer.innerHTML = `
     <div class="modal-overlay" id="credModal" role="dialog" aria-modal="true">
-      <div class="modal" style="max-width:500px;">
-        <div class="modal-header" style="background:#FEF3C7;border-bottom-color:#FDE68A;">
-          <h2><i class="fas fa-exclamation-triangle" style="color:#D97706;margin-right:0.5rem;"></i>Email no enviado</h2>
+      <div class="modal usr-modal-lg">
+        <div class="modal-header usr-alert-header">
+          <h2><i class="fas fa-exclamation-triangle usr-alert-icon"></i>Email no enviado</h2>
           <button class="btn-close" id="btnCerrarCred"><i class="fas fa-times"></i></button>
         </div>
         <div class="modal-body">
-          <div style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:1rem;margin-bottom:1rem;">
-            <p style="margin:0;font-size:0.875rem;color:#92400E;">
+          <div class="usr-alert-body">
+            <p class="usr-alert-text">
               <strong>⚠️ No se pudo enviar el email automáticamente.</strong><br>
               Proporciona estas credenciales manualmente al usuario.
             </p>
           </div>
-          <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:1rem;">
-            <p style="margin:0 0 0.75rem;font-weight:600;color:#1E293B;">Credenciales de acceso:</p>
-            <div style="display:flex;flex-direction:column;gap:0.5rem;">
+          <div class="usr-cred-box">
+            <p class="usr-cred-title">Credenciales de acceso:</p>
+            <div class="usr-cred-col">
               <div>
-                <span style="font-size:0.75rem;color:#64748B;text-transform:uppercase;font-weight:600;">Usuario:</span>
-                <div style="background:#fff;border:1px solid #E2E8F0;border-radius:6px;padding:0.5rem;margin-top:0.25rem;font-family:monospace;font-weight:600;color:#0F172A;">
+                <span class="usr-cred-label">Usuario:</span>
+                <div class="usr-cred-value">
                   ${usuarioData.usuario}
                 </div>
               </div>
               <div>
-                <span style="font-size:0.75rem;color:#64748B;text-transform:uppercase;font-weight:600;">Contraseña temporal:</span>
-                <div style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:6px;padding:0.5rem;margin-top:0.25rem;font-family:monospace;font-weight:600;color:#D97706;">
+                <span class="usr-cred-label">Contraseña temporal:</span>
+                <div class="usr-cred-pass">
                   ${usuarioData.clave_temporal}
                 </div>
               </div>
             </div>
           </div>
           ${usuarioData.error_email ? `
-            <div style="margin-top:1rem;font-size:0.8125rem;color:#64748B;">
+            <div class="usr-error-box">
               <strong>Error:</strong> ${usuarioData.error_email}
             </div>
           ` : ''}
         </div>
         <div class="modal-footer">
-          <button class="btn-primary" id="btnCopiar" style="flex:1;">
+          <button class="btn-primary usr-btn-copy" id="btnCopiar">
             <i class="fas fa-copy"></i> Copiar credenciales
           </button>
           <button class="btn-secondary" id="btnCerrarCredBtn">Cerrar</button>

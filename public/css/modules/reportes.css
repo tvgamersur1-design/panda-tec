@@ -1,0 +1,48 @@
+/* ── reportes.css ────────────────────────────── */
+.tabs { display:flex; border-bottom:1px solid #E2E8F0; margin-bottom:1.25rem; flex-wrap:wrap; }
+.tab-btn { padding:0.625rem 1.25rem; border:none; background:none; font-size:0.875rem; font-weight:500; cursor:pointer; color:#64748B; border-bottom:2px solid transparent; margin-bottom:-1px; white-space:nowrap; }
+.tab-btn.active { color:#2563EB; border-bottom-color:#2563EB; }
+.rep-card { background:#fff; border-radius:12px; border:1px solid #E2E8F0; padding:1.5rem; }
+.rep-filters { display:flex; gap:0.75rem; flex-wrap:wrap; align-items:flex-end; margin-bottom:1.25rem; }
+.rep-filters label { font-size:0.8125rem; font-weight:600; color:#374151; display:flex; flex-direction:column; gap:0.25rem; }
+.rep-filters input, .rep-filters select { padding:0.5rem 0.75rem; border:1px solid #E2E8F0; border-radius:8px; font-size:0.875rem; outline:none; }
+.rep-filters input:focus { border-color:#2563EB; }
+.btn-primary { display:inline-flex; align-items:center; gap:0.5rem; padding:0.5rem 1rem; background:#2563EB; color:#fff; border:none; border-radius:8px; font-size:0.875rem; font-weight:600; cursor:pointer; }
+.btn-primary:hover { background:#1D4ED8; }
+.stat-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:1rem; margin-bottom:1.25rem; }
+.stat-box { background:#F8FAFC; border-radius:10px; padding:1rem; border:1px solid #E2E8F0; }
+.stat-box-label { font-size:0.75rem; font-weight:600; color:#64748B; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:0.375rem; }
+.stat-box-value { font-size:1.5rem; font-weight:700; color:#1E293B; }
+.table-wrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:0.875rem; }
+th { padding:0.625rem 0.875rem; text-align:left; font-size:0.75rem; font-weight:600; text-transform:uppercase; color:#64748B; border-bottom:1px solid #E2E8F0; }
+td { padding:0.625rem 0.875rem; border-bottom:1px solid #F1F5F9; }
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:#F8FAFC; }
+.metodo-badge { background:#EFF6FF; color:#2563EB; padding:0.15rem 0.5rem; border-radius:6px; font-size:0.75rem; font-weight:500; text-transform:capitalize; display:inline-block; }
+.empty-state { text-align:center; padding:2.5rem; color:#64748B; }
+.empty-state i { font-size:2rem; margin-bottom:0.75rem; display:block; opacity:0.35; }
+.pagination { display:flex; align-items:center; justify-content:center; gap:0.5rem; margin-top:1.25rem; flex-wrap:wrap; }
+.pagination button { padding:0.5rem 0.75rem; border:1px solid #E2E8F0; background:#fff; border-radius:6px; font-size:0.875rem; cursor:pointer; min-width:40px; }
+.pagination button:hover:not(:disabled) { background:#F8FAFC; border-color:#2563EB; }
+.pagination button:disabled { opacity:0.4; cursor:not-allowed; }
+.pagination button.active { background:#2563EB; color:#fff; border-color:#2563EB; font-weight:600; }
+.pagination-info { font-size:0.8125rem; color:#64748B; padding:0 0.5rem; }
+.rep-spinner { text-align:center; padding:2rem; color:#94A3B8; }
+.rep-error { color:#DC2626; }
+.rep-section-title { font-weight:600; margin-bottom:0.75rem; font-size:0.9375rem; }
+.rep-empty { color:#94A3B8; font-size:0.875rem; }
+.rep-fw600 { font-weight:600; }
+.rep-stat-blue { font-size:1.25rem; color:#2563EB; }
+.rep-stat-green { font-size:1.25rem; color:#16A34A; }
+.rep-stat-orange { font-size:1.25rem; color:#EA580C; }
+.rep-col-blue { color:#2563EB; font-weight:700; }
+.rep-col-green { font-weight:600; color:#16A34A; }
+.rep-header-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem; flex-wrap:wrap; gap:0.75rem; }
+.rep-header-title { font-size:1rem; font-weight:600; }
+.rep-header-controls { display:flex; gap:0.75rem; align-items:center; }
+.rep-control-label { font-size:0.8125rem; font-weight:600; color:#374151; display:flex; align-items:center; gap:0.5rem; }
+.rep-control-select { padding:0.5rem 0.75rem; border:1px solid #E2E8F0; border-radius:8px; font-size:0.875rem; }
+.rep-input-sm { width:70px; }
+.rep-input-md { width:90px; }
+.rep-name { font-weight:500; }

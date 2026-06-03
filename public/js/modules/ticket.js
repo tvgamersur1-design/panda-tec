@@ -230,24 +230,24 @@ export function mostrarModalTicket(svgContent, numeroVenta) {
 
   const modal = document.createElement('div');
   modal.id = 'ticketModal';
-  modal.style.cssText = `position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;padding:1rem;`;
+  modal.className = 'ticket-modal';
 
   modal.innerHTML = `
-    <div style="background:#fff;border-radius:14px;max-width:380px;width:100%;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid #E2E8F0;flex-shrink:0;">
-        <span style="font-weight:700;font-size:1rem;">
-          <i class="fas fa-receipt" style="margin-right:0.5rem;color:#16A34A;"></i>Ticket ${String(numeroVenta || '').replace(/&/g,'&amp;')}
+    <div class="ticket-content">
+      <div class="ticket-header">
+        <span class="ticket-header-title">
+          <i class="fas fa-receipt ticket-header-icon"></i>Ticket ${String(numeroVenta || '').replace(/&/g,'&amp;')}
         </span>
-        <div style="display:flex;gap:0.5rem;">
-          <button id="btnImprimirTicket" style="display:inline-flex;align-items:center;gap:0.375rem;padding:0.4rem 0.875rem;background:#0a0a0a;color:#fff;border:none;border-radius:7px;font-size:0.8125rem;font-weight:600;cursor:pointer;">
+        <div class="ticket-header-actions">
+          <button id="btnImprimirTicket" class="ticket-btn-print">
             <i class="fas fa-print"></i> Imprimir
           </button>
-          <button id="btnCerrarTicket" style="background:none;border:none;font-size:1.25rem;cursor:pointer;color:#64748B;padding:0.25rem 0.5rem;">
+          <button id="btnCerrarTicket" class="ticket-btn-close">
             <i class="fas fa-times"></i>
           </button>
         </div>
       </div>
-      <div style="overflow-y:auto;padding:1rem;display:flex;justify-content:center;background:#f1f5f9;">
+      <div class="ticket-body">
         ${svgContent}
       </div>
     </div>

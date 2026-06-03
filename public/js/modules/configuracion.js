@@ -7,48 +7,15 @@ import { api } from '../api.js';
 
 export async function init(container, user) {
   if (!user || user.rol !== 'admin') {
-    container.innerHTML = `<div style="text-align:center;padding:3rem;color:#64748B;"><i class="fas fa-lock" style="font-size:2.5rem;margin-bottom:1rem;display:block;opacity:0.35;"></i><p>Acceso restringido a administradores.</p></div>`;
+    container.innerHTML = `<div class="conf-restricted"><i class="fas fa-lock"></i><p>Acceso restringido a administradores.</p></div>`;
     return;
   }
 
   container.innerHTML = `
-    <style>
-      .conf-card { background:#fff; border-radius:12px; border:1px solid #E2E8F0; padding:1.5rem; max-width:700px; margin:0 auto; }
-      .conf-card h2 { font-size:1.125rem; font-weight:700; margin-bottom:1.5rem; display:flex; align-items:center; gap:0.5rem; }
-      .form-group { display:flex; flex-direction:column; gap:0.375rem; margin-bottom:1rem; }
-      .form-group label { font-size:0.8125rem; font-weight:600; color:#374151; }
-      .form-group input, .form-group textarea { padding:0.5rem 0.75rem; border:1px solid #E2E8F0; border-radius:8px; font-size:0.875rem; color:#1E293B; outline:none; width:100%; box-sizing:border-box; }
-      .form-group input:focus, .form-group textarea:focus { border-color:#2563EB; }
-      .form-group textarea { resize:vertical; font-family:inherit; min-height:80px; }
-      .form-group .hint { font-size:0.75rem; color:#64748B; margin-top:0.25rem; }
-      .form-group .error-hint { font-size:0.75rem; color:#DC2626; margin-top:0.25rem; display:none; }
-      .form-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem; }
-      .btn-primary { display:inline-flex; align-items:center; justify-content:center; gap:0.5rem; padding:0.625rem 1.25rem; background:#2563EB; color:#fff; border:none; border-radius:8px; font-size:0.875rem; font-weight:600; cursor:pointer; margin-top:0.5rem; width:100%; }
-      .btn-primary:hover { background:#1D4ED8; }
-      .btn-primary:disabled { background:#94A3B8; cursor:not-allowed; }
-      
-      /* Responsive para móviles */
-      @media (max-width: 768px) {
-        .conf-card { padding:1rem; border-radius:8px; }
-        .conf-card h2 { font-size:1rem; margin-bottom:1rem; }
-        .form-row { grid-template-columns:1fr; gap:0; }
-        .form-group { margin-bottom:0.875rem; }
-        .form-group label { font-size:0.8125rem; }
-        .form-group input, .form-group textarea { font-size:0.875rem; padding:0.625rem 0.75rem; }
-        .btn-primary { padding:0.75rem 1rem; font-size:0.9375rem; }
-      }
-      
-      @media (max-width: 480px) {
-        .conf-card { padding:0.875rem; margin:0; border-radius:0; border-left:none; border-right:none; }
-        .conf-card h2 { font-size:0.9375rem; }
-        .form-group input, .form-group textarea { font-size:16px; /* Evita zoom en iOS */ }
-      }
-    </style>
-
     <div class="conf-card">
-      <h2><i class="fas fa-cog" style="color:#2563EB;"></i> Configuración de la Tienda</h2>
+      <h2><i class="fas fa-cog conf-icon-cog"></i> Configuración de la Tienda</h2>
       <div id="confContent">
-        <div style="text-align:center;padding:2rem;color:#94A3B8;"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem;"></i></div>
+        <div class="conf-spinner"><i class="fas fa-spinner fa-spin"></i></div>
       </div>
     </div>
   `;
@@ -57,7 +24,7 @@ export async function init(container, user) {
   const confContent = container.querySelector('#confContent');
 
   if (!res.ok) {
-    confContent.innerHTML = `<p style="color:#DC2626;">Error al cargar la configuración.</p>`;
+    confContent.innerHTML = `<p class="conf-error">Error al cargar la configuración.</p>`;
     return;
   }
 
@@ -65,36 +32,36 @@ export async function init(container, user) {
 
   confContent.innerHTML = `
     <form id="confForm">
-      <div class="form-group">
+      <div class="conf-form-group">
         <label for="fNombreTienda">Nombre de la tienda *</label>
         <input id="fNombreTienda" name="nombre_tienda" type="text" required value="${conf.nombre_tienda || ''}" placeholder="Ej: Panda Tec" />
       </div>
-      <div class="form-row">
-        <div class="form-group">
+      <div class="conf-form-row">
+        <div class="conf-form-group">
           <label for="fRuc">RUC * (11 dígitos)</label>
           <input id="fRuc" name="ruc" type="text" maxlength="11" required value="${conf.ruc || ''}" placeholder="20123456789" inputmode="numeric" />
           <span class="error-hint" id="rucError">El RUC debe tener exactamente 11 dígitos numéricos.</span>
           <span class="hint">Solo números, sin guiones</span>
         </div>
-        <div class="form-group">
+        <div class="conf-form-group">
           <label for="fTelefono">Teléfono</label>
           <input id="fTelefono" name="telefono" type="tel" value="${conf.telefono || ''}" placeholder="Ej: 01-234-5678" />
         </div>
       </div>
-      <div class="form-group">
+      <div class="conf-form-group">
         <label for="fDireccion">Dirección</label>
         <input id="fDireccion" name="direccion" type="text" value="${conf.direccion || ''}" placeholder="Ej: Av. Principal 123, Lima" />
       </div>
-      <div class="form-group">
+      <div class="conf-form-group">
         <label for="fCorreo">Correo electrónico</label>
         <input id="fCorreo" name="correo" type="email" value="${conf.correo || ''}" placeholder="contacto@pantatec.com" inputmode="email" />
       </div>
-      <div class="form-group">
+      <div class="conf-form-group">
         <label for="fMensaje">Mensaje de cierre del ticket</label>
         <input id="fMensaje" name="mensaje_ticket" type="text" value="${conf.mensaje_ticket || '¡Gracias por su compra!'}" placeholder="¡Gracias por su compra!" />
         <span class="hint">Aparece al final del ticket de venta</span>
       </div>
-      <div class="form-group">
+      <div class="conf-form-group">
         <label for="fTerminos">Términos y condiciones del ticket</label>
         <textarea id="fTerminos" name="terminos" rows="3" placeholder="Ej: No se aceptan devoluciones. Reclamos dentro de las 24h.">${conf.terminos || 'No se aceptan devoluciones de dinero. Cualquier reclamo debe realizarse dentro de las 24 horas de la compra.'}</textarea>
         <span class="hint">Se imprime al pie del ticket</span>

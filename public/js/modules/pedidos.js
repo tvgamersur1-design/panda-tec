@@ -16,56 +16,13 @@ export async function init(container, user) {
   const puedeEditar = user && (user.rol === 'admin' || user.rol === 'almacen');
 
   container.innerHTML = `
-    <style>
-      .tabs { display:flex; border-bottom:1px solid #E2E8F0; margin-bottom:1.25rem; }
-      .tab-btn { padding:0.625rem 1.25rem; border:none; background:none; font-size:0.875rem; font-weight:500; cursor:pointer; color:#64748B; border-bottom:2px solid transparent; margin-bottom:-1px; }
-      .tab-btn.active { color:#2563EB; border-bottom-color:#2563EB; }
-      .btn-primary { display:inline-flex; align-items:center; gap:0.5rem; padding:0.5rem 1rem; background:#2563EB; color:#fff; border:none; border-radius:8px; font-size:0.875rem; font-weight:600; cursor:pointer; }
-      .btn-primary:hover { background:#1D4ED8; }
-      .btn-secondary { display:inline-flex; align-items:center; gap:0.5rem; padding:0.5rem 1rem; background:#F1F5F9; color:#1E293B; border:1px solid #E2E8F0; border-radius:8px; font-size:0.875rem; font-weight:500; cursor:pointer; }
-      .btn-success { display:inline-flex; align-items:center; gap:0.5rem; padding:0.4rem 0.75rem; background:#DCFCE7; color:#16A34A; border:none; border-radius:6px; font-size:0.8125rem; font-weight:500; cursor:pointer; }
-      .btn-edit { display:inline-flex; align-items:center; gap:0.5rem; padding:0.4rem 0.75rem; background:#EFF6FF; color:#2563EB; border:none; border-radius:6px; font-size:0.8125rem; font-weight:500; cursor:pointer; }
-      .btn-danger { display:inline-flex; align-items:center; gap:0.5rem; padding:0.4rem 0.75rem; background:#FEE2E2; color:#DC2626; border:none; border-radius:6px; font-size:0.8125rem; font-weight:500; cursor:pointer; }
-      .section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; flex-wrap:wrap; gap:0.75rem; }
-      .filters { display:flex; gap:0.75rem; flex-wrap:wrap; }
-      .filters select { padding:0.5rem 0.75rem; border:1px solid #E2E8F0; border-radius:8px; font-size:0.875rem; background:#fff; outline:none; }
-      .table-wrap { background:#fff; border-radius:12px; border:1px solid #E2E8F0; overflow:auto; }
-      table { width:100%; border-collapse:collapse; font-size:0.875rem; }
-      th { padding:0.75rem 1rem; text-align:left; font-size:0.75rem; font-weight:600; text-transform:uppercase; color:#64748B; border-bottom:1px solid #E2E8F0; }
-      td { padding:0.75rem 1rem; border-bottom:1px solid #F1F5F9; vertical-align:middle; }
-      tr:last-child td { border-bottom:none; }
-      tr:hover td { background:#F8FAFC; }
-      .badge { display:inline-flex; align-items:center; gap:0.25rem; padding:0.2rem 0.6rem; border-radius:999px; font-size:0.75rem; font-weight:600; }
-      .badge-warning { background:#FEF3C7; color:#D97706; }
-      .badge-ok { background:#DCFCE7; color:#16A34A; }
-      .empty-state { text-align:center; padding:3rem; color:#64748B; }
-      .empty-state i { font-size:2.5rem; margin-bottom:1rem; display:block; opacity:0.35; }
-      .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:1000; display:flex; align-items:center; justify-content:center; padding:1rem; }
-      .modal { background:#fff; border-radius:14px; width:100%; max-width:560px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.2); animation:slideUp 0.2s ease; }
-      @keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
-      .modal-header { display:flex; align-items:center; justify-content:space-between; padding:1.25rem 1.5rem; border-bottom:1px solid #E2E8F0; }
-      .modal-header h2 { font-size:1.125rem; font-weight:700; }
-      .modal-body { padding:1.5rem; display:flex; flex-direction:column; gap:1rem; }
-      .modal-footer { display:flex; justify-content:flex-end; gap:0.75rem; padding:1rem 1.5rem; border-top:1px solid #E2E8F0; }
-      .form-group { display:flex; flex-direction:column; gap:0.375rem; }
-      .form-group label { font-size:0.8125rem; font-weight:600; color:#374151; }
-      .form-group input, .form-group select { padding:0.5rem 0.75rem; border:1px solid #E2E8F0; border-radius:8px; font-size:0.875rem; color:#1E293B; outline:none; }
-      .form-group input:focus, .form-group select:focus { border-color:#2563EB; }
-      .form-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
-      .btn-close { background:none; border:none; font-size:1.25rem; cursor:pointer; color:#64748B; }
-      .item-row { display:flex; align-items:center; gap:0.75rem; padding:0.5rem; border:1px solid #F1F5F9; border-radius:8px; }
-      .item-row select { flex:1; padding:0.375rem 0.5rem; border:1px solid #E2E8F0; border-radius:6px; font-size:0.875rem; }
-      .item-row input { width:80px; padding:0.375rem 0.5rem; border:1px solid #E2E8F0; border-radius:6px; font-size:0.875rem; }
-      .btn-rm-item { background:none; border:none; color:#DC2626; cursor:pointer; font-size:0.875rem; }
-    </style>
-
     <div class="tabs">
       <button class="tab-btn active" data-tab="pedidos">Pedidos</button>
       <button class="tab-btn" data-tab="proveedores">Proveedores</button>
     </div>
 
     <div id="viewPedidos"></div>
-    <div id="viewProveedores" style="display:none;"></div>
+    <div id="viewProveedores" class="ped-hid"></div>
     <div id="modalContainer"></div>
   `;
 
@@ -80,12 +37,12 @@ export async function init(container, user) {
       container.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       if (btn.dataset.tab === 'pedidos') {
-        container.querySelector('#viewPedidos').style.display = '';
-        container.querySelector('#viewProveedores').style.display = 'none';
+        container.querySelector('#viewPedidos').classList.remove('ped-hid');
+        container.querySelector('#viewProveedores').classList.add('ped-hid');
         renderPedidos(container, puedeEditar);
       } else {
-        container.querySelector('#viewPedidos').style.display = 'none';
-        container.querySelector('#viewProveedores').style.display = '';
+        container.querySelector('#viewPedidos').classList.add('ped-hid');
+        container.querySelector('#viewProveedores').classList.remove('ped-hid');
         renderProveedores(container, puedeEditar);
       }
     });
@@ -115,10 +72,10 @@ async function renderPedidos(container, puedeEditar) {
     <div class="table-wrap">
       <table class="data-table">
         <thead><tr><th>ID</th><th>Proveedor</th><th>Productos</th><th>Estado</th><th>Fecha</th>${puedeEditar?'<th>Acciones</th>':''}</tr></thead>
-        <tbody id="pedidosTbody"><tr><td colspan="${puedeEditar?6:5}" style="text-align:center;padding:2rem;color:#94A3B8;"><i class="fas fa-spinner fa-spin"></i></td></tr></tbody>
+        <tbody id="pedidosTbody"><tr><td colspan="${puedeEditar?6:5}" class="empty-state"><i class="fas fa-spinner fa-spin"></i></td></tr></tbody>
       </table>
     </div>
-    <div id="pedPaginacion" style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;border-top:1px solid #E2E8F0;font-size:0.8125rem;color:#64748B;"></div>
+    <div id="pedPaginacion" class="ped-pag"></div>
   `;
 
   await cargarPedidos(container, puedeEditar);
@@ -166,8 +123,8 @@ function renderPedidosTbody(container, puedeEditar) {
     const itemsCount = p.items?.length || 0;
     return `
       <tr>
-        <td data-label="ID" style="font-size:0.75rem;color:#64748B;">${p._id.slice(-6).toUpperCase()}</td>
-        <td data-label="Proveedor" style="font-weight:500;">${provNombre}</td>
+        <td data-label="ID" class="ped-id">${p._id.slice(-6).toUpperCase()}</td>
+        <td data-label="Proveedor" class="ped-name">${provNombre}</td>
         <td data-label="Productos">${itemsCount} producto(s)</td>
         <td data-label="Estado"><span class="badge ${p.estado==='recibido'?'badge-ok':'badge-warning'}">${p.estado}</span></td>
         <td data-label="Fecha">${new Date(p.fecha_creacion).toLocaleDateString('es-PE')}</td>
@@ -195,16 +152,17 @@ function renderPedidosTbody(container, puedeEditar) {
       const desde = (_pedPagina - 1) * 15 + 1;
       const hasta = Math.min(_pedPagina * 15, _pedTotal);
       let botones = '';
-      botones += `<button data-page="${_pedPagina - 1}" ${_pedPagina <= 1 ? 'disabled' : ''} style="padding:0.25rem 0.5rem;border:1px solid #E2E8F0;border-radius:4px;background:#fff;cursor:pointer;font-size:0.75rem;">← Ant</button>`;
+      botones += `<button data-page="${_pedPagina - 1}" class="pag-btn-sm" ${_pedPagina <= 1 ? 'disabled' : ''}>← Ant</button>`;
       for (let i = 1; i <= _pedTotalPaginas; i++) {
         if (i === 1 || i === _pedTotalPaginas || Math.abs(i - _pedPagina) <= 1) {
-          botones += `<button data-page="${i}" style="padding:0.25rem 0.5rem;border:1px solid ${i === _pedPagina ? '#2563EB' : '#E2E8F0'};border-radius:4px;background:${i === _pedPagina ? '#2563EB' : '#fff'};color:${i === _pedPagina ? '#fff' : '#374151'};cursor:pointer;font-size:0.75rem;font-weight:${i === _pedPagina ? '600' : '400'};">${i}</button>`;
+          const active = i === _pedPagina;
+          botones += `<button data-page="${i}" class="pag-btn-sm ${active ? 'pag-btn-sm--active' : ''}" ${active ? '' : ''}>${i}</button>`;
         } else if (Math.abs(i - _pedPagina) === 2) {
-          botones += `<span style="padding:0.25rem 0.25rem;font-size:0.75rem;color:#94A3B8;">…</span>`;
+          botones += `<span class="pag-ellipsis">…</span>`;
         }
       }
-      botones += `<button data-page="${_pedPagina + 1}" ${_pedPagina >= _pedTotalPaginas ? 'disabled' : ''} style="padding:0.25rem 0.5rem;border:1px solid #E2E8F0;border-radius:4px;background:#fff;cursor:pointer;font-size:0.75rem;">Sig →</button>`;
-      pagDiv.innerHTML = `<span>Mostrando ${desde}-${hasta} de ${_pedTotal}</span><div style="display:flex;gap:0.25rem;align-items:center;">${botones}</div>`;
+      botones += `<button data-page="${_pedPagina + 1}" class="pag-btn-sm" ${_pedPagina >= _pedTotalPaginas ? 'disabled' : ''}>Sig →</button>`;
+      pagDiv.innerHTML = `<span>Mostrando ${desde}-${hasta} de ${_pedTotal}</span><div class="ped-pag-btns">${botones}</div>`;
       pagDiv.querySelectorAll('[data-page]').forEach(btn => {
         btn.addEventListener('click', () => {
           const p = parseInt(btn.dataset.page);
@@ -263,9 +221,9 @@ function abrirModalPedido(container, puedeEditar) {
             </select>
           </div>
           <div>
-            <div style="font-size:0.8125rem;font-weight:600;color:#374151;margin-bottom:0.5rem;">Productos *</div>
+            <div class="ped-item-label">Productos *</div>
             <div id="itemsContainer"></div>
-            <button type="button" class="btn-secondary" id="btnAgregarItem" style="margin-top:0.5rem;font-size:0.8125rem;padding:0.375rem 0.75rem;">
+            <button type="button" class="btn-secondary ped-btn-add" id="btnAgregarItem">
               <i class="fas fa-plus"></i> Agregar producto
             </button>
           </div>
@@ -318,7 +276,7 @@ function confirmarRecibir(container, id, puedeEditar) {
   const modalContainer = container.querySelector('#modalContainer');
   modalContainer.innerHTML = `
     <div class="modal-overlay" id="recModal" role="dialog" aria-modal="true">
-      <div class="modal" style="max-width:400px;">
+      <div class="modal ped-modal-max">
         <div class="modal-header">
           <h2>Marcar como Recibido</h2>
           <button class="btn-close" id="btnCerrarRec"><i class="fas fa-times"></i></button>
@@ -328,7 +286,7 @@ function confirmarRecibir(container, id, puedeEditar) {
         </div>
         <div class="modal-footer">
           <button class="btn-secondary" id="btnCancelarRec">Cancelar</button>
-          <button class="btn-success" id="btnConfirmarRec" style="padding:0.5rem 1rem;"><i class="fas fa-check"></i> Confirmar recepción</button>
+          <button class="btn-success usr-btn-pad" id="btnConfirmarRec"><i class="fas fa-check"></i> Confirmar recepción</button>
         </div>
       </div>
     </div>
@@ -358,7 +316,7 @@ async function renderProveedores(container, puedeEditar) {
   const view = container.querySelector('#viewProveedores');
   view.innerHTML = `
     <div class="section-header">
-      <h3 style="font-size:1rem;font-weight:600;">Proveedores</h3>
+      <h3 class="ped-prov-title">Proveedores</h3>
       ${puedeEditar ? `<button class="btn-primary" id="btnNuevoProv"><i class="fas fa-plus"></i> Nuevo Proveedor</button>` : ''}
     </div>
     <div class="table-wrap">
@@ -385,7 +343,7 @@ function renderProvTbody(container, puedeEditar) {
   }
   tbody.innerHTML = _proveedores.map(p => `
     <tr>
-      <td data-label="Nombre" style="font-weight:500;">${p.nombre}</td>
+      <td data-label="Nombre" class="ped-name">${p.nombre}</td>
       <td data-label="Teléfono">${p.telefono}</td>
       <td data-label="Correo">${p.correo}</td>
       ${puedeEditar ? `
@@ -411,7 +369,7 @@ function abrirModalProveedor(container, proveedor = null, puedeEditar) {
   const modalContainer = container.querySelector('#modalContainer');
   modalContainer.innerHTML = `
     <div class="modal-overlay" id="provModal" role="dialog" aria-modal="true">
-      <div class="modal" style="max-width:440px;">
+      <div class="modal ped-modal-md">
         <div class="modal-header">
           <h2>${esEdicion ? 'Editar Proveedor' : 'Nuevo Proveedor'}</h2>
           <button class="btn-close" id="btnCerrarProv"><i class="fas fa-times"></i></button>

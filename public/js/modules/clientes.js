@@ -16,46 +16,10 @@ export async function init(container, user) {
   const puedeEliminar = user && user.rol === 'admin';
 
   container.innerHTML = `
-    <style>
-      .cli-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem; flex-wrap:wrap; gap:0.75rem; }
-      .btn-primary { display:inline-flex; align-items:center; gap:0.5rem; padding:0.5rem 1rem; background:#2563EB; color:#fff; border:none; border-radius:8px; font-size:0.875rem; font-weight:600; cursor:pointer; }
-      .btn-primary:hover { background:#1D4ED8; }
-      .btn-secondary { display:inline-flex; align-items:center; gap:0.5rem; padding:0.5rem 1rem; background:#F1F5F9; color:#1E293B; border:1px solid #E2E8F0; border-radius:8px; font-size:0.875rem; font-weight:500; cursor:pointer; }
-      .btn-danger { display:inline-flex; align-items:center; gap:0.5rem; padding:0.4rem 0.75rem; background:#FEE2E2; color:#DC2626; border:none; border-radius:6px; font-size:0.8125rem; font-weight:500; cursor:pointer; }
-      .btn-info { display:inline-flex; align-items:center; gap:0.5rem; padding:0.4rem 0.75rem; background:#EFF6FF; color:#2563EB; border:none; border-radius:6px; font-size:0.8125rem; font-weight:500; cursor:pointer; }
-      .search-input { padding:0.5rem 0.75rem; border:1px solid #E2E8F0; border-radius:8px; font-size:0.875rem; outline:none; min-width:220px; }
-      .search-input:focus { border-color:#2563EB; }
-      .table-wrap { background:#fff; border-radius:12px; border:1px solid #E2E8F0; overflow:auto; }
-      table { width:100%; border-collapse:collapse; font-size:0.875rem; }
-      th { padding:0.75rem 1rem; text-align:left; font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; color:#64748B; border-bottom:1px solid #E2E8F0; }
-      td { padding:0.75rem 1rem; border-bottom:1px solid #F1F5F9; vertical-align:middle; }
-      tr:last-child td { border-bottom:none; }
-      tr:hover td { background:#F8FAFC; }
-      .empty-state { text-align:center; padding:3rem; color:#64748B; }
-      .empty-state i { font-size:2.5rem; margin-bottom:1rem; display:block; opacity:0.35; }
-      .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:1000; display:flex; align-items:center; justify-content:center; padding:1rem; }
-      .modal { background:#fff; border-radius:14px; width:100%; max-width:520px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.2); animation:slideUp 0.2s ease; }
-      .modal-lg { max-width:680px; }
-      @keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
-      .modal-header { display:flex; align-items:center; justify-content:space-between; padding:1.25rem 1.5rem; border-bottom:1px solid #E2E8F0; }
-      .modal-header h2 { font-size:1.125rem; font-weight:700; }
-      .modal-body { padding:1.5rem; display:flex; flex-direction:column; gap:1rem; }
-      .modal-footer { display:flex; justify-content:flex-end; gap:0.75rem; padding:1rem 1.5rem; border-top:1px solid #E2E8F0; }
-      .form-group { display:flex; flex-direction:column; gap:0.375rem; }
-      .form-group label { font-size:0.8125rem; font-weight:600; color:#374151; }
-      .form-group input, .form-group textarea { padding:0.5rem 0.75rem; border:1px solid #E2E8F0; border-radius:8px; font-size:0.875rem; color:#1E293B; outline:none; font-family:inherit; }
-      .form-group input:focus { border-color:#2563EB; }
-      .form-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
-      .btn-close { background:none; border:none; font-size:1.25rem; cursor:pointer; color:#64748B; }
-      .reniec-hint { font-size:0.75rem; color:#64748B; margin-top:0.25rem; }
-      .reniec-loading { font-size:0.75rem; color:#2563EB; margin-top:0.25rem; display:none; }
-      .reniec-aviso { font-size:0.75rem; color:#D97706; margin-top:0.25rem; display:none; }
-    </style>
-
     <div class="cli-header">
-      <div style="position:relative;flex:1;max-width:400px;">
-        <i class="fas fa-search" style="position:absolute;left:0.75rem;top:50%;transform:translateY(-50%);color:#94A3B8;font-size:0.875rem;pointer-events:none;"></i>
-        <input type="text" id="searchInput" class="search-input" placeholder="Buscar por nombre o DNI..." style="padding-left:2.25rem;" />
+      <div class="cli-search-wrap">
+        <i class="fas fa-search cli-search-icon"></i>
+        <input type="text" id="searchInput" class="search-input cli-search-input" placeholder="Buscar por nombre o DNI..." />
       </div>
       ${puedeEditar ? `<button class="btn-primary" id="btnNuevo"><i class="fas fa-plus"></i> Nuevo Cliente</button>` : ''}
     </div>
@@ -73,7 +37,7 @@ export async function init(container, user) {
         <tbody id="cliTbody"></tbody>
       </table>
     </div>
-    <div id="cliPaginacion" style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;border-top:1px solid #E2E8F0;font-size:0.8125rem;color:#64748B;"></div>
+    <div id="cliPaginacion" class="cli-pag"></div>
     <div id="modalContainer"></div>
   `;
 
@@ -92,7 +56,7 @@ export async function init(container, user) {
 
 async function cargarClientes(container, puedeEditar, puedeEliminar, search = '', pagina = 1) {
   const tbody = container.querySelector('#cliTbody');
-  tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:#94A3B8;"><i class="fas fa-spinner fa-spin"></i></td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="5" class="cli-spinner"><i class="fas fa-spinner fa-spin"></i></td></tr>`;
   let url = search ? `/clientes?search=${encodeURIComponent(search)}&page=${pagina}&limit=15` : `/clientes?page=${pagina}&limit=15`;
   const res = await api.get(url);
   if (res.ok && res.data.clientes) {
@@ -120,14 +84,14 @@ function renderClientes(container, puedeEditar, puedeEliminar) {
 
   tbody.innerHTML = _clientes.map(c => `
     <tr>
-      <td data-label="DNI" style="font-weight:500;">${c.dni}</td>
+      <td data-label="DNI" class="cli-name">${c.dni}</td>
       <td data-label="Nombre">${[c.nombre, c.apellido_paterno, c.apellido_materno].filter(Boolean).join(' ') || '—'}</td>
       <td data-label="Teléfono">${c.telefono || '—'}</td>
       <td data-label="Email">${c.email || '—'}</td>
       <td data-label="Acciones">
-        <div style="display:flex;gap:0.5rem;">
+        <div class="cli-actions">
           <button class="btn-info" data-id="${c._id}" data-action="ver"><i class="fas fa-eye"></i> Ver</button>
-          ${puedeEditar ? `<button class="btn-info" data-id="${c._id}" data-action="editar" style="background:#F0FDF4;color:#16A34A;"><i class="fas fa-pen"></i></button>` : ''}
+          ${puedeEditar ? `<button class="btn-info cli-edit-btn" data-id="${c._id}" data-action="editar"><i class="fas fa-pen"></i></button>` : ''}
           ${puedeEliminar ? `<button class="btn-danger" data-id="${c._id}" data-action="eliminar"><i class="fas fa-trash"></i></button>` : ''}
         </div>
       </td>
@@ -161,16 +125,17 @@ function renderClientes(container, puedeEditar, puedeEliminar) {
       const desde = (_cliPagina - 1) * 15 + 1;
       const hasta = Math.min(_cliPagina * 15, _cliTotal);
       let botones = '';
-      botones += `<button data-page="${_cliPagina - 1}" ${_cliPagina <= 1 ? 'disabled' : ''} style="padding:0.25rem 0.5rem;border:1px solid #E2E8F0;border-radius:4px;background:#fff;cursor:pointer;font-size:0.75rem;">← Ant</button>`;
+      botones += `<button data-page="${_cliPagina - 1}" class="pag-btn-sm" ${_cliPagina <= 1 ? 'disabled' : ''}>← Ant</button>`;
       for (let i = 1; i <= _cliTotalPaginas; i++) {
         if (i === 1 || i === _cliTotalPaginas || Math.abs(i - _cliPagina) <= 1) {
-          botones += `<button data-page="${i}" style="padding:0.25rem 0.5rem;border:1px solid ${i === _cliPagina ? '#2563EB' : '#E2E8F0'};border-radius:4px;background:${i === _cliPagina ? '#2563EB' : '#fff'};color:${i === _cliPagina ? '#fff' : '#374151'};cursor:pointer;font-size:0.75rem;font-weight:${i === _cliPagina ? '600' : '400'};">${i}</button>`;
+          const active = i === _cliPagina;
+          botones += `<button data-page="${i}" class="pag-btn-sm ${active ? 'pag-btn-sm--active' : ''}" ${active ? '' : ''}>${i}</button>`;
         } else if (Math.abs(i - _cliPagina) === 2) {
-          botones += `<span style="padding:0.25rem 0.25rem;font-size:0.75rem;color:#94A3B8;">…</span>`;
+          botones += `<span class="pag-ellipsis">…</span>`;
         }
       }
-      botones += `<button data-page="${_cliPagina + 1}" ${_cliPagina >= _cliTotalPaginas ? 'disabled' : ''} style="padding:0.25rem 0.5rem;border:1px solid #E2E8F0;border-radius:4px;background:#fff;cursor:pointer;font-size:0.75rem;">Sig →</button>`;
-      pagDiv.innerHTML = `<span>Mostrando ${desde}-${hasta} de ${_cliTotal}</span><div style="display:flex;gap:0.25rem;align-items:center;">${botones}</div>`;
+      botones += `<button data-page="${_cliPagina + 1}" class="pag-btn-sm" ${_cliPagina >= _cliTotalPaginas ? 'disabled' : ''}>Sig →</button>`;
+      pagDiv.innerHTML = `<span>Mostrando ${desde}-${hasta} de ${_cliTotal}</span><div class="cli-pag-btns">${botones}</div>`;
       pagDiv.querySelectorAll('[data-page]').forEach(btn => {
         btn.addEventListener('click', () => {
           const p = parseInt(btn.dataset.page);
@@ -328,7 +293,7 @@ async function verDetalle(container, id) {
           <button class="btn-close" id="btnCerrarDet"><i class="fas fa-times"></i></button>
         </div>
         <div class="modal-body" id="detBody">
-          <div style="text-align:center;padding:2rem;color:#94A3B8;"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem;"></i></div>
+          <div class="cli-spinner"><i class="fas fa-spinner fa-spin"></i></div>
         </div>
         <div class="modal-footer">
           <button class="btn-secondary" id="btnCerrarDet2">Cerrar</button>
@@ -344,32 +309,32 @@ async function verDetalle(container, id) {
   const res = await api.get(`/clientes/${id}`);
   const detBody = modalContainer.querySelector('#detBody');
   if (!res.ok) {
-    detBody.innerHTML = `<p style="color:#DC2626;">Error al cargar el cliente.</p>`;
+    detBody.innerHTML = `<p class="cli-error">Error al cargar el cliente.</p>`;
     return;
   }
   const c = res.data.cliente || res.data;
   const ventas = res.data.ventas || [];
 
   detBody.innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1.25rem;">
-      <div><span style="font-size:0.75rem;color:#64748B;font-weight:600;">DNI</span><div style="font-weight:500;">${c.dni}</div></div>
-      <div><span style="font-size:0.75rem;color:#64748B;font-weight:600;">Nombre completo</span><div style="font-weight:500;">${[c.nombre,c.apellido_paterno,c.apellido_materno].filter(Boolean).join(' ')||'—'}</div></div>
-      <div><span style="font-size:0.75rem;color:#64748B;font-weight:600;">Teléfono</span><div>${c.telefono||'—'}</div></div>
-      <div><span style="font-size:0.75rem;color:#64748B;font-weight:600;">Email</span><div>${c.email||'—'}</div></div>
-      <div><span style="font-size:0.75rem;color:#64748B;font-weight:600;">Dirección</span><div>${c.direccion||'—'}</div></div>
+    <div class="cli-detail-grid">
+      <div><span class="cli-detail-label">DNI</span><div class="cli-detail-value">${c.dni}</div></div>
+      <div><span class="cli-detail-label">Nombre completo</span><div class="cli-detail-value">${[c.nombre,c.apellido_paterno,c.apellido_materno].filter(Boolean).join(' ')||'—'}</div></div>
+      <div><span class="cli-detail-label">Teléfono</span><div>${c.telefono||'—'}</div></div>
+      <div><span class="cli-detail-label">Email</span><div>${c.email||'—'}</div></div>
+      <div><span class="cli-detail-label">Dirección</span><div>${c.direccion||'—'}</div></div>
     </div>
-    <div style="font-weight:600;margin-bottom:0.75rem;">Historial de ventas (${ventas.length})</div>
-    ${ventas.length === 0 ? '<p style="color:#94A3B8;font-size:0.875rem;">Sin ventas registradas</p>' : `
-      <div style="overflow-x:auto;">
+    <div class="cli-hist-title">Historial de ventas (${ventas.length})</div>
+    ${ventas.length === 0 ? '<p class="cli-hist-empty">Sin ventas registradas</p>' : `
+      <div class="cli-hist-table">
         <table>
           <thead><tr><th>N° Venta</th><th>Total</th><th>Método</th><th>Estado</th><th>Fecha</th></tr></thead>
           <tbody>
             ${ventas.map(v => `
               <tr>
-                <td style="font-weight:500;">${v.numero_venta||'—'}</td>
+                <td class="cli-hist-num">${v.numero_venta||'—'}</td>
                 <td>S/ ${Number(v.total).toLocaleString('es-PE',{minimumFractionDigits:2})}</td>
                 <td style="text-transform:capitalize;">${v.metodo_pago}</td>
-                <td><span style="padding:0.15rem 0.5rem;border-radius:999px;font-size:0.75rem;font-weight:600;background:${v.estado==='completada'?'#DCFCE7':'#FEE2E2'};color:${v.estado==='completada'?'#16A34A':'#DC2626'};">${v.estado}</span></td>
+                <td><span class="cli-hist-estado" style="background:${v.estado==='completada'?'#DCFCE7':'#FEE2E2'};color:${v.estado==='completada'?'#16A34A':'#DC2626'};">${v.estado}</span></td>
                 <td>${new Date(v.fecha_venta).toLocaleDateString('es-PE')}</td>
               </tr>
             `).join('')}
@@ -386,7 +351,7 @@ async function confirmarEliminar(container, id, puedeEditar, puedeEliminar) {
   const modalContainer = container.querySelector('#modalContainer');
   modalContainer.innerHTML = `
     <div class="modal-overlay" id="delModal" role="dialog" aria-modal="true">
-      <div class="modal" style="max-width:400px;">
+      <div class="modal cli-modal-max">
         <div class="modal-header">
           <h2>Eliminar Cliente</h2>
           <button class="btn-close" id="btnCerrarDel"><i class="fas fa-times"></i></button>
@@ -396,7 +361,7 @@ async function confirmarEliminar(container, id, puedeEditar, puedeEliminar) {
         </div>
         <div class="modal-footer">
           <button class="btn-secondary" id="btnCancelarDel">Cancelar</button>
-          <button class="btn-danger" id="btnConfirmarDel" style="padding:0.5rem 1rem;"><i class="fas fa-trash"></i> Eliminar</button>
+          <button class="btn-danger usr-btn-pad" id="btnConfirmarDel"><i class="fas fa-trash"></i> Eliminar</button>
         </div>
       </div>
     </div>
