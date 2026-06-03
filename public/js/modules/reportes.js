@@ -184,7 +184,9 @@ async function cargarVentasMes(content, mes, anio) {
 function renderMasVendidos(content) {
   const now = new Date();
   const hasta = now.toISOString().split('T')[0];
-  const desde30 = new Date(now.setDate(now.getDate() - 30)).toISOString().split('T')[0];
+  const hace30 = new Date(now);
+  hace30.setDate(hace30.getDate() - 30);
+  const desde30 = hace30.toISOString().split('T')[0];
   content.innerHTML = `
     <div class="rep-card">
       <div class="rep-filters">

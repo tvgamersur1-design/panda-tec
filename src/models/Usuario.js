@@ -14,6 +14,7 @@ const usuarioSchema = new mongoose.Schema(
     },
     activo: { type: Boolean, default: true },
     eliminado: { type: Boolean, default: false },
+    foto: { type: String, default: null },
     google_id: { type: String, default: null },
     email_verificado: { type: Boolean, default: false },
     codigo_recuperacion: { type: String, default: null },

@@ -8,6 +8,9 @@ import { api } from '../api.js';
 let _proveedores = [];
 let _productos = [];
 let _pedidos = [];
+let _pedPagina = 1;
+let _pedTotalPaginas = 1;
+let _pedTotal = 0;
 
 export async function init(container, user) {
   const puedeEditar = user && (user.rol === 'admin' || user.rol === 'almacen');
@@ -67,7 +70,7 @@ export async function init(container, user) {
   `;
 
   // Cargar datos base
-  const [provRes, prodRes] = await Promise.all([api.get('/proveedores'), api.get('/productos')]);
+  const [provRes, prodRes] = await Promise.all([api.get('/proveedores?limit=200'), api.get('/productos?limit=200')]);
   _proveedores = provRes.ok ? (provRes.data.proveedores || provRes.data || []) : [];
   _productos = prodRes.ok ? (prodRes.data.productos || prodRes.data || []) : [];
 
@@ -115,26 +118,37 @@ async function renderPedidos(container, puedeEditar) {
         <tbody id="pedidosTbody"><tr><td colspan="${puedeEditar?6:5}" style="text-align:center;padding:2rem;color:#94A3B8;"><i class="fas fa-spinner fa-spin"></i></td></tr></tbody>
       </table>
     </div>
+    <div id="pedPaginacion" style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;border-top:1px solid #E2E8F0;font-size:0.8125rem;color:#64748B;"></div>
   `;
 
   await cargarPedidos(container, puedeEditar);
 
-  view.querySelector('#btnFiltrar').addEventListener('click', () => cargarPedidos(container, puedeEditar));
+  view.querySelector('#btnFiltrar').addEventListener('click', () => cargarPedidos(container, puedeEditar, 1));
   if (puedeEditar) {
     view.querySelector('#btnNuevoPedido').addEventListener('click', () => abrirModalPedido(container, puedeEditar));
   }
 }
 
-async function cargarPedidos(container, puedeEditar) {
+async function cargarPedidos(container, puedeEditar, pagina = 1) {
   const tbody = container.querySelector('#pedidosTbody');
   const estado = container.querySelector('#filtroEstado')?.value || '';
   const provId = container.querySelector('#filtroProveedor')?.value || '';
-  let url = '/pedidos?';
-  if (estado) url += `estado=${estado}&`;
-  if (provId) url += `proveedor_id=${provId}&`;
+  let url = `/pedidos?page=${pagina}&limit=15`;
+  if (estado) url += `&estado=${estado}`;
+  if (provId) url += `&proveedor_id=${provId}`;
 
   const res = await api.get(url);
-  _pedidos = res.ok ? (res.data.pedidos || res.data || []) : [];
+  if (res.ok && res.data.pedidos) {
+    _pedidos = res.data.pedidos;
+    _pedPagina = res.data.page || 1;
+    _pedTotalPaginas = res.data.totalPages || 1;
+    _pedTotal = res.data.total || 0;
+  } else {
+    _pedidos = res.ok ? (res.data.pedidos || res.data || []) : [];
+    _pedPagina = 1;
+    _pedTotalPaginas = 1;
+    _pedTotal = _pedidos.length;
+  }
 
   renderPedidosTbody(container, puedeEditar);
 }
@@ -170,6 +184,34 @@ function renderPedidosTbody(container, puedeEditar) {
     tbody.querySelectorAll('[data-action="recibir"]').forEach(btn => {
       btn.addEventListener('click', () => confirmarRecibir(container, btn.dataset.id, puedeEditar));
     });
+  }
+
+  // Paginación
+  const pagDiv = container.querySelector('#pedPaginacion');
+  if (pagDiv) {
+    if (_pedTotalPaginas <= 1) {
+      pagDiv.innerHTML = `<span>${_pedTotal} pedido(s)</span><span></span>`;
+    } else {
+      const desde = (_pedPagina - 1) * 15 + 1;
+      const hasta = Math.min(_pedPagina * 15, _pedTotal);
+      let botones = '';
+      botones += `<button data-page="${_pedPagina - 1}" ${_pedPagina <= 1 ? 'disabled' : ''} style="padding:0.25rem 0.5rem;border:1px solid #E2E8F0;border-radius:4px;background:#fff;cursor:pointer;font-size:0.75rem;">← Ant</button>`;
+      for (let i = 1; i <= _pedTotalPaginas; i++) {
+        if (i === 1 || i === _pedTotalPaginas || Math.abs(i - _pedPagina) <= 1) {
+          botones += `<button data-page="${i}" style="padding:0.25rem 0.5rem;border:1px solid ${i === _pedPagina ? '#2563EB' : '#E2E8F0'};border-radius:4px;background:${i === _pedPagina ? '#2563EB' : '#fff'};color:${i === _pedPagina ? '#fff' : '#374151'};cursor:pointer;font-size:0.75rem;font-weight:${i === _pedPagina ? '600' : '400'};">${i}</button>`;
+        } else if (Math.abs(i - _pedPagina) === 2) {
+          botones += `<span style="padding:0.25rem 0.25rem;font-size:0.75rem;color:#94A3B8;">…</span>`;
+        }
+      }
+      botones += `<button data-page="${_pedPagina + 1}" ${_pedPagina >= _pedTotalPaginas ? 'disabled' : ''} style="padding:0.25rem 0.5rem;border:1px solid #E2E8F0;border-radius:4px;background:#fff;cursor:pointer;font-size:0.75rem;">Sig →</button>`;
+      pagDiv.innerHTML = `<span>Mostrando ${desde}-${hasta} de ${_pedTotal}</span><div style="display:flex;gap:0.25rem;align-items:center;">${botones}</div>`;
+      pagDiv.querySelectorAll('[data-page]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const p = parseInt(btn.dataset.page);
+          if (p >= 1 && p <= _pedTotalPaginas) cargarPedidos(container, puedeEditar, p);
+        });
+      });
+    }
   }
 }
 

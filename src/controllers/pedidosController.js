@@ -9,18 +9,33 @@ const MovimientoInventario = require('../models/MovimientoInventario');
  */
 exports.listar = async (req, res) => {
   try {
-    const { estado, proveedor_id } = req.query;
+    const { estado, proveedor_id, page = 1, limit = 20 } = req.query;
 
     const filtro = {};
     if (estado) filtro.estado = estado;
     if (proveedor_id) filtro.proveedor_id = proveedor_id;
 
-    const pedidos = await Pedido.find(filtro)
-      .populate('proveedor_id', 'nombre')
-      .populate('items.producto_id', 'nombre precio_venta')
-      .sort({ fecha_creacion: -1 });
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(50, Math.max(1, parseInt(limit)));
+    const skip = (pageNum - 1) * limitNum;
 
-    res.json(pedidos);
+    const [pedidos, total] = await Promise.all([
+      Pedido.find(filtro)
+        .populate('proveedor_id', 'nombre')
+        .populate('items.producto_id', 'nombre precio_venta')
+        .sort({ fecha_creacion: -1 })
+        .skip(skip)
+        .limit(limitNum),
+      Pedido.countDocuments(filtro),
+    ]);
+
+    res.json({
+      pedidos,
+      total,
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(total / limitNum),
+    });
   } catch (error) {
     console.error('Error al listar pedidos:', error);
     res.status(500).json({ error: 'Error al listar pedidos' });
@@ -70,29 +85,33 @@ exports.recibir = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Verificar que el pedido existe y está pendiente (fuera de transacción primero)
-    const pedidoExistente = await Pedido.findById(id);
+    // Iniciar transacción ANTES de cualquier validación (fix TOCTOU)
+    session.startTransaction();
 
-    if (!pedidoExistente) {
+    // Recargar el pedido DENTRO de la transacción con lock
+    const pedido = await Pedido.findById(id).session(session);
+
+    if (!pedido) {
+      await session.abortTransaction();
       session.endSession();
       return res.status(404).json({ error: 'Pedido no encontrado' });
     }
 
-    if (pedidoExistente.estado === 'recibido') {
+    if (pedido.estado === 'recibido') {
+      await session.abortTransaction();
       session.endSession();
       return res.status(409).json({ error: 'El pedido ya fue recibido' });
     }
 
-    session.startTransaction();
-
-    // Recargar dentro de la transacción
-    const pedido = await Pedido.findById(id).session(session);
-
     // Procesar cada ítem: incrementar stock y crear movimiento
+    const productosNoEncontrados = [];
     for (const item of pedido.items) {
       const producto = await Producto.findById(item.producto_id).session(session);
 
-      if (!producto) continue;
+      if (!producto) {
+        productosNoEncontrados.push(item.producto_id);
+        continue;
+      }
 
       const stockAnterior = producto.stock_actual;
       const stockNuevo = stockAnterior + item.cantidad;
@@ -124,6 +143,15 @@ exports.recibir = async (req, res) => {
         ],
         { session }
       );
+    }
+
+    // Si hubo productos no encontrados, abortar la transacción
+    if (productosNoEncontrados.length > 0) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({
+        error: `Productos no encontrados: ${productosNoEncontrados.join(', ')}`,
+      });
     }
 
     // Actualizar pedido: estado='recibido', fecha_recepcion, usuario_recepcion_id

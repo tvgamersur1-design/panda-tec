@@ -5,7 +5,8 @@ const authController = require('../controllers/authController');
 const recoveryController = require('../controllers/recoveryController');
 const googleAuthController = require('../controllers/googleAuthController');
 const auth = require('../middlewares/auth');
-const { loginRateLimiter, recoveryRateLimiter, verifyCodeRateLimiter } = require('../config/rateLimiter');
+const { loginRateLimiter, recoveryRateLimiter, verifyCodeRateLimiter, writeRateLimiter } = require('../config/rateLimiter');
+const { uploadAvatar } = require('../middlewares/upload');
 
 // POST /api/auth/login — Público, con rate limiting
 router.post('/login', loginRateLimiter, authController.login);
@@ -22,5 +23,9 @@ router.post('/restablecer', recoveryRateLimiter, recoveryController.restablecerC
 // ── Google OAuth ─────────────────────────────────────────────────────────────
 router.post('/google', googleAuthController.loginConGoogle);
 router.post('/google/vincular', auth, googleAuthController.vincularGoogle);
+
+// ── Perfil de usuario ────────────────────────────────────────────────────────
+router.put('/perfil', auth, writeRateLimiter, authController.cambiarClave);
+router.post('/perfil/foto', auth, writeRateLimiter, uploadAvatar, authController.subirFoto);
 
 module.exports = router;

@@ -8,8 +8,26 @@ const { enviarEmail } = require('../config/mailer');
  */
 exports.listar = async (req, res) => {
   try {
-    const usuarios = await Usuario.find({ eliminado: false }).select('-clave');
-    res.json(usuarios);
+    const { page = 1, limit = 50 } = req.query;
+
+    const filtro = { eliminado: false };
+
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+    const skip = (pageNum - 1) * limitNum;
+
+    const [usuarios, total] = await Promise.all([
+      Usuario.find(filtro).select('-clave').sort({ nombre_completo: 1 }).skip(skip).limit(limitNum),
+      Usuario.countDocuments(filtro),
+    ]);
+
+    res.json({
+      usuarios,
+      total,
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(total / limitNum),
+    });
   } catch (error) {
     console.error('Error al listar usuarios:', error);
     res.status(500).json({ error: 'Error al listar usuarios' });
@@ -145,11 +163,15 @@ exports.editar = async (req, res) => {
       }
     }
 
-    const actualizado = await Usuario.findByIdAndUpdate(
-      id,
+    const actualizado = await Usuario.findOneAndUpdate(
+      { _id: id, eliminado: false },
       { nombre_completo, correo, rol },
       { new: true, runValidators: true }
     ).select('-clave');
+
+    if (!actualizado) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
 
     res.json(actualizado);
   } catch (error) {

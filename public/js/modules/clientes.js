@@ -7,6 +7,9 @@ import { api } from '../api.js';
 
 let _clientes = [];
 let _dniTimer = null;
+let _cliPagina = 1;
+let _cliTotalPaginas = 1;
+let _cliTotal = 0;
 
 export async function init(container, user) {
   const puedeEditar = user && (user.rol === 'admin' || user.rol === 'vendedor');
@@ -70,6 +73,7 @@ export async function init(container, user) {
         <tbody id="cliTbody"></tbody>
       </table>
     </div>
+    <div id="cliPaginacion" style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;border-top:1px solid #E2E8F0;font-size:0.8125rem;color:#64748B;"></div>
     <div id="modalContainer"></div>
   `;
 
@@ -78,7 +82,7 @@ export async function init(container, user) {
   let searchTimer;
   container.querySelector('#searchInput').addEventListener('input', e => {
     clearTimeout(searchTimer);
-    searchTimer = setTimeout(() => cargarClientes(container, puedeEditar, puedeEliminar, e.target.value), 400);
+    searchTimer = setTimeout(() => cargarClientes(container, puedeEditar, puedeEliminar, e.target.value, 1), 400);
   });
 
   if (puedeEditar) {
@@ -86,12 +90,22 @@ export async function init(container, user) {
   }
 }
 
-async function cargarClientes(container, puedeEditar, puedeEliminar, search = '') {
+async function cargarClientes(container, puedeEditar, puedeEliminar, search = '', pagina = 1) {
   const tbody = container.querySelector('#cliTbody');
   tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:#94A3B8;"><i class="fas fa-spinner fa-spin"></i></td></tr>`;
-  const url = search ? `/clientes?search=${encodeURIComponent(search)}` : '/clientes';
+  let url = search ? `/clientes?search=${encodeURIComponent(search)}&page=${pagina}&limit=15` : `/clientes?page=${pagina}&limit=15`;
   const res = await api.get(url);
-  _clientes = res.ok ? (res.data.clientes || res.data || []) : [];
+  if (res.ok && res.data.clientes) {
+    _clientes = res.data.clientes;
+    _cliPagina = res.data.page || 1;
+    _cliTotalPaginas = res.data.totalPages || 1;
+    _cliTotal = res.data.total || 0;
+  } else {
+    _clientes = res.ok ? (res.data.clientes || res.data || []) : [];
+    _cliPagina = 1;
+    _cliTotalPaginas = 1;
+    _cliTotal = _clientes.length;
+  }
 
   renderClientes(container, puedeEditar, puedeEliminar);
 }
@@ -135,6 +149,35 @@ function renderClientes(container, puedeEditar, puedeEliminar) {
     tbody.querySelectorAll('[data-action="eliminar"]').forEach(btn => {
       btn.addEventListener('click', () => confirmarEliminar(container, btn.dataset.id, puedeEditar, puedeEliminar));
     });
+  }
+
+  // Paginación
+  const pagDiv = container.querySelector('#cliPaginacion');
+  if (pagDiv) {
+    const searchVal = container.querySelector('#searchInput')?.value || '';
+    if (_cliTotalPaginas <= 1) {
+      pagDiv.innerHTML = `<span>${_cliTotal} cliente(s)</span><span></span>`;
+    } else {
+      const desde = (_cliPagina - 1) * 15 + 1;
+      const hasta = Math.min(_cliPagina * 15, _cliTotal);
+      let botones = '';
+      botones += `<button data-page="${_cliPagina - 1}" ${_cliPagina <= 1 ? 'disabled' : ''} style="padding:0.25rem 0.5rem;border:1px solid #E2E8F0;border-radius:4px;background:#fff;cursor:pointer;font-size:0.75rem;">← Ant</button>`;
+      for (let i = 1; i <= _cliTotalPaginas; i++) {
+        if (i === 1 || i === _cliTotalPaginas || Math.abs(i - _cliPagina) <= 1) {
+          botones += `<button data-page="${i}" style="padding:0.25rem 0.5rem;border:1px solid ${i === _cliPagina ? '#2563EB' : '#E2E8F0'};border-radius:4px;background:${i === _cliPagina ? '#2563EB' : '#fff'};color:${i === _cliPagina ? '#fff' : '#374151'};cursor:pointer;font-size:0.75rem;font-weight:${i === _cliPagina ? '600' : '400'};">${i}</button>`;
+        } else if (Math.abs(i - _cliPagina) === 2) {
+          botones += `<span style="padding:0.25rem 0.25rem;font-size:0.75rem;color:#94A3B8;">…</span>`;
+        }
+      }
+      botones += `<button data-page="${_cliPagina + 1}" ${_cliPagina >= _cliTotalPaginas ? 'disabled' : ''} style="padding:0.25rem 0.5rem;border:1px solid #E2E8F0;border-radius:4px;background:#fff;cursor:pointer;font-size:0.75rem;">Sig →</button>`;
+      pagDiv.innerHTML = `<span>Mostrando ${desde}-${hasta} de ${_cliTotal}</span><div style="display:flex;gap:0.25rem;align-items:center;">${botones}</div>`;
+      pagDiv.querySelectorAll('[data-page]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const p = parseInt(btn.dataset.page);
+          if (p >= 1 && p <= _cliTotalPaginas) cargarClientes(container, puedeEditar, puedeEliminar, searchVal, p);
+        });
+      });
+    }
   }
 }
 

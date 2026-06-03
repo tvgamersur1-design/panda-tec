@@ -92,14 +92,14 @@ exports.editar = async (req, res) => {
 
 /**
  * DELETE /api/categorias/:id
- * Elimina una categoría (hard delete).
+ * Soft delete de una categoría (marcar activo: false).
  * Verifica que no haya productos activos con esa categoria_id.
  */
 exports.eliminar = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const categoria = await Categoria.findById(id);
+    const categoria = await Categoria.findOne({ _id: id, activo: true });
     if (!categoria) {
       return res.status(404).json({ error: 'Categoría no encontrada' });
     }
@@ -116,10 +116,24 @@ exports.eliminar = async (req, res) => {
       });
     }
 
-    await Categoria.findByIdAndDelete(id);
+    await Categoria.findByIdAndUpdate(id, { activo: false });
     res.json({ mensaje: 'Categoría eliminada correctamente' });
   } catch (error) {
     console.error('Error en categoriasController.eliminar:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+/**
+ * GET /api/categorias/publico
+ * Retorna las categorías para el catálogo sin auth.
+ */
+exports.listarPublico = async (req, res) => {
+  try {
+    const categorias = await Categoria.find({ activo: true }).sort({ nombre: 1 });
+    res.json(categorias);
+  } catch (error) {
+    console.error('Error en categoriasController.listarPublico:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 };

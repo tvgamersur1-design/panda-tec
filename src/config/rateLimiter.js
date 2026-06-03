@@ -51,4 +51,43 @@ const verifyCodeRateLimiter = rateLimit({
   },
 });
 
-module.exports = { loginRateLimiter, recoveryRateLimiter, verifyCodeRateLimiter };
+/**
+ * Rate limiter general para endpoints de escritura (POST, PUT, PATCH, DELETE).
+ * Previene abuso masivo: creación de registros, subida de archivos, etc.
+ * Máximo 60 requests por IP en 15 minutos (4 por minuto).
+ */
+const writeRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    return res.status(429).json({
+      error: 'Demasiadas solicitudes. Intenta de nuevo en unos minutos',
+    });
+  },
+});
+
+/**
+ * Rate limiter para endpoints de lectura intensiva (reportes, dashboards).
+ * Máximo 30 requests por IP en 15 minutos.
+ */
+const readRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    return res.status(429).json({
+      error: 'Demasiadas consultas. Intenta de nuevo en unos minutos',
+    });
+  },
+});
+
+module.exports = {
+  loginRateLimiter,
+  recoveryRateLimiter,
+  verifyCodeRateLimiter,
+  writeRateLimiter,
+  readRateLimiter,
+};

@@ -66,10 +66,10 @@ function uploadImagen(req, res, next) {
  * @param {string} mimetype - Tipo MIME del archivo.
  * @returns {Promise<string>} URL segura del recurso subido.
  */
-function subirACloudinary(buffer, mimetype) {
+function subirACloudinary(buffer, mimetype, folder = 'pantatec/productos') {
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
-      { folder: 'pantatec/productos' },
+      { folder },
       (error, result) => {
         if (error) return reject(error);
         resolve(result.secure_url);
@@ -79,4 +79,35 @@ function subirACloudinary(buffer, mimetype) {
   });
 }
 
+/**
+ * Middleware para subir foto de perfil de usuario.
+ * Usa la carpeta 'pantatec/avatars' en Cloudinary.
+ */
+function uploadAvatar(req, res, next) {
+  const multerSingle = upload.single('imagen');
+
+  multerSingle(req, res, async function (err) {
+    if (err) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(413).json({ error: 'La imagen no puede superar 2MB' });
+      }
+      return res.status(415).json({ error: err.message });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'Debes seleccionar una imagen' });
+    }
+
+    try {
+      const url = await subirACloudinary(req.file.buffer, req.file.mimetype, 'pantatec/avatars');
+      req.cloudinaryUrl = url;
+      next();
+    } catch (cloudErr) {
+      console.error('Error Cloudinary avatar:', cloudErr.message || cloudErr);
+      return res.status(500).json({ error: 'Error al subir imagen' });
+    }
+  });
+}
+
 module.exports = uploadImagen;
+module.exports.uploadAvatar = uploadAvatar;

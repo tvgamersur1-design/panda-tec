@@ -8,12 +8,13 @@ const Venta = require('../models/Venta');
  */
 exports.listar = async (req, res) => {
   try {
-    const { search } = req.query;
+    const { search, page = 1, limit = 20 } = req.query;
 
     const filtro = { eliminado: false };
 
     if (search && search.trim()) {
-      const regex = new RegExp(search.trim(), 'i');
+      const escaped = search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(escaped, 'i');
       filtro.$or = [
         { nombre: regex },
         { apellido_paterno: regex },
@@ -21,9 +22,22 @@ exports.listar = async (req, res) => {
       ];
     }
 
-    const clientes = await Cliente.find(filtro).sort({ apellido_paterno: 1 });
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(50, Math.max(1, parseInt(limit)));
+    const skip = (pageNum - 1) * limitNum;
 
-    res.json(clientes);
+    const [clientes, total] = await Promise.all([
+      Cliente.find(filtro).sort({ apellido_paterno: 1 }).skip(skip).limit(limitNum),
+      Cliente.countDocuments(filtro),
+    ]);
+
+    res.json({
+      clientes,
+      total,
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(total / limitNum),
+    });
   } catch (error) {
     console.error('Error al listar clientes:', error);
     res.status(500).json({ error: 'Error al listar clientes' });

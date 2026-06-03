@@ -14,7 +14,11 @@ export function getToken() {
 export function getUser() {
   const raw = localStorage.getItem(USER_KEY);
   if (!raw) return null;
-  try { return JSON.parse(raw); } catch { return null; }
+  try { const u = JSON.parse(raw); return u; } catch { return null; }
+}
+
+export function saveUser(user) {
+  localStorage.setItem(USER_KEY, JSON.stringify(user));
 }
 
 export function isLoggedIn() {

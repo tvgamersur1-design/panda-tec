@@ -11,7 +11,7 @@ const Cliente = require('../models/Cliente');
  */
 exports.listar = async (req, res) => {
   try {
-    const { desde, hasta, estado, metodo_pago } = req.query;
+    const { desde, hasta, estado, metodo_pago, page = 1, limit = 20 } = req.query;
 
     const filtro = {};
 
@@ -28,12 +28,27 @@ exports.listar = async (req, res) => {
     if (estado) filtro.estado = estado;
     if (metodo_pago) filtro.metodo_pago = metodo_pago;
 
-    const ventas = await Venta.find(filtro)
-      .populate('cliente_id', 'nombre apellido_paterno dni')
-      .populate('vendedor_id', 'nombre_completo usuario')
-      .sort({ fecha_venta: -1 });
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(50, Math.max(1, parseInt(limit)));
+    const skip = (pageNum - 1) * limitNum;
 
-    res.json(ventas);
+    const [ventas, total] = await Promise.all([
+      Venta.find(filtro)
+        .populate('cliente_id', 'nombre apellido_paterno dni')
+        .populate('vendedor_id', 'nombre_completo usuario')
+        .sort({ fecha_venta: -1 })
+        .skip(skip)
+        .limit(limitNum),
+      Venta.countDocuments(filtro),
+    ]);
+
+    res.json({
+      ventas,
+      total,
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(total / limitNum),
+    });
   } catch (error) {
     console.error('Error al listar ventas:', error);
     res.status(500).json({ error: 'Error al listar ventas' });
@@ -86,6 +101,15 @@ exports.crear = async (req, res) => {
     // Verificar stock de cada producto y recopilar datos
     const productosData = [];
     for (const item of items) {
+      // Validar que cantidad sea un entero positivo
+      if (!item.producto_id || !Number.isInteger(item.cantidad) || item.cantidad < 1) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({
+          error: `Ítem inválido: cantidad debe ser un entero positivo para el producto ${item.producto_id || 'desconocido'}`,
+        });
+      }
+
       const producto = await Producto.findOne({
         _id: item.producto_id,
         eliminado: false,

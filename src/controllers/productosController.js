@@ -272,3 +272,49 @@ exports.stockBajo = async (req, res) => {
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
+
+/**
+ * GET /api/productos/publico
+ * Lista productos para el catálogo público.
+ * No requiere autenticación.
+ */
+exports.listarPublico = async (req, res) => {
+  try {
+    const { categoria, search, page = 1, limit = 12 } = req.query;
+    const filtro = { eliminado: false, estado: 'activo' };
+
+    if (categoria) filtro.categoria_id = categoria;
+    if (search && search.trim()) {
+      const searchTerm = search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      filtro.$or = [
+        { nombre: { $regex: searchTerm, $options: 'i' } },
+        { descripcion: { $regex: searchTerm, $options: 'i' } }
+      ];
+    }
+
+    const pageNum  = Math.max(1, parseInt(page));
+    const limitNum = Math.min(50, Math.max(1, parseInt(limit)));
+    const skip     = (pageNum - 1) * limitNum;
+
+    const [productos, total] = await Promise.all([
+      Producto.find(filtro)
+        .select('nombre descripcion precio_venta imagen stock_actual categoria_id')
+        .populate('categoria_id', 'nombre')
+        .sort({ nombre: 1 })
+        .skip(skip)
+        .limit(limitNum),
+      Producto.countDocuments(filtro),
+    ]);
+
+    res.json({
+      productos,
+      total,
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(total / limitNum),
+    });
+  } catch (error) {
+    console.error('Error en productosController.listarPublico:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};

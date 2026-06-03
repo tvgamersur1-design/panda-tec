@@ -17,6 +17,9 @@ let _searchTimer = null;
 let _clienteTimer = null;
 let _historialVentas = [];
 let _configTienda = {};
+let _histPagina = 1;
+let _histTotalPaginas = 1;
+let _histTotal = 0;
 
 export async function init(container, user) {
   const puedeAnular = user && user.rol === 'admin';
@@ -30,14 +33,17 @@ export async function init(container, user) {
       .pos-layout { display:grid; grid-template-columns:1fr 380px; gap:1rem; min-height:calc(100vh - 120px); }
       @media(max-width:900px){ .pos-layout { grid-template-columns:1fr; } }
       .pos-left, .pos-right { display:flex; flex-direction:column; gap:1rem; }
-      .pos-card { background:#fff; border-radius:12px; border:1px solid #E2E8F0; overflow:hidden; }
-      .pos-card-header { padding:0.875rem 1.25rem; border-bottom:1px solid #E2E8F0; font-weight:600; font-size:0.9375rem; display:flex; align-items:center; gap:0.5rem; }
+      .pos-card { background:#fff; border-radius:12px; border:1px solid #E2E8F0; }
+      .pos-card-header { padding:0.875rem 1.25rem; border-bottom:1px solid #E2E8F0; font-weight:600; font-size:0.9375rem; display:flex; align-items:center; gap:0.5rem; border-radius:12px 12px 0 0; }
       .pos-card-body { padding:1rem; }
       .search-input { width:100%; padding:0.625rem 0.875rem; border:1px solid #E2E8F0; border-radius:8px; font-size:0.875rem; outline:none; }
       .search-input:focus { border-color:#2563EB; }
-      .cat-filters { display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.75rem; }
-      .cat-btn { padding:0.3rem 0.75rem; border-radius:999px; border:1px solid #E2E8F0; background:#fff; font-size:0.8125rem; cursor:pointer; transition:all 0.15s; }
-      .cat-btn.active { background:#2563EB; color:#fff; border-color:#2563EB; }
+      .cat-opt { padding:0.5rem 0.75rem; font-size:0.875rem; cursor:pointer; color:#1E293B; }
+      .cat-opt:hover { background:#F1F5F9; }
+      .cat-opt-active { background:#EFF6FF; color:#2563EB; font-weight:600; }
+      #catSelectDisplay:hover { border-color:#BFDBFE; }
+      #catSelectDisplay:focus-within { border-color:#2563EB; }
+      #catSearch:focus { border-color:#2563EB; }
       .prod-results { display:flex; flex-direction:column; gap:0.5rem; margin-top:0.75rem; max-height:320px; overflow-y:auto; }
       .prod-result-item { display:flex; align-items:center; justify-content:space-between; padding:0.625rem 0.875rem; border:1px solid #E2E8F0; border-radius:8px; cursor:pointer; transition:all 0.15s; gap:0.75rem; }
       .prod-result-item:hover { background:#F8FAFC; border-color:#BFDBFE; }
@@ -127,11 +133,24 @@ export async function init(container, user) {
           <div class="pos-card">
             <div class="pos-card-header"><i class="fas fa-search" style="color:#2563EB;"></i> Buscar Producto</div>
             <div class="pos-card-body">
-              <div style="position:relative;">
-                <i class="fas fa-search" style="position:absolute;left:0.75rem;top:50%;transform:translateY(-50%);color:#94A3B8;font-size:0.875rem;pointer-events:none;"></i>
-                <input class="search-input" id="prodSearch" type="text" placeholder="Buscar por nombre o código de barras..." autocomplete="off" style="padding-left:2.25rem;" />
+              <div style="display:flex;gap:0.5rem;">
+                <div style="position:relative;flex:1;">
+                  <i class="fas fa-search" style="position:absolute;left:0.75rem;top:50%;transform:translateY(-50%);color:#94A3B8;font-size:0.875rem;pointer-events:none;"></i>
+                  <input class="search-input" id="prodSearch" type="text" placeholder="Buscar por nombre o código de barras..." autocomplete="off" style="padding-left:2.25rem;" />
+                </div>
+                <div style="position:relative;flex-shrink:0;" id="catSelectWrapper">
+                  <div id="catSelectDisplay" style="display:flex;align-items:center;gap:0.375rem;padding:0.625rem 0.75rem;border:1px solid #E2E8F0;border-radius:8px;font-size:0.875rem;cursor:pointer;background:#fff;user-select:none;white-space:nowrap;height:100%;box-sizing:border-box;">
+                    <i class="fas fa-tag" style="color:#94A3B8;font-size:0.75rem;"></i>
+                    <span id="catSelectedText" style="color:#64748B;max-width:130px;overflow:hidden;text-overflow:ellipsis;">Todas</span>
+                    <i class="fas fa-chevron-down" id="catArrow" style="color:#94A3B8;font-size:0.7rem;transition:transform 0.2s;"></i>
+                  </div>
+                  <div id="catDropdown" style="display:none;position:absolute;top:calc(100% + 4px);right:0;width:240px;background:#fff;border:1px solid #E2E8F0;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:1050;max-height:280px;overflow:hidden;">
+                    <div style="padding:0.5rem;">
+                      <input type="text" id="catSearch" placeholder="Buscar categoría…" style="width:100%;padding:0.5rem 0.625rem;border:1px solid #E2E8F0;border-radius:6px;font-size:0.8125rem;outline:none;box-sizing:border-box;" /></div>
+                    <div id="catOptions" style="max-height:210px;overflow-y:auto;"></div>
+                  </div>
+                </div>
               </div>
-              <div class="cat-filters" id="catFilters"></div>
               <div class="prod-results" id="prodResults">
                 <p style="color:#94A3B8;font-size:0.875rem;text-align:center;padding:1rem;">Escribe para buscar productos</p>
               </div>
@@ -220,6 +239,7 @@ export async function init(container, user) {
             <tbody id="histTbody"><tr><td colspan="${puedeAnular?8:6}" style="text-align:center;padding:2rem;color:#94A3B8;">Cargando historial…</td></tr></tbody>
           </table>
         </div>
+        <div id="histPaginacion" style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;border-top:1px solid #E2E8F0;font-size:0.8125rem;color:#64748B;"></div>
       </div>
     </div>
 
@@ -241,22 +261,61 @@ export async function init(container, user) {
     cargarHistorial(container, puedeAnular);
   });
 
-  // Cargar categorías para filtros
+  // Cargar categorías para filtro con buscador
   const catRes = await api.get('/categorias');
   _categorias = catRes.ok ? (catRes.data.categorias || catRes.data || []) : [];
-  const catFilters = container.querySelector('#catFilters');
-  catFilters.innerHTML = `<button class="cat-btn active" data-cat="">Todas</button>` +
-    _categorias.map(c => `<button class="cat-btn" data-cat="${c._id}">${c.nombre}</button>`).join('');
 
   let catActiva = '';
-  catFilters.querySelectorAll('.cat-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      catFilters.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      catActiva = btn.dataset.cat;
-      buscarProductos(container, container.querySelector('#prodSearch').value, catActiva);
+  const wrapper = container.querySelector('#catSelectWrapper');
+  const display = container.querySelector('#catSelectDisplay');
+  const selectedText = container.querySelector('#catSelectedText');
+  const dropdown = container.querySelector('#catDropdown');
+  const catSearch = container.querySelector('#catSearch');
+  const catOptions = container.querySelector('#catOptions');
+  const arrow = container.querySelector('#catArrow');
+
+  function renderCatOptions(filter = '') {
+    const items = _categorias.filter(c => !filter || c.nombre.toLowerCase().includes(filter.toLowerCase()));
+    catOptions.innerHTML =
+      `<div class="cat-opt${!catActiva ? ' cat-opt-active' : ''}" data-cat="">Todas</div>` +
+      items.map(c => `<div class="cat-opt${catActiva === c._id ? ' cat-opt-active' : ''}" data-cat="${c._id}">${c.nombre}</div>`).join('');
+
+    catOptions.querySelectorAll('.cat-opt').forEach(el => {
+      el.addEventListener('click', () => {
+        const catId = el.dataset.cat;
+        catActiva = catId;
+        const cat = _categorias.find(c => c._id === catId);
+        selectedText.textContent = cat ? cat.nombre : 'Todas';
+        selectedText.style.color = cat ? '#1E293B' : '#64748B';
+        dropdown.style.display = 'none';
+        arrow.style.transform = 'rotate(0deg)';
+        catSearch.value = '';
+        buscarProductos(container, container.querySelector('#prodSearch').value, catActiva);
+      });
     });
+  }
+
+  renderCatOptions();
+
+  display.addEventListener('click', e => {
+    e.stopPropagation();
+    const isOpen = dropdown.style.display === 'block';
+    dropdown.style.display = isOpen ? 'none' : 'block';
+    arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+    if (!isOpen) { catSearch.value = ''; renderCatOptions(); catSearch.focus(); }
   });
+
+  catSearch.addEventListener('input', () => renderCatOptions(catSearch.value));
+
+  document.addEventListener('click', e => {
+    if (!wrapper.contains(e.target)) {
+      dropdown.style.display = 'none';
+      arrow.style.transform = 'rotate(0deg)';
+    }
+  });
+
+  // Mostrar 5 productos aleatorios al cargar el POS
+  buscarProductos(container, '', '');
 
   // Búsqueda de productos con debounce optimizado a 250ms para POS
   const searchInput = container.querySelector('#prodSearch');
@@ -304,8 +363,30 @@ export async function init(container, user) {
     if (!_descuentoActivo) { _descuentoValor = 0; container.querySelector('#descValor').value = 0; }
     recalcular(container);
   });
-  container.querySelector('#descTipo').addEventListener('change', e => { _descuentoTipo = e.target.value; recalcular(container); });
-  container.querySelector('#descValor').addEventListener('input', e => { _descuentoValor = parseFloat(e.target.value) || 0; recalcular(container); });
+  container.querySelector('#descTipo').addEventListener('change', () => {
+    _descuentoTipo = container.querySelector('#descTipo').value;
+    const input = container.querySelector('#descValor');
+    if (_descuentoTipo === 'porcentaje') {
+      input.max = 100;
+      if (parseFloat(input.value) > 100) { input.value = 100; _descuentoValor = 100; }
+    } else {
+      const subtotal = _carrito.reduce((s, i) => s + i.precio_venta * i.cantidad, 0);
+      input.max = subtotal;
+      if (parseFloat(input.value) > subtotal) { input.value = subtotal.toFixed(2); _descuentoValor = subtotal; }
+    }
+    recalcular(container);
+  });
+  container.querySelector('#descValor').addEventListener('input', e => {
+    const subtotal = _carrito.reduce((s, i) => s + i.precio_venta * i.cantidad, 0);
+    let val = parseFloat(e.target.value) || 0;
+    if (_descuentoTipo === 'porcentaje') {
+      if (val > 100) { val = 100; e.target.value = 100; }
+    } else {
+      if (val > subtotal) { val = subtotal; e.target.value = subtotal.toFixed(2); }
+    }
+    _descuentoValor = val;
+    recalcular(container);
+  });
 
   // Métodos de pago
   container.querySelectorAll('.metodo-btn').forEach(btn => {
@@ -324,49 +405,46 @@ export async function init(container, user) {
   container.querySelector('#btnCobrar').addEventListener('click', () => mostrarConfirmacion(container, user));
 
   // Historial filtros
-  container.querySelector('#btnFiltrarHist').addEventListener('click', () => cargarHistorial(container, puedeAnular));
+  container.querySelector('#btnFiltrarHist').addEventListener('click', () => cargarHistorial(container, puedeAnular, 1));
 }
 
 async function buscarProductos(container, q, catId) {
   const resultsEl = container.querySelector('#prodResults');
   const searchTerm = q?.trim() || '';
-  
-  if (!searchTerm && !catId) {
-    resultsEl.innerHTML = `<p style="color:#94A3B8;font-size:0.875rem;text-align:center;padding:1rem;">Escribe para buscar productos</p>`;
-    return;
-  }
-  
-  resultsEl.innerHTML = `<p style="color:#2563EB;font-size:0.875rem;text-align:center;padding:0.5rem;"><i class="fas fa-spinner fa-spin"></i> Buscando…</p>`;
-  
-  // Optimización: limitar resultados desde el backend para POS
+  const isDefaultView = !searchTerm && !catId;
+
+  resultsEl.innerHTML = `<p style="color:#2563EB;font-size:0.875rem;text-align:center;padding:0.5rem;"><i class="fas fa-spinner fa-spin"></i> ${isDefaultView ? 'Cargando sugerencias…' : 'Buscando…'}</p>`;
+
   let url = `/productos?limit=30&estado=activo`;
   if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`;
   if (catId) url += `&categoria=${catId}`;
-  
+
   const res = await api.get(url);
-  const prods = res.ok ? (res.data.productos || res.data || []) : [];
-  
+  let prods = res.ok ? (res.data.productos || res.data || []) : [];
+
+  if (isDefaultView && prods.length > 0) {
+    prods = prods.sort(() => Math.random() - 0.5).slice(0, 5);
+  }
+
   if (prods.length === 0) {
     resultsEl.innerHTML = `
       <div style="text-align:center;padding:1.5rem;color:#64748B;">
         <i class="fas fa-search" style="font-size:2rem;opacity:0.3;display:block;margin-bottom:0.5rem;"></i>
-        <p style="font-size:0.875rem;">No se encontraron productos</p>
+        <p style="font-size:0.875rem;">${isDefaultView ? 'No hay productos disponibles' : 'No se encontraron productos'}</p>
         ${searchTerm ? `<p style="font-size:0.75rem;color:#94A3B8;margin-top:0.25rem;">Intenta con otro término de búsqueda</p>` : ''}
       </div>
     `;
     return;
   }
-  
-  // Mostrar solo los primeros 20 resultados para mejor rendimiento
-  resultsEl.innerHTML = prods.slice(0, 20).map(p => {
+
+  resultsEl.innerHTML = prods.map(p => {
     const sinStock = p.stock_actual === 0;
     const stockBajo = p.stock_actual > 0 && p.stock_actual <= (p.stock_minimo || 5);
-    
-    // Imagen del producto
+
     const imgHtml = p.imagen
       ? `<img src="${p.imagen}" alt="${p.nombre}" class="prod-thumb" loading="lazy" data-src="${p.imagen}" data-nombre="${p.nombre}" style="cursor:zoom-in;" />`
       : `<div class="prod-thumb-placeholder"><i class="fas fa-mobile-alt"></i></div>`;
-    
+
     return `
       <div class="prod-result-item${sinStock ? ' sin-stock' : ''}" data-id="${p._id}">
         ${imgHtml}
@@ -386,16 +464,6 @@ async function buscarProductos(container, q, catId) {
     `;
   }).join('');
 
-  // Mostrar contador de resultados si hay más de 20
-  if (prods.length > 20) {
-    resultsEl.innerHTML += `
-      <div style="text-align:center;padding:0.5rem;font-size:0.75rem;color:#64748B;border-top:1px solid #F1F5F9;">
-        Mostrando 20 de ${prods.length} resultados. Refina tu búsqueda para ver más.
-      </div>
-    `;
-  }
-
-  // Event listener para ampliar imagen
   resultsEl.querySelectorAll('.prod-thumb').forEach(img => {
     img.addEventListener('click', e => {
       e.stopPropagation();
@@ -410,8 +478,7 @@ async function buscarProductos(container, q, catId) {
       if (prod) agregarAlCarrito(container, prod);
     });
   });
-  
-  // Permitir agregar con clic en toda la fila (excepto si está agotado)
+
   resultsEl.querySelectorAll('.prod-result-item:not(.sin-stock)').forEach(item => {
     item.style.cursor = 'pointer';
     item.addEventListener('click', e => {
@@ -542,6 +609,16 @@ function recalcular(container) {
   container.querySelector('#rDescuento').textContent = `- S/ ${descuento.toLocaleString('es-PE',{minimumFractionDigits:2})}`;
   container.querySelector('#rTotal').textContent = `S/ ${total.toLocaleString('es-PE',{minimumFractionDigits:2})}`;
   calcularVuelto(container);
+
+  // Sincronizar max del input de descuento
+  const descInput = container.querySelector('#descValor');
+  if (_descuentoTipo === 'porcentaje') {
+    descInput.max = 100;
+    if (_descuentoValor > 100) { descInput.value = 100; _descuentoValor = 100; }
+  } else {
+    descInput.max = subtotal;
+    if (_descuentoValor > subtotal) { descInput.value = subtotal.toFixed(2); _descuentoValor = subtotal; }
+  }
 }
 
 function calcularVuelto(container) {
@@ -802,7 +879,7 @@ function mostrarConfirmacion(container, user) {
   });
 }
 
-async function cargarHistorial(container, puedeAnular) {
+async function cargarHistorial(container, puedeAnular, pagina = 1) {
   const tbody = container.querySelector('#histTbody');
   tbody.innerHTML = `<tr><td colspan="${puedeAnular?8:6}" style="text-align:center;padding:2rem;color:#94A3B8;"><i class="fas fa-spinner fa-spin"></i> Cargando…</td></tr>`;
 
@@ -815,9 +892,20 @@ async function cargarHistorial(container, puedeAnular) {
   if (hasta) url += `hasta=${hasta}&`;
   if (estado) url += `estado=${estado}&`;
   if (metodo) url += `metodo_pago=${metodo}&`;
+  url += `page=${pagina}&limit=15`;
 
   const res = await api.get(url);
-  _historialVentas = res.ok ? (res.data.ventas || res.data || []) : [];
+  if (res.ok && res.data.ventas) {
+    _historialVentas = res.data.ventas;
+    _histPagina = res.data.page || 1;
+    _histTotalPaginas = res.data.totalPages || 1;
+    _histTotal = res.data.total || 0;
+  } else {
+    _historialVentas = [];
+    _histPagina = 1;
+    _histTotalPaginas = 1;
+    _histTotal = 0;
+  }
 
   renderHistorial(container, puedeAnular);
 }
@@ -881,6 +969,34 @@ function renderHistorial(container, puedeAnular) {
       btn.addEventListener('click', () => confirmarAnulacion(container, btn.dataset.id, puedeAnular));
     });
   }
+
+  // Paginación del historial
+  const pagDiv = container.querySelector('#histPaginacion');
+  if (pagDiv) {
+    if (_histTotalPaginas <= 1) {
+      pagDiv.innerHTML = `<span>${_histTotal} venta(s)</span><span></span>`;
+    } else {
+      const desde = (_histPagina - 1) * 15 + 1;
+      const hasta = Math.min(_histPagina * 15, _histTotal);
+      let botones = '';
+      botones += `<button class="btn-sm" data-page="${_histPagina - 1}" ${_histPagina <= 1 ? 'disabled' : ''} style="padding:0.25rem 0.5rem;border:1px solid #E2E8F0;border-radius:4px;background:#fff;cursor:pointer;font-size:0.75rem;">← Ant</button>`;
+      for (let i = 1; i <= _histTotalPaginas; i++) {
+        if (i === 1 || i === _histTotalPaginas || Math.abs(i - _histPagina) <= 1) {
+          botones += `<button class="btn-sm" data-page="${i}" style="padding:0.25rem 0.5rem;border:1px solid ${i === _histPagina ? '#2563EB' : '#E2E8F0'};border-radius:4px;background:${i === _histPagina ? '#2563EB' : '#fff'};color:${i === _histPagina ? '#fff' : '#374151'};cursor:pointer;font-size:0.75rem;font-weight:${i === _histPagina ? '600' : '400'};">${i}</button>`;
+        } else if (Math.abs(i - _histPagina) === 2) {
+          botones += `<span style="padding:0.25rem 0.25rem;font-size:0.75rem;color:#94A3B8;">…</span>`;
+        }
+      }
+      botones += `<button class="btn-sm" data-page="${_histPagina + 1}" ${_histPagina >= _histTotalPaginas ? 'disabled' : ''} style="padding:0.25rem 0.5rem;border:1px solid #E2E8F0;border-radius:4px;background:#fff;cursor:pointer;font-size:0.75rem;">Sig →</button>`;
+      pagDiv.innerHTML = `<span>Mostrando ${desde}-${hasta} de ${_histTotal}</span><div style="display:flex;gap:0.25rem;align-items:center;">${botones}</div>`;
+      pagDiv.querySelectorAll('[data-page]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const p = parseInt(btn.dataset.page);
+          if (p >= 1 && p <= _histTotalPaginas) cargarHistorial(container, puedeAnular, p);
+        });
+      });
+    }
+  }
 }
 
 function mostrarModalDetalleVenta(container, venta) {
@@ -903,7 +1019,7 @@ function mostrarModalDetalleVenta(container, venta) {
   // Cliente
   const cliente = venta.cliente_id;
   const nombreCliente = cliente 
-    ? `${cliente.nombre} ${cliente.apellido_paterno || ''} ${cliente.apellido_paterno || ''}`.trim()
+    ? `${cliente.nombre} ${cliente.apellido_paterno || ''} ${cliente.apellido_materno || ''}`.trim()
     : 'Público general';
   
   // Vendedor

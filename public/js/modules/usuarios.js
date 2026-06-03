@@ -6,6 +6,9 @@
 import { api } from '../api.js';
 
 let _usuarios = [];
+let _usrPagina = 1;
+let _usrTotalPaginas = 1;
+let _usrTotal = 0;
 
 export async function init(container, user) {
   if (!user || user.rol !== 'admin') {
@@ -74,6 +77,7 @@ export async function init(container, user) {
         <tbody id="usrTbody"></tbody>
       </table>
     </div>
+    <div id="usrPaginacion" style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;border-top:1px solid #E2E8F0;font-size:0.8125rem;color:#64748B;"></div>
     <div id="modalContainer"></div>
   `;
 
@@ -81,11 +85,21 @@ export async function init(container, user) {
   container.querySelector('#btnNuevoUsr').addEventListener('click', () => abrirModal(container, null, user));
 }
 
-async function cargarUsuarios(container, user) {
+async function cargarUsuarios(container, user, pagina = 1) {
   const tbody = container.querySelector('#usrTbody');
   tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:#94A3B8;"><i class="fas fa-spinner fa-spin"></i></td></tr>`;
-  const res = await api.get('/usuarios');
-  _usuarios = res.ok ? (res.data.usuarios || res.data || []) : [];
+  const res = await api.get(`/usuarios?page=${pagina}&limit=20`);
+  if (res.ok && res.data.usuarios) {
+    _usuarios = res.data.usuarios;
+    _usrPagina = res.data.page || 1;
+    _usrTotalPaginas = res.data.totalPages || 1;
+    _usrTotal = res.data.total || 0;
+  } else {
+    _usuarios = res.ok ? (res.data.usuarios || res.data || []) : [];
+    _usrPagina = 1;
+    _usrTotalPaginas = 1;
+    _usrTotal = _usuarios.length;
+  }
 
   renderUsuarios(container, user);
 }
@@ -142,6 +156,34 @@ function renderUsuarios(container, user) {
   tbody.querySelectorAll('[data-action="eliminar"]').forEach(btn => {
     btn.addEventListener('click', () => confirmarEliminar(container, btn.dataset.id, user));
   });
+
+  // Paginación
+  const pagDiv = container.querySelector('#usrPaginacion');
+  if (pagDiv) {
+    if (_usrTotalPaginas <= 1) {
+      pagDiv.innerHTML = `<span>${_usrTotal} usuario(s)</span><span></span>`;
+    } else {
+      const desde = (_usrPagina - 1) * 20 + 1;
+      const hasta = Math.min(_usrPagina * 20, _usrTotal);
+      let botones = '';
+      botones += `<button data-page="${_usrPagina - 1}" ${_usrPagina <= 1 ? 'disabled' : ''} style="padding:0.25rem 0.5rem;border:1px solid #E2E8F0;border-radius:4px;background:#fff;cursor:pointer;font-size:0.75rem;">← Ant</button>`;
+      for (let i = 1; i <= _usrTotalPaginas; i++) {
+        if (i === 1 || i === _usrTotalPaginas || Math.abs(i - _usrPagina) <= 1) {
+          botones += `<button data-page="${i}" style="padding:0.25rem 0.5rem;border:1px solid ${i === _usrPagina ? '#2563EB' : '#E2E8F0'};border-radius:4px;background:${i === _usrPagina ? '#2563EB' : '#fff'};color:${i === _usrPagina ? '#fff' : '#374151'};cursor:pointer;font-size:0.75rem;font-weight:${i === _usrPagina ? '600' : '400'};">${i}</button>`;
+        } else if (Math.abs(i - _usrPagina) === 2) {
+          botones += `<span style="padding:0.25rem 0.25rem;font-size:0.75rem;color:#94A3B8;">…</span>`;
+        }
+      }
+      botones += `<button data-page="${_usrPagina + 1}" ${_usrPagina >= _usrTotalPaginas ? 'disabled' : ''} style="padding:0.25rem 0.5rem;border:1px solid #E2E8F0;border-radius:4px;background:#fff;cursor:pointer;font-size:0.75rem;">Sig →</button>`;
+      pagDiv.innerHTML = `<span>Mostrando ${desde}-${hasta} de ${_usrTotal}</span><div style="display:flex;gap:0.25rem;align-items:center;">${botones}</div>`;
+      pagDiv.querySelectorAll('[data-page]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const p = parseInt(btn.dataset.page);
+          if (p >= 1 && p <= _usrTotalPaginas) cargarUsuarios(container, user, p);
+        });
+      });
+    }
+  }
 }
 
 function abrirModal(container, usuario = null, user) {

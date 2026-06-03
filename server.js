@@ -8,17 +8,38 @@ const PORT = process.env.PORT || 3000;
 // Conectar a MongoDB y verificar configuración de email
 connectDB().then(async () => {
   // Verificar configuración de email (no bloquea el inicio del servidor)
-  if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
-    console.log('Verificando conexión SMTP...');
-    await verificarConexion();
-  } else {
-    console.warn('⚠ Variables GMAIL_USER o GMAIL_APP_PASSWORD no configuradas. La recuperación de contraseña no funcionará.');
+  try {
+    if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+      console.log('Verificando conexión SMTP...');
+      await verificarConexion();
+    } else if (process.env.NODE_ENV === 'production') {
+      console.warn('Variables GMAIL_USER o GMAIL_APP_PASSWORD no configuradas. La recuperación de contraseña no funcionará.');
+    }
+  } catch (emailErr) {
+    console.error('Error al verificar email (no bloquea el servidor):', emailErr.message);
   }
 
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log(`Servidor Panta Tec corriendo en http://localhost:${PORT}`);
     console.log(`Entorno: ${process.env.NODE_ENV || 'development'}`);
   });
+
+  // ─── GRACEFUL SHUTDOWN ──────────────────────────────────────────────────
+  const shutdown = (signal) => {
+    console.log(`\n${signal} recibido. Cerrando servidor...`);
+    server.close(() => {
+      console.log('Servidor HTTP cerrado.');
+      process.exit(0);
+    });
+    // Forzar cierre después de 10 segundos
+    setTimeout(() => {
+      console.error('Forzando cierre del servidor.');
+      process.exit(1);
+    }, 10000);
+  };
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 }).catch((err) => {
   console.error('Error al conectar a MongoDB:', err.message);
   process.exit(1);

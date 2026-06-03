@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link rel="stylesheet" href="css/responsive.css" />
   <link rel="stylesheet" href="css/panda.css" />
+  <link rel="stylesheet" href="css/style.css" />
   <style>
     :root {
       --color-primary: #2563EB; --color-primary-dark: #1D4ED8; --color-primary-light: #DBEAFE;
@@ -125,7 +126,10 @@
       </div>
       <div class="topbar-right">
         <div class="topbar-date"><i class="far fa-calendar" aria-hidden="true"></i><span id="topbarDate"></span></div>
-        <div class="topbar-user"><i class="fas fa-user-circle" aria-hidden="true"></i><span id="topbarUserName">—</span></div>
+        <div class="topbar-user topbar-user-btn" id="btnOpenSettings">
+          <span id="topbarUserName">—</span>
+          <i class="fas fa-cog"></i>
+        </div>
       </div>
     </header>
     <main class="content-area" id="contentArea" role="main"></main>
@@ -134,6 +138,35 @@
   <!-- Toast container -->
   <div id="toastContainer" aria-live="polite" aria-atomic="false"></div>
 
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="modal-overlay">
+    <div class="modal settings">
+      <div class="modal-header">
+        <h2><i class="fas fa-cog"></i> Configuración de cuenta</h2>
+        <button class="btn-close" id="btnCloseSettings">&times;</button>
+      </div>
+      <div class="modal-body settings-body">
+        <div class="settings-foto-row">
+          <div class="settings-avatar" id="settingsAvatar">
+            <i class="fas fa-user-circle"></i>
+          </div>
+          <label class="btn-secondary btn-foto">
+            <i class="fas fa-camera"></i> Cambiar foto
+            <input type="file" id="settingsFotoInput" accept="image/jpeg,image/png,image/webp" class="sr-only" />
+          </label>
+        </div>
+        <hr class="settings-divider" />
+        <div class="settings-section">
+          <h3><i class="fas fa-key"></i> Cambiar contraseña</h3>
+          <input class="search-input" id="settingsClaveActual" type="password" placeholder="Contraseña actual" />
+          <input class="search-input" id="settingsNuevaClave" type="password" placeholder="Nueva contraseña (mín. 6 caracteres)" />
+          <input class="search-input" id="settingsConfirmarClave" type="password" placeholder="Confirmar nueva contraseña" />
+          <button class="btn-primary btn-primary--start" id="btnCambiarClave"><i class="fas fa-key"></i> Actualizar contraseña</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Redirección inmediata si no hay token (antes de renderizar nada)
     if (!localStorage.getItem('panta_token')) {
@@ -141,20 +174,36 @@
     }
   </script>
   <script type="module">
-    import { isLoggedIn, getUser, logout } from './js/auth.js';
+    import { isLoggedIn, getUser, saveUser, logout } from './js/auth.js';
     import { api } from './js/api.js';
+    import { initSettings } from './js/settings.js';
 
     // Verificar token localmente primero (rápido)
     if (!isLoggedIn()) { window.location.replace('/index.html'); }
 
     // Verificar token contra el servidor (evita acceso con token expirado o inválido)
     (async () => {
-      const { ok } = await api.get('/auth/verificar');
-      if (!ok) {
+      const res = await api.get('/auth/verificar');
+      if (!res.ok) {
         localStorage.clear();
         window.location.replace('/index.html');
       } else {
-        // Token válido, mostrar la página
+        // Token válido, actualizar datos del usuario desde el servidor
+        if (res.data.usuario) {
+          const u = res.data.usuario;
+          saveUser(u);
+          // Re-renderizar avatar con datos frescos
+          const name = u.nombre_completo || u.usuario || 'Usuario';
+          const avatarHtml = u.foto
+            ? `<img src="${u.foto}" alt="${name}" />`
+            : `<i class="fas fa-user-circle"></i>`;
+          const avatarContainer = document.querySelector('.sidebar-user .sidebar-user-avatar');
+          if (avatarContainer) {
+            avatarContainer.innerHTML = avatarHtml;
+          } else {
+            document.querySelector('.sidebar-user .fas').outerHTML = `<div class="sidebar-user-avatar">${avatarHtml}</div>`;
+          }
+        }
         document.body.classList.remove('auth-pending');
       }
     })();
@@ -162,6 +211,10 @@
     const user = getUser();
     if (user) {
       const name = user.nombre_completo || user.usuario || 'Usuario';
+      const userAvatar = user.foto
+        ? `<img src="${user.foto}" alt="${name}" />`
+        : `<i class="fas fa-user-circle"></i>`;
+      document.querySelector('.sidebar-user .fas').outerHTML = `<div class="sidebar-user-avatar">${userAvatar}</div>`;
       document.getElementById('sidebarUserName').textContent = name;
       document.getElementById('sidebarUserRole').textContent = user.rol || '';
       document.getElementById('topbarUserName').textContent = name;
@@ -186,6 +239,9 @@
 
     // Logout
     document.getElementById('btnLogout').addEventListener('click', logout);
+
+    // Settings
+    initSettings();
 
     // Sidebar mobile
     const sidebar  = document.getElementById('sidebar');
@@ -224,7 +280,7 @@
       api.stopPolling();
       _currentModule = name;
 
-      contentArea.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;min-height:300px;color:var(--color-text-muted);gap:0.75rem;"><i class="fas fa-spinner fa-spin" style="font-size:2rem;"></i><p>Cargando ${TITLES[name]}…</p></div>`;
+      contentArea.innerHTML = `<div class="loading-area"><i class="fas fa-spinner fa-spin"></i><p>Cargando ${TITLES[name]}…</p></div>`;
       try {
         const mod = await import(`./js/modules/${name}.js`);
         if (mod.init) await mod.init(contentArea, user);
@@ -236,7 +292,7 @@
           }, 30000);
         }
       } catch (e) {
-        contentArea.innerHTML = `<div style="padding:2rem;color:var(--color-text-muted);text-align:center;"><i class="fas fa-tools" style="font-size:2rem;margin-bottom:0.75rem;display:block;"></i><p>Módulo <strong>${TITLES[name]}</strong> en construcción.</p></div>`;
+        contentArea.innerHTML = `<div class="module-error"><i class="fas fa-tools"></i><p>Módulo <strong>${TITLES[name]}</strong> en construcción.</p></div>`;
       }
     }
 

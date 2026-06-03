@@ -1,30 +1,7 @@
 const Venta = require('../models/Venta');
 const DetalleVenta = require('../models/DetalleVenta');
 const Producto = require('../models/Producto');
-
-// Offset Perú UTC-5
-const OFFSET_MS = 5 * 60 * 60 * 1000;
-
-function rangoDiaPerú(fechaInput) {
-  const base = fechaInput ? new Date(fechaInput) : new Date();
-  const localMs   = base.getTime() - OFFSET_MS;
-  const localDate = new Date(localMs);
-  const y = localDate.getUTCFullYear();
-  const m = localDate.getUTCMonth();
-  const d = localDate.getUTCDate();
-  return {
-    inicio: new Date(Date.UTC(y, m, d,  0,  0,  0,   0) + OFFSET_MS),
-    fin:    new Date(Date.UTC(y, m, d, 23, 59, 59, 999) + OFFSET_MS),
-  };
-}
-
-function rangoMesPerú(mes0, anio) {
-  // mes0 = 0-indexed
-  return {
-    inicio: new Date(Date.UTC(anio, mes0,  1,  0,  0,  0,   0) + OFFSET_MS),
-    fin:    new Date(Date.UTC(anio, mes0 + 1, 0, 23, 59, 59, 999) + OFFSET_MS),
-  };
-}
+const { rangoDiaPeru, rangoMesPeru } = require('../utils/dateUtils');
 
 /**
  * GET /api/reportes/ventas-dia?fecha=YYYY-MM-DD
@@ -33,7 +10,7 @@ function rangoMesPerú(mes0, anio) {
 exports.ventasDia = async (req, res) => {
   try {
     const fechaInput = req.query.fecha ? new Date(req.query.fecha + 'T12:00:00') : null;
-    const { inicio: inicioDia, fin: finDia } = rangoDiaPerú(fechaInput);
+    const { inicio: inicioDia, fin: finDia } = rangoDiaPeru(fechaInput);
 
     const ventas = await Venta.find({
       estado: 'completada',
@@ -103,7 +80,13 @@ exports.ventasMes = async (req, res) => {
     const ahora = new Date();
     const mes  = req.query.mes  ? parseInt(req.query.mes,  10) - 1 : ahora.getMonth();
     const anio = req.query.anio ? parseInt(req.query.anio, 10)     : ahora.getFullYear();
-    const { inicio: inicioMes, fin: finMes } = rangoMesPerú(mes, anio);
+
+    // Validar rango de mes (0-11)
+    if (mes < 0 || mes > 11) {
+      return res.status(400).json({ error: 'El mes debe estar entre 1 y 12' });
+    }
+
+    const { inicio: inicioMes, fin: finMes } = rangoMesPeru(mes, anio);
 
     const ventas = await Venta.find({
       estado: 'completada',

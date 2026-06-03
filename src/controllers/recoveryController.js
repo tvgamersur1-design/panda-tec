@@ -38,27 +38,33 @@ exports.solicitarCodigo = async (req, res) => {
     // ── Verificar configuración de email ────────────────────────────────────
     if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
       console.error('❌ Variables GMAIL_USER o GMAIL_APP_PASSWORD no configuradas');
-      return res.status(503).json({ 
-        error: 'El servicio de recuperación de contraseña no está disponible. Contacta al administrador.' 
+      // Retornar mensaje genérico para no revelar configuración del servidor
+      return res.json({ 
+        success: true,
+        mensaje: 'Si el correo está registrado, recibirás un código de recuperación.' 
       });
     }
 
     // ── Buscar usuario ──────────────────────────────────────────────────────
     const usuario = await Usuario.findOne({ correo, eliminado: false });
 
-    // ── VALIDACIÓN DIRECTA: Correo no existe ────────────────────────────────
+    // ── Respuesta genérica para no revelar si el correo existe ──────────────
     if (!usuario) {
       console.log(`⚠️ Intento de recuperación con correo no registrado: ${correo}`);
-      return res.status(404).json({ 
-        error: 'El correo no está registrado en el sistema. Verifica que sea correcto o contacta al administrador.' 
+      // Retornar 200 con mensaje genérico para no revelar existencia del correo
+      return res.json({ 
+        success: true,
+        mensaje: 'Si el correo está registrado, recibirás un código de recuperación.' 
       });
     }
 
     // ── VALIDACIÓN: Usuario debe estar activo ───────────────────────────────
     if (!usuario.activo) {
       console.log(`⚠️ Intento de recuperación con cuenta inactiva: ${correo}`);
-      return res.status(403).json({ 
-        error: 'Tu cuenta está inactiva. Contacta al administrador para reactivarla.' 
+      // Retornar mensaje genérico para no revelar estado de la cuenta
+      return res.json({ 
+        success: true,
+        mensaje: 'Si el correo está registrado, recibirás un código de recuperación.' 
       });
     }
 

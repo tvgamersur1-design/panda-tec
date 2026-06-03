@@ -4,7 +4,11 @@ const proveedorSchema = new mongoose.Schema(
   {
     nombre: { type: String, required: true },
     telefono: { type: String, required: true },
-    correo: { type: String, required: true },
+    correo: { 
+      type: String, 
+      required: true,
+      match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Formato de correo inválido'],
+    },
     activo: { type: Boolean, default: true },
     fecha_creacion: { type: Date, default: Date.now },
   },

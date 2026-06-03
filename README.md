@@ -1,99 +1,142 @@
-# Panta Tec - Sistema de Ventas de Celulares
+# Panta Tec — Sistema POS de Ventas
 
-Sistema completo de gestión de ventas de celulares y accesorios con Node.js + Express usando JSON como almacenamiento.
+Sistema de punto de venta (POS) para tienda de celulares y accesorios.  
+**Backend:** Node.js + Express + MongoDB Atlas  
+**Frontend:** Vanilla JS SPA (ES Modules) + CSS
+
+---
+
+## Características
+
+- **POS** — Búsqueda de productos con filtro por categoría, carrito, descuentos, métodos de pago, vuelto
+- **Dashboard** — Estadísticas en tiempo real, alertas de stock bajo, últimos pedidos
+- **Productos** — CRUD con imágenes (Cloudinary), stock mínimo, código de barras
+- **Categorías** — CRUD con soft delete
+- **Clientes** — CRUD con búsqueda por DNI/nombre, paginación
+- **Pedidos** — Gestión de pedidos a proveedores con recepción parcial
+- **Usuarios** — Roles (admin/vendedor/almacén), CRUD con paginación
+- **Reportes** — Ventas por día/mes, productos más vendidos
+- **Configuración** — Datos de tienda, términos y condiciones
+- **Autenticación** — JWT, login, recuperación de contraseña por email, Google OAuth
+- **Perfil** — Cambio de contraseña, foto de perfil (Cloudinary)
+
+---
 
 ## Instalación
 
 ```bash
+# Clonar
+git clone <repo>
+cd sitema-panda-tec
+
+# Dependencias
 npm install
+
+# Variables de entorno (copiar y configurar)
+cp .env.example .env
 ```
+
+### Variables de entorno
+
+| Variable | Descripción |
+|----------|-------------|
+| `MONGODB_URI` | URI de MongoDB Atlas |
+| `JWT_SECRET` | Secreto para firmar tokens JWT |
+| `CLOUDINARY_CLOUD_NAME` | Cloud name de Cloudinary |
+| `CLOUDINARY_API_KEY` | API Key de Cloudinary |
+| `CLOUDINARY_API_SECRET` | API Secret de Cloudinary |
+| `EMAIL_SERVICE` | `sendgrid` o `resend` |
+| `SENDGRID_API_KEY` | API Key de SendGrid |
+| `RESEND_API_KEY` | API Key de Resend |
+| `EMAIL_FROM` | Correo remitente |
+| `GOOGLE_CLIENT_ID` | Client ID de Google OAuth |
+| `NODE_ENV` | `development` o `production` |
+
+---
 
 ## Ejecutar
 
 ```bash
-# Modo normal
-npm start
-
-# Modo desarrollo (con nodemon)
+# Desarrollo (con nodemon)
 npm run dev
+
+# Producción
+npm start
 ```
 
-El servidor corre en `http://localhost:3000`
+Servidor en `http://localhost:3000`
 
-**IMPORTANTE:** Si agregaste nuevas rutas o modificaste archivos del servidor, debes reiniciar:
-1. Presiona `Ctrl+C` para detener el servidor
-2. Ejecuta `npm start` nuevamente
-3. Recarga el navegador con `Ctrl+F5` (recarga forzada sin caché)
+---
 
-## Frontend
+## Tests
 
-Abre tu navegador en `http://localhost:3000` para acceder a la interfaz web profesional.
+```bash
+npm test
+```
 
-El frontend incluye:
-- Dashboard con estadísticas en tiempo real
-- Alertas de stock bajo
-- Gestión completa de productos con modal
-- Interfaz para registrar ventas con cálculo automático
-- Historial de ventas detallado
-- Diseño profesional con sidebar y iconos Font Awesome
-- Responsive para móviles y tablets
+---
 
-## Endpoints
+## Seguridad
 
-### Productos
+- JWT con expiración de 8 horas
+- Rate limiting en login, recuperación, escritura y lectura
+- Helmet (cabeceras HTTP seguras)
+- express-mongo-sanitize (protección NoSQL injection)
+- Contraseñas hasheadas con bcryptjs (cost 10)
+- Validación de entradas en todos los endpoints
+- Soft delete en categorías
+- Mensajes genéricos en recuperación de contraseña (previene enumeración)
+- CORS restringido en producción
+- Graceful shutdown con cierre de conexiones
 
-- `GET /api/productos` - Listar todos los productos
-- `POST /api/productos` - Crear producto
-  ```json
-  {
-    "nombre": "Sello Personalizado",
-    "descripcion": "Sello con diseño personalizado",
-    "precio": 30.00,
-    "stock": 15
-  }
-  ```
-- `PUT /api/productos/:id` - Actualizar producto
-- `DELETE /api/productos/:id` - Eliminar producto
-
-### Ventas
-
-- `POST /api/ventas` - Registrar venta
-  ```json
-  {
-    "cliente": "Juan Pérez",
-    "productos": [
-      {
-        "producto_id": 1,
-        "cantidad": 2
-      },
-      {
-        "producto_id": 2,
-        "cantidad": 1
-      }
-    ]
-  }
-  ```
-- `GET /api/ventas` - Listar todas las ventas con detalles
-- `GET /api/ventas/:id` - Obtener detalle de una venta específica
+---
 
 ## Estructura
 
 ```
-├── data/                    # Archivos JSON (base de datos)
-│   ├── productos.json
-│   ├── ventas.json
-│   └── detalles_venta.json
-├── src/
-│   ├── controllers/         # Lógica de negocio
-│   ├── routes/             # Definición de rutas
-│   └── app.js              # Servidor Express
-└── package.json
+src/
+  app.js              — Express app (middlewares, rutas)
+  server.js           — Entry point con graceful shutdown
+  config/             — db.js, cloudinary.js, rateLimiter.js
+  controllers/        — Lógica de negocio
+  middlewares/         — auth.js, roles.js, upload.js
+  models/             — Mongoose schemas
+  routes/             — Definición de rutas
+  utils/              — dateUtils.js
+public/
+  dashboard.html      — SPA dashboard
+  index.html          — Login
+  js/
+    auth.js           — Autenticación frontend
+    api.js            — Cliente HTTP centralizado con caché
+    settings.js       — Modal de configuración de cuenta
+    modules/          — Módulos SPA (ventas, productos, etc.)
+  css/
+    style.css         — Estilos globales
+    panda.css         — Tema base
+    responsive.css    — Media queries
 ```
 
-## Funcionalidades
+---
 
-- CRUD completo de productos
-- Registro de ventas con validación de stock
-- Actualización automática de inventario
-- Cálculo automático de totales
-- Historial de ventas con detalles
+## API
+
+### Autenticación
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| POST | `/api/auth/login` | Iniciar sesión |
+| GET | `/api/auth/verificar` | Verificar token |
+| PUT | `/api/auth/perfil` | Cambiar contraseña |
+| POST | `/api/auth/perfil/foto` | Subir foto de perfil |
+
+### Módulos
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET/POST | `/api/productos` | CRUD productos |
+| GET/POST | `/api/categorias` | CRUD categorías |
+| GET/POST | `/api/clientes` | CRUD clientes |
+| GET/POST | `/api/usuarios` | CRUD usuarios |
+| GET/POST | `/api/pedidos` | CRUD pedidos |
+| GET/POST | `/api/proveedores` | CRUD proveedores |
+| GET | `/api/reportes` | Reportes de ventas |
+| GET/POST | `/api/configuracion` | Configuración de tienda |

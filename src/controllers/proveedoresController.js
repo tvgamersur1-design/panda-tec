@@ -6,8 +6,26 @@ const Proveedor = require('../models/Proveedor');
  */
 exports.listar = async (req, res) => {
   try {
-    const proveedores = await Proveedor.find({ activo: true }).sort({ nombre: 1 });
-    res.json(proveedores);
+    const { page = 1, limit = 50 } = req.query;
+
+    const filtro = { activo: true };
+
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+    const skip = (pageNum - 1) * limitNum;
+
+    const [proveedores, total] = await Promise.all([
+      Proveedor.find(filtro).sort({ nombre: 1 }).skip(skip).limit(limitNum),
+      Proveedor.countDocuments(filtro),
+    ]);
+
+    res.json({
+      proveedores,
+      total,
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(total / limitNum),
+    });
   } catch (error) {
     console.error('Error al listar proveedores:', error);
     res.status(500).json({ error: 'Error al listar proveedores' });

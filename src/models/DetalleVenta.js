@@ -13,10 +13,10 @@ const detalleVentaSchema = new mongoose.Schema(
       required: true,
     },
     cantidad: { type: Number, required: true, min: 1 },
-    precio_unitario: { type: Number, required: true },
-    precio_compra: { type: Number, required: true }, // Precio de compra al momento de la venta
-    descuento_item: { type: Number, default: 0 },
-    subtotal: { type: Number, required: true },
+    precio_unitario: { type: Number, required: true, min: 0 },
+    precio_compra: { type: Number, required: true, min: 0 },
+    descuento_item: { type: Number, default: 0, min: 0 },
+    subtotal: { type: Number, required: true, min: 0 },
   },
   { timestamps: false }
 );
