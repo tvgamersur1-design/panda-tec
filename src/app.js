@@ -39,23 +39,11 @@ if (process.env.NODE_ENV !== 'test') {
 app.use(compression());
 
 // ─── CORS ────────────────────────────────────────────────────────────────────
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
-  : ['http://localhost:3000'];
-
+// Configuración permisiva para desarrollo y producción
+// Permite peticiones desde cualquier origen
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // Permitir peticiones sin origin (same-origin requests)
-      // Esto ocurre cuando el frontend está en el mismo dominio que el backend
-      if (!origin) {
-        callback(null, true);
-      } else if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error(`Origen no permitido por CORS: ${origin}`));
-      }
-    },
+    origin: true, // Permite todos los orígenes
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -201,11 +189,6 @@ app.use((req, res) => {
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   console.error(err.stack);
-
-  // Error de CORS
-  if (err.message && err.message.startsWith('Origen no permitido')) {
-    return res.status(403).json({ error: err.message });
-  }
 
   res.status(500).json({ error: 'Error interno del servidor' });
 });

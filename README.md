@@ -52,6 +52,16 @@ cp .env.example .env
 | `GOOGLE_CLIENT_ID` | Client ID de Google OAuth |
 | `NODE_ENV` | `development` o `production` |
 
+### Rutas públicas (sin autenticación)
+
+Las siguientes rutas están disponibles públicamente sin necesidad de token JWT:
+
+- `GET /api/categorias/publico` — Categorías para catálogo
+- `GET /api/productos/publico` — Productos para catálogo
+- `GET /api/configuracion/publica` — Datos de la tienda
+
+CORS está configurado de forma permisiva para permitir peticiones desde cualquier origen.
+
 ---
 
 ## Ejecutar
@@ -86,7 +96,7 @@ npm test
 - Validación de entradas en todos los endpoints
 - Soft delete en categorías
 - Mensajes genéricos en recuperación de contraseña (previene enumeración)
-- CORS restringido en producción
+- CORS permisivo para facilitar integración con catálogos públicos
 - Graceful shutdown con cierre de conexiones
 
 ---
