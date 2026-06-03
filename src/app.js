@@ -46,12 +46,10 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
 app.use(
   cors({
     origin: (origin, callback) => {
-      // En producción, rechazar peticiones sin origin (Postman, curl, SSRF)
-      // En desarrollo, permitir peticiones sin origin para debugging
-      if (!origin && process.env.NODE_ENV !== 'production') {
+      // Permitir peticiones sin origin (same-origin requests)
+      // Esto ocurre cuando el frontend está en el mismo dominio que el backend
+      if (!origin) {
         callback(null, true);
-      } else if (!origin) {
-        callback(new Error('Origen no permitido: petición sin header Origin en producción'));
       } else if (allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
