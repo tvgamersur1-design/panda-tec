@@ -69,6 +69,10 @@ app.use(express.static(path.join(__dirname, '../public')));
 app.use('/catalogo', express.static(path.join(__dirname, '../../Catalogo-panda')));
 
 // ─── RUTAS API ────────────────────────────────────────────────────────────────
+// Rate limiting global para TODAS las rutas API (archivos estáticos no se ven afectados)
+const { apiGlobalRateLimiter } = require('./config/rateLimiter');
+app.use('/api', apiGlobalRateLimiter);
+
 // Módulo de autenticación (JWT)
 app.use('/api/auth', require('./routes/auth'));
 

@@ -84,10 +84,29 @@ const readRateLimiter = rateLimit({
   },
 });
 
+/**
+ * Rate limiter global para TODAS las rutas API.
+ * Protege contra abuso masivo, scraping y ataques de fuerza bruta.
+ * Máximo 100 requests por IP en 15 minutos (~7 por minuto).
+ * Los archivos estáticos (HTML, CSS, JS) NO se ven afectados.
+ */
+const apiGlobalRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    return res.status(429).json({
+      error: 'Demasiadas solicitudes a la API. Intenta de nuevo en unos minutos',
+    });
+  },
+});
+
 module.exports = {
   loginRateLimiter,
   recoveryRateLimiter,
   verifyCodeRateLimiter,
   writeRateLimiter,
   readRateLimiter,
+  apiGlobalRateLimiter,
 };
