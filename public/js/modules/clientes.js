@@ -19,7 +19,7 @@ export async function init(container, user) {
     <div class="cli-header">
       <div class="cli-search-wrap">
         <i class="fas fa-search cli-search-icon"></i>
-        <input type="text" id="searchInput" class="search-input cli-search-input" placeholder="Buscar por nombre o DNI..." autocomplete="off" />
+        <input type="text" id="searchInput" class="search-input cli-search-input" placeholder="Buscar por nombre o DNI..." autocomplete="new-password" />
       </div>
       ${puedeEditar ? `<button class="btn-primary" id="btnNuevo"><i class="fas fa-plus"></i> Nuevo Cliente</button>` : ''}
     </div>

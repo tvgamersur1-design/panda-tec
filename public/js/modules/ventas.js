@@ -45,7 +45,7 @@ export async function init(container, user) {
               <div class="ven-flex-gap-sm">
                 <div class="ven-search-wrap">
                   <i class="fas fa-search ven-search-icon-abs"></i>
-                  <input class="search-input ven-search-input-pl" id="prodSearch" type="text" placeholder="Buscar por nombre o código de barras..." autocomplete="off" />
+                  <input class="search-input ven-search-input-pl" id="prodSearch" type="text" placeholder="Buscar por nombre o código de barras..." autocomplete="new-password" />
                 </div>
                 <div class="ven-cat-wrap" id="catSelectWrapper">
                   <div id="catSelectDisplay" class="ven-cat-display">
@@ -55,7 +55,7 @@ export async function init(container, user) {
                   </div>
                   <div id="catDropdown" class="ven-cat-dropdown">
                     <div class="ven-cat-search-wrap">
-                      <input type="text" id="catSearch" class="ven-cat-search" placeholder="Buscar categoría…" autocomplete="off" /></div>
+                      <input type="text" id="catSearch" class="ven-cat-search" placeholder="Buscar categoría…" autocomplete="new-password" /></div>
                     <div id="catOptions" class="ven-cat-options"></div>
                   </div>
                 </div>
@@ -70,7 +70,7 @@ export async function init(container, user) {
             <div class="pos-card-body">
               <div class="ven-cliente-search-wrap">
                 <i class="fas fa-search ven-cliente-icon"></i>
-                <input class="search-input ven-cliente-input" id="clienteSearch" type="text" placeholder="Buscar por DNI o nombre..." autocomplete="off" />
+                <input class="search-input ven-cliente-input" id="clienteSearch" type="text" placeholder="Buscar por DNI o nombre..." autocomplete="new-password" />
               </div>
               <div id="clienteResults"></div>
               <div id="clienteSeleccionado"></div>
