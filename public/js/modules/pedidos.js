@@ -378,16 +378,16 @@ function abrirModalProveedor(container, proveedor = null, puedeEditar) {
           <div class="modal-body">
             <div class="form-group">
               <label for="fNombreProv">Nombre *</label>
-              <input id="fNombreProv" name="nombre" type="text" required value="${proveedor?.nombre || ''}" />
+              <input id="fNombreProv" name="nombre" type="text" required value="${proveedor?.nombre || ''}" autocomplete="off" />
             </div>
             <div class="form-row">
               <div class="form-group">
                 <label for="fTelProv">Teléfono *</label>
-                <input id="fTelProv" name="telefono" type="text" required value="${proveedor?.telefono || ''}" />
+                <input id="fTelProv" name="telefono" type="text" required value="${proveedor?.telefono || ''}" autocomplete="off" />
               </div>
               <div class="form-group">
                 <label for="fCorreoProv">Correo *</label>
-                <input id="fCorreoProv" name="correo" type="email" required value="${proveedor?.correo || ''}" />
+                <input id="fCorreoProv" name="correo" type="email" required value="${proveedor?.correo || ''}" autocomplete="off" />
               </div>
             </div>
           </div>

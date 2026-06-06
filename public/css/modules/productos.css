@@ -37,9 +37,9 @@ tr:hover td { background:#F8FAFC; }
 .btn-close { background:none; border:none; font-size:1.25rem; cursor:pointer; color:#64748B; padding:0.25rem; }
 
 /* --- added for inline style replacements --- */
-.prod-search-wrap { position:relative; min-width:200px; }
-.prod-search-icon { position:absolute; left:0.75rem; top:50%; transform:translateY(-50%); color:#94A3B8; font-size:0.875rem; pointer-events:none; }
-.prod-search-input { min-width:200px; padding-left:2.25rem; }
+.prod-search-wrap { display:flex; align-items:center; min-width:200px; gap:0.5rem; }
+.prod-search-icon { color:#94A3B8; font-size:0.875rem; flex-shrink:0; }
+.prod-search-input { min-width:200px; padding-left:0.875rem; }
 .prod-paginador { display:flex; align-items:center; justify-content:space-between; margin-top:1rem; flex-wrap:wrap; gap:0.5rem; }
 .prod-spinner-inline { text-align:center; padding:2rem; color:#94A3B8; }
 .prod-name { font-weight:500; }

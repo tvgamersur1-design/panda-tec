@@ -161,16 +161,16 @@ function abrirModal(container, usuario = null, user) {
           <div class="modal-body">
             <div class="form-group">
               <label for="fNombreCompleto">Nombre completo *</label>
-              <input id="fNombreCompleto" name="nombre_completo" type="text" required value="${usuario?.nombre_completo || ''}" />
+              <input id="fNombreCompleto" name="nombre_completo" type="text" required value="${usuario?.nombre_completo || ''}" autocomplete="off" />
             </div>
             <div class="form-row">
               <div class="form-group">
                 <label for="fUsuario">Usuario *</label>
-                <input id="fUsuario" name="usuario" type="text" required value="${usuario?.usuario || ''}" />
+                <input id="fUsuario" name="usuario" type="text" required value="${usuario?.usuario || ''}" autocomplete="off" />
               </div>
               <div class="form-group">
                 <label for="fCorreo">Correo *</label>
-                <input id="fCorreo" name="correo" type="email" required value="${usuario?.correo || ''}" />
+                <input id="fCorreo" name="correo" type="email" required value="${usuario?.correo || ''}" autocomplete="off" />
               </div>
             </div>
             ${!esEdicion ? `

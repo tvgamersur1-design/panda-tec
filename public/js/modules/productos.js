@@ -22,7 +22,7 @@ export async function init(container, user) {
       <div class="prod-filters">
         <div class="prod-search-wrap">
           <i class="fas fa-search prod-search-icon"></i>
-          <input type="text" id="searchInput" placeholder="Buscar producto..." class="prod-search-input" />
+          <input type="text" id="searchInput" placeholder="Buscar producto..." class="prod-search-input" autocomplete="off" />
         </div>
         <select id="catFilter"><option value="">Todas las categorías</option></select>
       </div>
@@ -274,7 +274,7 @@ function abrirModal(container, producto = null) {
           <div class="modal-body">
             <div class="form-group">
               <label for="fNombre">Nombre *</label>
-              <input id="fNombre" name="nombre" type="text" required value="${producto?.nombre || ''}" />
+              <input id="fNombre" name="nombre" type="text" required value="${producto?.nombre || ''}" autocomplete="off" />
             </div>
             <div class="form-group">
               <label for="fDesc">Descripción</label>

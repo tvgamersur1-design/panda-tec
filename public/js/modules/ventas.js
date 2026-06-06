@@ -55,7 +55,7 @@ export async function init(container, user) {
                   </div>
                   <div id="catDropdown" class="ven-cat-dropdown">
                     <div class="ven-cat-search-wrap">
-                      <input type="text" id="catSearch" class="ven-cat-search" placeholder="Buscar categoría…" /></div>
+                      <input type="text" id="catSearch" class="ven-cat-search" placeholder="Buscar categoría…" autocomplete="off" /></div>
                     <div id="catOptions" class="ven-cat-options"></div>
                   </div>
                 </div>

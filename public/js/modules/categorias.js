@@ -91,7 +91,7 @@ function abrirModal(container, categoria = null) {
           <div class="modal-body">
             <div class="form-group">
               <label for="fNombre">Nombre *</label>
-              <input id="fNombre" name="nombre" type="text" required value="${categoria?.nombre || ''}" placeholder="Ej: Smartphones" />
+              <input id="fNombre" name="nombre" type="text" required value="${categoria?.nombre || ''}" placeholder="Ej: Smartphones" autocomplete="off" />
             </div>
             <div class="form-group">
               <label for="fDesc">Descripción</label>

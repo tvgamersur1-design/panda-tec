@@ -34,31 +34,31 @@ export async function init(container, user) {
     <form id="confForm">
       <div class="conf-form-group">
         <label for="fNombreTienda">Nombre de la tienda *</label>
-        <input id="fNombreTienda" name="nombre_tienda" type="text" required value="${conf.nombre_tienda || ''}" placeholder="Ej: Panda Tec" />
+        <input id="fNombreTienda" name="nombre_tienda" type="text" required value="${conf.nombre_tienda || ''}" placeholder="Ej: Panda Tec" autocomplete="off" />
       </div>
       <div class="conf-form-row">
         <div class="conf-form-group">
           <label for="fRuc">RUC * (11 dígitos)</label>
-          <input id="fRuc" name="ruc" type="text" maxlength="11" required value="${conf.ruc || ''}" placeholder="20123456789" inputmode="numeric" />
+          <input id="fRuc" name="ruc" type="text" maxlength="11" required value="${conf.ruc || ''}" placeholder="20123456789" inputmode="numeric" autocomplete="off" />
           <span class="error-hint" id="rucError">El RUC debe tener exactamente 11 dígitos numéricos.</span>
           <span class="hint">Solo números, sin guiones</span>
         </div>
         <div class="conf-form-group">
           <label for="fTelefono">Teléfono</label>
-          <input id="fTelefono" name="telefono" type="tel" value="${conf.telefono || ''}" placeholder="Ej: 01-234-5678" />
+          <input id="fTelefono" name="telefono" type="tel" value="${conf.telefono || ''}" placeholder="Ej: 01-234-5678" autocomplete="off" />
         </div>
       </div>
       <div class="conf-form-group">
         <label for="fDireccion">Dirección</label>
-        <input id="fDireccion" name="direccion" type="text" value="${conf.direccion || ''}" placeholder="Ej: Av. Principal 123, Lima" />
+        <input id="fDireccion" name="direccion" type="text" value="${conf.direccion || ''}" placeholder="Ej: Av. Principal 123, Lima" autocomplete="off" />
       </div>
       <div class="conf-form-group">
         <label for="fCorreo">Correo electrónico</label>
-        <input id="fCorreo" name="correo" type="email" value="${conf.correo || ''}" placeholder="contacto@pantatec.com" inputmode="email" />
+        <input id="fCorreo" name="correo" type="email" value="${conf.correo || ''}" placeholder="contacto@pantatec.com" inputmode="email" autocomplete="off" />
       </div>
       <div class="conf-form-group">
         <label for="fMensaje">Mensaje de cierre del ticket</label>
-        <input id="fMensaje" name="mensaje_ticket" type="text" value="${conf.mensaje_ticket || '¡Gracias por su compra!'}" placeholder="¡Gracias por su compra!" />
+        <input id="fMensaje" name="mensaje_ticket" type="text" value="${conf.mensaje_ticket || '¡Gracias por su compra!'}" placeholder="¡Gracias por su compra!" autocomplete="off" />
         <span class="hint">Aparece al final del ticket de venta</span>
       </div>
       <div class="conf-form-group">

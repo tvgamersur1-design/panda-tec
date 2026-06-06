@@ -1,8 +1,8 @@
 /* ── clientes.css ────────────────────────────── */
 .cli-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem; flex-wrap:wrap; gap:0.75rem; }
-.cli-search-wrap { position:relative; flex:1; max-width:400px; }
-.cli-search-icon { position:absolute; left:0.75rem; top:50%; transform:translateY(-50%); color:#94A3B8; font-size:0.875rem; pointer-events:none; }
-.cli-search-input { padding-left:2.25rem; }
+.cli-search-wrap { display:flex; align-items:center; flex:1; max-width:400px; gap:0.5rem; }
+.cli-search-icon { color:#94A3B8; font-size:0.875rem; flex-shrink:0; }
+.cli-search-input { padding-left:0.875rem; }
 .cli-name { font-weight:500; }
 .cli-actions { display:flex; gap:0.5rem; }
 .cli-edit-btn { background:#F0FDF4; color:#16A34A; }
@@ -20,3 +20,6 @@
 .cli-hist-num { font-weight:500; }
 .cli-hist-estado { padding:0.15rem 0.5rem; border-radius:999px; font-size:0.75rem; font-weight:600; }
 .cli-modal-max { max-width:400px; }
+.reniec-loading { display:none; }
+.reniec-aviso { display:none; }
+.reniec-hint { }

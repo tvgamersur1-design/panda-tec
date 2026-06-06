@@ -19,7 +19,7 @@ export async function init(container, user) {
     <div class="cli-header">
       <div class="cli-search-wrap">
         <i class="fas fa-search cli-search-icon"></i>
-        <input type="text" id="searchInput" class="search-input cli-search-input" placeholder="Buscar por nombre o DNI..." />
+        <input type="text" id="searchInput" class="search-input cli-search-input" placeholder="Buscar por nombre o DNI..." autocomplete="off" />
       </div>
       ${puedeEditar ? `<button class="btn-primary" id="btnNuevo"><i class="fas fa-plus"></i> Nuevo Cliente</button>` : ''}
     </div>
@@ -161,7 +161,7 @@ function abrirModal(container, cliente = null, puedeEditar) {
           <div class="modal-body">
             <div class="form-group">
               <label for="fDni">DNI * (8 dígitos)</label>
-              <input id="fDni" name="dni" type="text" maxlength="8" pattern="\\d{8}" required value="${cliente?.dni || ''}" placeholder="12345678" />
+              <input id="fDni" name="dni" type="text" maxlength="8" pattern="\\d{8}" required value="${cliente?.dni || ''}" placeholder="12345678" autocomplete="off" />
               <span class="reniec-loading" id="reniecLoading"><i class="fas fa-spinner fa-spin"></i> Consultando RENIEC…</span>
               <span class="reniec-aviso" id="reniecAviso"><i class="fas fa-exclamation-triangle"></i> No encontrado en RENIEC. Ingresa los datos manualmente.</span>
               <span class="reniec-hint" id="reniecHint">Al ingresar 8 dígitos se consultará RENIEC automáticamente</span>
@@ -169,21 +169,21 @@ function abrirModal(container, cliente = null, puedeEditar) {
             <div class="form-row">
               <div class="form-group">
                 <label for="fNombre">Nombre</label>
-                <input id="fNombre" name="nombre" type="text" value="${cliente?.nombre || ''}" />
+                <input id="fNombre" name="nombre" type="text" value="${cliente?.nombre || ''}" autocomplete="off" />
               </div>
               <div class="form-group">
                 <label for="fApPat">Apellido paterno</label>
-                <input id="fApPat" name="apellido_paterno" type="text" value="${cliente?.apellido_paterno || ''}" />
+                <input id="fApPat" name="apellido_paterno" type="text" value="${cliente?.apellido_paterno || ''}" autocomplete="off" />
               </div>
             </div>
             <div class="form-row">
               <div class="form-group">
                 <label for="fApMat">Apellido materno</label>
-                <input id="fApMat" name="apellido_materno" type="text" value="${cliente?.apellido_materno || ''}" />
+                <input id="fApMat" name="apellido_materno" type="text" value="${cliente?.apellido_materno || ''}" autocomplete="off" />
               </div>
               <div class="form-group">
                 <label for="fTel">Teléfono *</label>
-                <input id="fTel" name="telefono" type="text" required value="${cliente?.telefono || ''}" />
+                <input id="fTel" name="telefono" type="text" required value="${cliente?.telefono || ''}" autocomplete="off" />
               </div>
             </div>
             <div class="form-row">
@@ -193,7 +193,7 @@ function abrirModal(container, cliente = null, puedeEditar) {
               </div>
               <div class="form-group">
                 <label for="fDir">Dirección</label>
-                <input id="fDir" name="direccion" type="text" value="${cliente?.direccion || ''}" />
+                <input id="fDir" name="direccion" type="text" value="${cliente?.direccion || ''}" autocomplete="off" />
               </div>
             </div>
           </div>
