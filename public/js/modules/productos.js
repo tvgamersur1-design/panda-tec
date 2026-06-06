@@ -22,7 +22,7 @@ export async function init(container, user) {
       <div class="prod-filters">
         <div class="prod-search-wrap">
           <i class="fas fa-search prod-search-icon"></i>
-          <input type="text" id="searchInput" placeholder="Buscar producto..." class="prod-search-input" autocomplete="new-password" />
+          <input type="text" id="searchInput" placeholder="Buscar producto..." class="prod-search-input" autocomplete="one-time-code" />
         </div>
         <select id="catFilter"><option value="">Todas las categorías</option></select>
       </div>
