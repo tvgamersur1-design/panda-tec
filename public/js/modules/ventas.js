@@ -463,8 +463,13 @@ function renderCarrito(container) {
     return;
   }
 
-  carritoEl.innerHTML = _carrito.map((item, idx) => `
+  carritoEl.innerHTML = _carrito.map((item, idx) => {
+    const cartImgHtml = item.imagen
+      ? `<img src="${item.imagen}" alt="${item.nombre}" class="carrito-item-img" data-src="${item.imagen}" data-nombre="${item.nombre}" loading="lazy" />`
+      : `<div class="carrito-item-img-placeholder"><i class="fas fa-mobile-alt"></i></div>`;
+    return `
     <div class="carrito-item">
+      ${cartImgHtml}
       <div class="carrito-item-info">
         <div class="carrito-item-name">${item.nombre}</div>
         <div class="carrito-item-price">S/ ${Number(item.precio_venta).toLocaleString('es-PE',{minimumFractionDigits:2})} c/u</div>
@@ -478,8 +483,8 @@ function renderCarrito(container) {
         S/ ${(item.precio_venta * item.cantidad).toLocaleString('es-PE',{minimumFractionDigits:2})}
       </div>
       <button class="btn-rm" data-idx="${idx}" data-action="rm" aria-label="Eliminar"><i class="fas fa-times"></i></button>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 
   carritoEl.querySelectorAll('[data-action]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -494,6 +499,13 @@ function renderCarrito(container) {
         _carrito.splice(idx, 1);
       }
       renderCarrito(container);
+    });
+  });
+
+  carritoEl.querySelectorAll('.carrito-item-img').forEach(img => {
+    img.addEventListener('click', e => {
+      e.stopPropagation();
+      abrirLightbox(img.dataset.src, img.dataset.nombre);
     });
   });
 
